@@ -81,7 +81,7 @@ class PlainStyle(OutputStyle):
                 token_count=file_token_counts.get(file.path, 0),
             )
 
-        return output
+        return f"{output}\n\n"
 
     def generate_file_section(self, file_path: str, content: str, char_count: int, token_count: int) -> str:
         """Generate plain text format file section"""
@@ -104,12 +104,12 @@ class PlainStyle(OutputStyle):
         Returns:
             Plain text format statistics content
         """
-        stats = "\nStatistics\n"
-        stats += PLAIN_SHORT_SEPARATOR + "\n"
+        stats = f"{PLAIN_LONG_SEPARATOR}\n"
+        stats += "Statistics\n"
+        stats += f"{PLAIN_LONG_SEPARATOR}\n"
         stats += f"Total Files: {total_files}\n"
         stats += f"Total Characters: {total_chars}\n"
         stats += f"Total Tokens: {total_tokens}\n"
-        stats += PLAIN_SHORT_SEPARATOR + "\n"
         return stats
 
     def generate_file_tree_section(self, file_tree: Dict) -> str:
