@@ -129,6 +129,13 @@ def merge_configs(
 
     # Merge CLI options
     if cli_options:
+        if cli_options.get("output", {}).get("file_path") is None:
+            if cli_options.get("output", {}).get("style") == RepomixOutputStyle.MARKDOWN:
+                cli_options["output"]["file_path"] = "repomix-output.md"
+            elif cli_options.get("output", {}).get("style") == RepomixOutputStyle.XML:
+                cli_options["output"]["file_path"] = "repomix-output.xml"
+            elif cli_options.get("output", {}).get("style") == RepomixOutputStyle.PLAIN:
+                cli_options["output"]["file_path"] = "repomix-output.txt"
         merge_config_dict(merged_config.__dict__, cli_options)
 
     return merged_config
