@@ -62,6 +62,182 @@ python -m repomix --remote https://github.com/username/repo
 python -m repomix --init
 ```
 
+一旦你生成了打包文件，你就可以将其与 Claude、ChatGPT 和 Gemini 等生成式 AI 工具一起使用。
+
+### 提示示例
+一旦你使用 Repomix 生成了打包文件，你就可以将其与 Claude、ChatGPT 和 Gemini 等 AI 工具一起使用。以下是一些入门示例提示：
+
+
+#### 代码审查和重构
+进行全面的代码审查和重构建议：
+
+```
+这个文件包含我所有的代码。请审查整体结构，并提出任何改进或重构的机会，重点关注可维护性和可扩展性。
+```
+
+
+#### 文档生成
+要生成项目文档：
+
+```
+基于此文件中的代码库，请生成一个详细的README.md，其中包括项目概述、主要功能、设置说明和使用示例。
+```
+
+
+#### 测试用例生成
+用于生成测试用例：
+
+```
+分析此文件中的代码，并为主要函数和类建议一组全面的单元测试。包括边缘情况和潜在的错误场景。
+```
+
+
+#### 代码质量评估
+评估代码质量和对最佳实践的遵循程度：
+
+```
+审查代码库，检查其是否符合编码最佳实践和行业标准。找出在可读性、可维护性和效率方面可以改进的地方。提出具体的修改建议，使代码与最佳实践保持一致。
+```
+
+
+#### 库概述
+获取库的高级理解
+
+```
+此文件包含库的整个代码库。请提供该库的全面概述，包括其主要目的、关键特性和整体架构。
+```
+
+
+随意根据您的具体需求和您正在使用的 AI 工具的功能修改这些提示。
+
+### 输出文件格式
+
+Repomix 生成一个单一文件，其中代码库的不同部分之间有清晰的分隔符。为了增强 AI 的理解能力，输出文件以面向 AI 的解释开始，使 AI 模型更容易理解打包存储库的上下文和结构。
+
+
+#### 纯文本格式 (默认)
+
+```text
+This file is a merged representation of the entire codebase, combining all repository files into a single document.
+
+================================================================
+File Summary
+================================================================
+(元数据和使用 AI 指令)
+
+================================================================
+Repository Structure
+================================================================
+src/
+  cli/
+    cliOutput.py
+    index.py
+  config/
+    configLoader.py
+
+(...剩余目录)
+
+================================================================
+Repository Files
+================================================================
+
+================
+File: src/index.py
+================
+# 文件内容在这里
+
+================
+File: src/utils.py
+================
+# 文件内容在这里
+
+(...剩余文件)
+
+================================================================
+Statistics
+================================================================
+(文件统计和元数据)
+```
+
+
+#### XML格式
+要生成XML格式的输出，请使用 --style xml 选项：
+
+```bash
+python -m repomix --style xml
+```
+
+
+XML格式以分层方式构建内容：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<repository>
+<repository_structure>
+(目录和文件结构)
+</repository_structure>
+
+<repository_files>
+<file>
+  <path>src/index.py</path>
+  <stats>
+    <chars>1234</chars>
+    <tokens>567</tokens>
+  </stats>
+  <content>
+    # 这里是文件内容
+  </content>
+</file>
+(...剩余文件)
+</repository_files>
+
+<statistics>
+  <total_files>19</total_files>
+  <total_chars>37377</total_chars>
+  <total_tokens>11195</total_tokens>
+</statistics>
+</repository>
+```
+
+
+#### `Markdown 格式
+要生成 Markdown 格式的输出，请使用 --style markdown 选项：
+
+```bash
+python -m repomix --style markdown
+```
+
+`````markdown
+# File Summary
+(元数据和使用 AI 指令)
+
+# Repository Structure
+
+```
+src/
+  cli/
+    cliOutput.py
+    index.py
+```
+
+# Repository Files
+
+## File: src/index.py
+```python
+# 文件内容在此
+```
+
+## File: src/utils.py
+```python
+# 文件内容在此
+```
+
+# 统计
+- 文件总数: 19
+- 字符总数: 37377
+- 令牌总数: 11195
+`````
+
 ## ⚙️ 配置
 
 在你的项目根目录创建一个 `repomix.config.json` 文件来进行自定义配置：
