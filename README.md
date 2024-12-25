@@ -4,6 +4,8 @@ English | [简体中文](README_zh.md)
 
 Repomix is a powerful tool that packs your entire repository into a single, AI-friendly file. It is perfect for when you need to feed your codebase to Large Language Models (LLMs) or other AI tools like Claude, ChatGPT, and Gemini.
 
+The original [Repomix](https://github.com/yamadashy/repomix) is written in JavaScript, and this is the ported Python version.
+
 ## 🌟 Features
 
 - **AI-Optimized**: Formats your codebase in a way that's easy for AI to understand and process

@@ -4,6 +4,8 @@
 
 Repomix 是一个强大的工具，可以将您的整个存储库打包成一个单一的、对 AI 友好的文件。当您需要将代码库提供给大型语言模型（LLM）或其他 AI 工具（如 Claude、ChatGPT 和 Gemini）时，它是理想的选择。
 
+原版 [Repomix](https://github.com/yamadashy/repomix) 是用 JavaScript 编写的，这个是移植的 Python 版本。
+
 ## 🌟 功能
 
 - **AI 优化**: 以一种易于 AI 理解和处理的方式格式化您的代码库
