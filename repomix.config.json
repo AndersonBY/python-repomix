@@ -1,0 +1,24 @@
+{
+  "output": {
+    "file_path": "repomix-output.md",
+    "style": "markdown",
+    "header_text": "",
+    "instruction_file_path": "",
+    "remove_comments": false,
+    "remove_empty_lines": false,
+    "top_files_length": 5,
+    "show_line_numbers": false,
+    "copy_to_clipboard": false,
+    "include_empty_directories": false
+  },
+  "security": {
+    "enable_security_check": true,
+    "exclude_suspicious_files": true
+  },
+  "ignore": {
+    "custom_patterns": [],
+    "use_gitignore": true,
+    "use_default_ignore": true
+  },
+  "include": []
+}
