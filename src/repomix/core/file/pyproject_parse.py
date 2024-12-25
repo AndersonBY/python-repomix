@@ -29,7 +29,7 @@ def _read_version_from_pyproject() -> Optional[str]:
     Returns:
         Version number string, returns None if file does not exist or reading fails
     """
-    pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
+    pyproject_path = Path(__file__).parent.parent.parent.parent.parent / "pyproject.toml"
 
     if not pyproject_path.exists():
         return None
