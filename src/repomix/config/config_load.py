@@ -88,9 +88,13 @@ def load_local_config(
         config_path_obj = Path(config_path)
         if not config_path_obj.is_absolute():
             config_path_obj = Path(cwd) / config_path
-    else:
+    elif (Path(cwd) / "repomix.config.json").exists():
         # Use default configuration file path
+        config_path_obj = Path(cwd) / "repomix.config.json"
+    elif (Path(directory) / "repomix.config.json").exists():
         config_path_obj = Path(directory) / "repomix.config.json"
+    else:
+        return None
 
     if not config_path_obj.exists():
         return None

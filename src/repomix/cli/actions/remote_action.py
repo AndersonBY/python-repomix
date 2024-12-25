@@ -50,7 +50,7 @@ def run_remote_action(repo_url: str, options: Dict[str, Any], deps: Optional[Dic
         logger.log("")
 
         # Run default action on cloned repository
-        result = run_default_action(temp_dir_path, temp_dir_path, options)
+        result = run_default_action(temp_dir_path, Path.cwd(), options)
         filename = Path(result.config.output.file_path).name
         copy_output_to_current_directory(Path(temp_dir_path), Path.cwd(), filename)
     except Exception as error:
