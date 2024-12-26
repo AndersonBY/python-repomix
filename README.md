@@ -2,20 +2,22 @@
 
 English | [简体中文](README_zh.md)
 
-Repomix is a powerful tool that packs your entire repository into a single, AI-friendly file. It is perfect for when you need to feed your codebase to Large Language Models (LLMs) or other AI tools like Claude, ChatGPT, and Gemini.
+## 🎯 1. Introduction
+
+Repomix is a powerful tool that packs your entire repository into a single, AI-friendly file. It's perfect for when you need to feed your codebase to Large Language Models (LLMs) or other AI tools like Claude, ChatGPT, and Gemini.
 
 The original [Repomix](https://github.com/yamadashy/repomix) is written in JavaScript, and this is the ported Python version.
 
-## 🌟 Features
+## ⭐ 2. Features
 
-- **AI-Optimized**: Formats your codebase in a way that's easy for AI to understand and process
-- **Token Counting**: Provides token counts for each file and the entire repository using tiktoken
-- **Simple to Use**: Pack your entire repository with just one command
-- **Customizable**: Easily configure what to include or exclude
-- **Git-Aware**: Automatically respects your .gitignore files
-- **Security-Focused**: Built-in security checks to detect and prevent inclusion of sensitive information
+-   **AI-Optimized**: Formats your codebase in a way that's easy for AI to understand and process.
+-   **Token Counting**: Provides token counts for each file and the entire repository using tiktoken.
+-   **Simple to Use**: Pack your entire repository with just one command.
+-   **Customizable**: Easily configure what to include or exclude.
+-   **Git-Aware**: Automatically respects your .gitignore files.
+-   **Security-Focused**: Built-in security checks to detect and prevent the inclusion of sensitive information.
 
-## 🚀 Quick Start
+## 🚀 3. Quick Start
 
 You can install Repomix using pip:
 
@@ -31,76 +33,90 @@ python -m repomix
 
 That's it! Repomix will generate a `repomix-output.md` file in your current directory, containing your entire repository in an AI-friendly format.
 
-## 📊 Usage
+## 📖 4. Usage
+
+### 4.1 Command Line Usage
 
 To pack your entire repository:
+
 ```bash
 python -m repomix
 ```
 
 To pack a specific directory:
+
 ```bash
 python -m repomix path/to/directory
 ```
 
 To pack a remote repository:
+
 ```bash
 python -m repomix --remote https://github.com/username/repo
 ```
 
 To initialize a new configuration file:
+
 ```bash
 python -m repomix --init
 ```
 
-Once you have generated the packed file, you can use it with Generative AI tools like Claude, ChatGPT, and Gemini.
+### 4.2 Configuration Options
 
-### Prompt Examples
-Once you have generated the packed file with Repomix, you can use it with AI tools like Claude, ChatGPT, and Gemini. Here are some example prompts to get you started:
+Create a `repomix.config.json` file in your project root for custom configurations:
 
-#### Code Review and Refactoring
-For a comprehensive code review and refactoring suggestions:
-
-```
-This file contains my entire codebase. Please review the overall structure and suggest any improvements or refactoring opportunities, focusing on maintainability and scalability.
-```
-
-#### Documentation Generation
-To generate project documentation:
-
-```
-Based on the codebase in this file, please generate a detailed README.md that includes an overview of the project, its main features, setup instructions, and usage examples.
-```
-
-#### Test Case Generation
-For generating test cases:
-
-```
-Analyze the code in this file and suggest a comprehensive set of unit tests for the main functions and classes. Include edge cases and potential error scenarios.
-```
-
-#### Code Quality Assessment
-Evaluate code quality and adherence to best practices:
-
-```
-Review the codebase for adherence to coding best practices and industry standards. Identify areas where the code could be improved in terms of readability, maintainability, and efficiency. Suggest specific changes to align the code with best practices.
+```json
+{
+  "output": {
+    "file_path": "repomix-output.md",
+    "style": "markdown",
+    "header_text": "",
+    "instruction_file_path": "",
+    "remove_comments": false,
+    "remove_empty_lines": false,
+    "top_files_length": 5,
+    "show_line_numbers": false,
+    "copy_to_clipboard": false,
+    "include_empty_directories": false
+  },
+  "security": {
+    "enable_security_check": true,
+    "exclude_suspicious_files": true
+  },
+  "ignore": {
+    "custom_patterns": [],
+    "use_gitignore": true,
+    "use_default_ignore": true
+  },
+  "include": []
+}
 ```
 
-#### Library Overview
-Get a high-level understanding of the library
+**Command Line Options**
 
+-   `-v, --version`: Show version
+-   `-o, --output <file>`: Specify output file name
+-   `--style <style>`: Specify output style (plain, xml, markdown)
+-   `--remote <url>`: Process a remote Git repository
+-   `--init`: Initialize configuration file
+-   `--no-security-check`: Disable security check
+-   `--verbose`: Enable verbose logging
+
+### 4.3 Security Check
+
+Repomix includes built-in security checks to detect potentially sensitive information in your files. This helps prevent accidental exposure of secrets when sharing your codebase.
+
+You can disable security checks using:
+
+```bash
+python -m repomix --no-security-check
 ```
-This file contains the entire codebase of library. Please provide a comprehensive overview of the library, including its main purpose, key features, and overall architecture.
-```
 
-Feel free to modify these prompts based on your specific needs and the capabilities of the AI tool you're using.
-
-
-### Output File Format
+## 🔒 5. Output File Format
 
 Repomix generates a single file with clear separators between different parts of your codebase. To enhance AI comprehension, the output file begins with an AI-oriented explanation, making it easier for AI models to understand the context and structure of the packed repository.
 
-#### Plain Text Format (default)
+### 5.1 Plain Text Format (default)
 
 ```text
 This file is a merged representation of the entire codebase, combining all repository files into a single document.
@@ -144,46 +160,9 @@ Statistics
 (File statistics and metadata)
 ```
 
-#### XML Format
-To generate output in XML format, use the --style xml option:
+### 5.2 Markdown Format
 
-```bash
-python -m repomix --style xml
-```
-
-The XML format structures the content in a hierarchical manner:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<repository>
-<repository_structure>
-(Directory and file structure)
-</repository_structure>
-
-<repository_files>
-<file>
-  <path>src/index.py</path>
-  <stats>
-    <chars>1234</chars>
-    <tokens>567</tokens>
-  </stats>
-  <content>
-    # File contents here
-  </content>
-</file>
-(...remaining files)
-</repository_files>
-
-<statistics>
-  <total_files>19</total_files>
-  <total_chars>37377</total_chars>
-  <total_tokens>11195</total_tokens>
-</statistics>
-</repository>
-```
-
-#### Markdown Format
-To generate output in Markdown format, use the --style markdown option:
+To generate output in Markdown format, use the `--style markdown` option:
 
 ```bash
 python -m repomix --style markdown
@@ -221,66 +200,157 @@ src/
 - Total Tokens: 11195
 `````
 
-## ⚙️ Configuration
+### 5.3 XML Format
 
-Create a `repomix.config.json` file in your project root for custom configurations:
+To generate output in XML format, use the `--style xml` option:
 
-```json
-{
-  "output": {
-    "filePath": "repomix-output.md",
-    "style": "markdown",
-    "showLineNumbers": false,
-    "copyToClipboard": false,
-    "topFilesLength": 5
-  },
-  "include": ["**/*"],
-  "ignore": {
-    "useGitignore": true,
-    "useDefaultPatterns": true,
-    "customPatterns": []
-  },
-  "security": {
-    "enableSecurityCheck": true
-  }
-}
-```
-
-### Output Formats
-
-Repomix supports three output formats:
-
-- **Plain Text** (default)
-- **Markdown**
-- **XML**
-
-To specify the output format:
 ```bash
-python -m repomix --style markdown
+python -m repomix --style xml
 ```
 
-### Command Line Options
+The XML format structures the content in a hierarchical manner:
 
-- `-v, --version`: Show version
-- `-o, --output <file>`: Specify output file name
-- `--style <style>`: Specify output style (plain, xml, markdown)
-- `--remote <url>`: Process a remote Git repository
-- `--init`: Initialize configuration file
-- `--no-security-check`: Disable security check
-- `--verbose`: Enable verbose logging
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<repository>
+<repository_structure>
+(Directory and file structure)
+</repository_structure>
 
-## 🔍 Security Check
+<repository_files>
+<file>
+  <path>src/index.py</path>
+  <stats>
+    <chars>1234</chars>
+    <tokens>567</tokens>
+  </stats>
+  <content>
+    # File contents here
+  </content>
+</file>
+(...remaining files)
+</repository_files>
 
-Repomix includes built-in security checks to detect potentially sensitive information in your files. This helps prevent accidental exposure of secrets when sharing your codebase.
-
-You can disable security checks using:
-```bash
-python -m repomix --no-security-check
+<statistics>
+  <total_files>19</total_files>
+  <total_chars>37377</total_chars>
+  <total_tokens>11195</total_tokens>
+</statistics>
+</repository>
 ```
 
-## 📜 License
+## 🛠️ 6. Advanced Usage
+
+### 6.1 Library Usage
+
+You can use Repomix as a Python library in your projects. Here's a basic example:
+
+```python
+from repomix import RepoProcessor
+
+# Basic usage
+processor = RepoProcessor(".")
+result = processor.process()
+
+# Access processing results
+print(f"Total files: {result.total_files}")
+print(f"Total characters: {result.total_chars}")
+print(f"Total tokens: {result.total_tokens}")
+print(f"Output saved to: {result.config.output.file_path}")
+```
+
+### 6.2 Advanced Configuration
+
+```python
+from repomix import RepoProcessor, RepomixConfig
+
+# Create custom configuration
+config = RepomixConfig()
+
+# Output settings
+config.output.file_path = "custom-output.md"
+config.output.style = "markdown"  # supports "plain", "markdown", and "xml"
+config.output.show_line_numbers = True
+
+# Security settings
+config.security.enable_security_check = True
+config.security.exclude_suspicious_files = True
+
+# Include/Ignore patterns
+config.include = ["src/**/*", "tests/**/*"]
+config.ignore.custom_patterns = ["*.log", "*.tmp"]
+config.ignore.use_gitignore = True
+
+# Process repository with custom config
+processor = RepoProcessor(".", config=config)
+result = processor.process()
+```
+
+For more example code, check out the `examples` directory:
+
+-   `basic_usage.py`: Basic usage examples
+-   `custom_config.py`: Custom configuration examples
+-   `security_check.py`: Security check feature examples
+-   `file_statistics.py`: File statistics examples
+-   `remote_repo_usage.py`: Remote repository processing examples
+
+## 🤖 7. AI Usage Guide
+
+### 7.1 Prompt Examples
+
+Once you have generated the packed file with Repomix, you can use it with AI tools like Claude, ChatGPT, and Gemini. Here are some example prompts to get you started:
+
+#### Code Review and Refactoring
+
+For a comprehensive code review and refactoring suggestions:
+
+```
+This file contains my entire codebase. Please review the overall structure and suggest any improvements or refactoring opportunities, focusing on maintainability and scalability.
+```
+
+#### Documentation Generation
+
+To generate project documentation:
+
+```
+Based on the codebase in this file, please generate a detailed README.md that includes an overview of the project, its main features, setup instructions, and usage examples.
+```
+
+#### Test Case Generation
+
+For generating test cases:
+
+```
+Analyze the code in this file and suggest a comprehensive set of unit tests for the main functions and classes. Include edge cases and potential error scenarios.
+```
+
+#### Code Quality Assessment
+Evaluate code quality and adherence to best practices:
+
+```
+Review the codebase for adherence to coding best practices and industry standards. Identify areas where the code could be improved in terms of readability, maintainability, and efficiency. Suggest specific changes to align the code with best practices.
+```
+
+#### Library Overview
+Get a high-level understanding of the library
+
+```
+This file contains the entire codebase of library. Please provide a comprehensive overview of the library, including its main purpose, key features, and overall architecture.
+```
+
+Feel free to modify these prompts based on your specific needs and the capabilities of the AI tool you're using.
+
+### 7.2 Best Practices
+
+*   **Be Specific:** When prompting the AI, be as specific as possible about what you want. The more context you provide, the better the results will be.
+*   **Iterate:** Don't be afraid to iterate on your prompts. If you don't get the results you want on the first try, refine your prompt and try again.
+*   **Combine with Manual Review:** While AI can be a powerful tool, it's not perfect. Always combine AI-generated output with manual review and editing.
+*   **Security First:** Always be mindful of security when working with your codebase. Use Repomix's built-in security checks and avoid sharing sensitive information with AI tools.
+
+## 📄 8. License
 
 This project is licensed under the MIT License.
 
 ---
+
 For more detailed information about usage and configuration options, please visit the [documentation](https://github.com/andersonby/python-repomix).
