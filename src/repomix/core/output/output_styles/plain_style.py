@@ -70,7 +70,7 @@ class PlainStyle(OutputStyle):
             Plain text format files section content
         """
         # Initialize empty output string
-        output = PLAIN_LONG_SEPARATOR + "\nRepository Files\n" + PLAIN_LONG_SEPARATOR + "\n\n"
+        output = PLAIN_LONG_SEPARATOR + "\nRepository Files\n" + PLAIN_LONG_SEPARATOR + "\n"
 
         # Generate section for each file
         for file in files:
@@ -90,7 +90,7 @@ class PlainStyle(OutputStyle):
         section += f"File: {file_path}\n"
         section += PLAIN_SHORT_SEPARATOR + "\n"
         # Add file content
-        section += content
+        section += f"{content}\n"
         return section
 
     def generate_statistics(self, total_files: int, total_chars: int, total_tokens: int) -> str:
@@ -114,7 +114,11 @@ class PlainStyle(OutputStyle):
 
     def generate_file_tree_section(self, file_tree: Dict) -> str:
         """Generates the file tree section in plain text style."""
-        return "\nRepository Structure:\n" + format_file_tree(file_tree) + "\n"
+        return (
+            f"{PLAIN_LONG_SEPARATOR}\nRepository Structure:\n{PLAIN_LONG_SEPARATOR}\n"
+            + format_file_tree(file_tree)
+            + "\n"
+        )
 
     def _get_current_time(self) -> str:
         """Get formatted current time string
