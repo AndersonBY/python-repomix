@@ -8,9 +8,8 @@ from dataclasses import dataclass
 
 import pyperclip
 
-from ...config.config_schema import RepomixConfigMerged
+from ...config.config_schema import RepomixConfig
 from ...config.config_load import load_config
-from ...core.output.output_generate import write_output
 from ...core.repo_processor import RepoProcessor
 from ..cli_print import (
     print_summary,
@@ -32,7 +31,7 @@ class DefaultActionRunnerResult:
         total_tokens: Total token count
     """
 
-    config: RepomixConfigMerged
+    config: RepomixConfig
     total_files: int
     total_chars: int
     total_tokens: int
@@ -73,9 +72,6 @@ def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str
 
     processor = RepoProcessor(directory, config=config)
     result = processor.process()
-
-    # Write output
-    write_output(result.output_content, result.config)
 
     # Print summary information
     print_summary(

@@ -5,7 +5,7 @@ CLI Print Module - Responsible for Formatting and Displaying Command Line Output
 from pathlib import Path
 from typing import Dict, List
 
-from ..config.config_schema import RepomixConfigMerged
+from ..config.config_schema import RepomixConfig
 from ..core.security.security_check import SuspiciousFileResult
 from ..shared.logger import logger
 
@@ -16,7 +16,7 @@ def print_summary(
     total_tokens: int,
     output_path: str,
     suspicious_files_results: List[SuspiciousFileResult],
-    config: RepomixConfigMerged,
+    config: RepomixConfig,
 ) -> None:
     """Print summary information
 
@@ -49,7 +49,7 @@ def print_summary(
 def print_security_check(
     root_dir: str | Path,
     suspicious_files_results: List[SuspiciousFileResult],
-    config: RepomixConfigMerged,
+    config: RepomixConfig,
 ) -> None:
     """Print security check results
 
