@@ -120,6 +120,7 @@ default_ignore_list = [
     # Others
     ".repomix-output.*",
     ".repomixignore",
+    "repomix.config.json",
     # Byte-compiled / optimized / DLL files
     "__pycache__/",
     "*.py[cod]",
