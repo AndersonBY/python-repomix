@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional
 from dataclasses import dataclass
 
-from ...config.config_schema import RepomixConfigMerged
+from ...config.config_schema import RepomixConfig
 from ...config.default_ignore import default_ignore_list
 from ...shared.logger import logger
 
@@ -101,7 +101,7 @@ def find_empty_directories(root_dir: str | Path, directories: List[str], ignore_
     return empty_dirs
 
 
-def search_files(root_dir: str | Path, config: RepomixConfigMerged) -> FileSearchResult:
+def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResult:
     """Search files
 
     Args:
@@ -160,7 +160,7 @@ def search_files(root_dir: str | Path, config: RepomixConfigMerged) -> FileSearc
     return FileSearchResult(file_paths=filtered_files, empty_dir_paths=empty_dirs)
 
 
-def get_ignore_patterns(root_dir: str | Path, config: RepomixConfigMerged) -> List[str]:
+def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str]:
     """Get list of ignore patterns
 
     Args:

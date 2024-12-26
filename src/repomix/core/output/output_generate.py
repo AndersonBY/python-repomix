@@ -2,18 +2,17 @@
 Output Generation Module - Responsible for Generating Final Output Content
 """
 
-from pathlib import Path
 from typing import Dict, List
 
 from ...shared.logger import logger
 from .output_styles import get_output_style
 from ...core.file.file_types import ProcessedFile
-from ...config.config_schema import RepomixConfigMerged, RepomixConfig
+from ...config.config_schema import RepomixConfig
 
 
 def generate_output(
     processed_files: List[ProcessedFile],
-    config: RepomixConfigMerged,
+    config: RepomixConfig,
     file_char_counts: Dict[str, int],
     file_token_counts: Dict[str, int],
     file_tree: Dict,
@@ -55,25 +54,3 @@ def generate_output(
     output += style.generate_footer()
 
     return output
-
-
-def write_output(output_content: str, config: RepomixConfigMerged) -> None:
-    """Write output content to file
-
-    Args:
-        output_content: Output content
-        config: Configuration object
-    """
-    try:
-        # Use Path object to handle file path
-        output_path = Path(config.output.file_path)
-        # Ensure output directory exists
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Write to file
-        output_path.write_text(output_content, encoding="utf-8")
-
-        logger.success(f"Output saved to: {output_path}")
-    except Exception as error:
-        logger.error(f"Failed to write output file: {error}")
-        raise

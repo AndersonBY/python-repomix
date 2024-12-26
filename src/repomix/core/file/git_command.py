@@ -22,7 +22,7 @@ def is_git_installed() -> bool:
         return False
 
 
-def exec_git_shallow_clone(repo_url: str, target_dir: str, branch: Optional[str] = None) -> None:
+def exec_git_shallow_clone(repo_url: str, target_dir: str | Path, branch: Optional[str] = None) -> None:
     """Perform Git shallow clone
 
     Args:
@@ -38,7 +38,7 @@ def exec_git_shallow_clone(repo_url: str, target_dir: str, branch: Optional[str]
     if branch:
         cmd.extend(["-b", branch])
 
-    cmd.extend([repo_url, target_dir])
+    cmd.extend([str(repo_url), str(target_dir)])
 
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
@@ -48,7 +48,7 @@ def exec_git_shallow_clone(repo_url: str, target_dir: str, branch: Optional[str]
         raise
 
 
-def get_git_ignore_patterns(repo_dir: str) -> List[str]:
+def get_git_ignore_patterns(repo_dir: str | Path) -> List[str]:
     """Get ignore patterns from .gitignore
 
     Args:

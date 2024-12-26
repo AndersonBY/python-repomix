@@ -4,13 +4,13 @@ File Processing Module - Responsible for Processing Collected File Contents
 
 from typing import List
 
-from ...config.config_schema import RepomixConfigMerged
+from ...config.config_schema import RepomixConfig
 from ...shared.process_concurrency import get_process_concurrency
 from .file_manipulate import get_file_manipulator
 from .file_types import ProcessedFile, RawFile
 
 
-def _process_single_file(args: tuple[RawFile, RepomixConfigMerged]) -> ProcessedFile:
+def _process_single_file(args: tuple[RawFile, RepomixConfig]) -> ProcessedFile:
     """Helper function to process a single file
 
     Args:
@@ -23,7 +23,7 @@ def _process_single_file(args: tuple[RawFile, RepomixConfigMerged]) -> Processed
     return ProcessedFile(path=raw_file.path, content=process_content(raw_file.content, raw_file.path, config))
 
 
-def process_files(raw_files: List[RawFile], config: RepomixConfigMerged) -> List[ProcessedFile]:
+def process_files(raw_files: List[RawFile], config: RepomixConfig) -> List[ProcessedFile]:
     """Process list of files
 
     Args:
@@ -42,7 +42,7 @@ def process_files(raw_files: List[RawFile], config: RepomixConfigMerged) -> List
     return processed_files
 
 
-def process_content(content: str, file_path: str, config: RepomixConfigMerged) -> str:
+def process_content(content: str, file_path: str, config: RepomixConfig) -> str:
     """Process single file content
 
     Args:
