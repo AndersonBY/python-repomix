@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 
 from ..shared.error_handle import RepomixError
 from ..shared.logger import logger
-from .config_schema import RepomixConfig, RepomixConfigMerged, RepomixOutputStyle
+from .config_schema import RepomixConfig, RepomixOutputStyle
 from .global_directory import get_global_directory
 
 
@@ -18,7 +18,7 @@ def load_config(
     cwd: str | Path,
     config_path: Optional[str] = None,
     cli_options: Optional[Dict[str, Any]] = None,
-) -> RepomixConfigMerged:
+) -> RepomixConfig:
     """Load configuration
 
     Args:
@@ -110,7 +110,7 @@ def load_local_config(
 
 def merge_configs(
     global_config: Optional[RepomixConfig], local_config: Optional[RepomixConfig], cli_options: Dict[str, Any]
-) -> RepomixConfigMerged:
+) -> RepomixConfig:
     """Merge configurations
 
     Args:
@@ -122,7 +122,7 @@ def merge_configs(
         Merged configuration object
     """
     # Create base configuration
-    merged_config = RepomixConfigMerged()
+    merged_config = RepomixConfig()
 
     # Merge configurations by priority: global config < local config < CLI options
     if global_config:
@@ -170,7 +170,7 @@ def merge_config_dict(target: Dict[str, Any], source: Dict[str, Any]) -> None:
                 target[key] = value
 
 
-def process_config(config: RepomixConfigMerged, directory: str | Path) -> None:
+def process_config(config: RepomixConfig, directory: str | Path) -> None:
     """Process and validate configuration
 
     Args:

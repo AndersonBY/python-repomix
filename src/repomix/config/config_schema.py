@@ -20,7 +20,7 @@ class RepomixConfigOutput:
     """Output configuration"""
 
     file_path: str = "repomix-output.md"
-    style: RepomixOutputStyle = RepomixOutputStyle.MARKDOWN
+    _style: RepomixOutputStyle = RepomixOutputStyle.MARKDOWN
     header_text: str = ""
     instruction_file_path: str = ""
     remove_comments: bool = False
@@ -29,6 +29,26 @@ class RepomixConfigOutput:
     show_line_numbers: bool = False
     copy_to_clipboard: bool = False
     include_empty_directories: bool = False
+
+    @property
+    def style(self) -> RepomixOutputStyle:
+        """Get the output style"""
+        return self._style
+
+    @style.setter
+    def style(self, value):
+        """Set the output style, supports string or RepomixOutputStyle enum"""
+        if isinstance(value, RepomixOutputStyle):
+            self._style = value
+        elif isinstance(value, str):
+            try:
+                self._style = RepomixOutputStyle(value.lower())
+            except ValueError:
+                raise ValueError(
+                    f"Invalid style value: {value}. Must be one of: {', '.join(s.value for s in RepomixOutputStyle)}"
+                )
+        else:
+            raise TypeError("Style must be either string or RepomixOutputStyle enum")
 
 
 @dataclass
@@ -56,27 +76,6 @@ class RepomixConfig:
     security: RepomixConfigSecurity = field(default_factory=RepomixConfigSecurity)
     ignore: RepomixConfigIgnore = field(default_factory=RepomixConfigIgnore)
     include: List[str] = field(default_factory=list)
-
-
-@dataclass
-class RepomixConfigFile(RepomixConfig):
-    """Configuration file configuration class"""
-
-    pass
-
-
-@dataclass
-class RepomixConfigCli(RepomixConfig):
-    """CLI configuration class"""
-
-    pass
-
-
-@dataclass
-class RepomixConfigMerged(RepomixConfig):
-    """Merged configuration class"""
-
-    pass
 
 
 # Default configuration
