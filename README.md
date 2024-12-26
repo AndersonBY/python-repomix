@@ -182,7 +182,7 @@ The XML format structures the content in a hierarchical manner:
 </repository>
 ```
 
-#### `Markdown Format
+#### Markdown Format
 To generate output in Markdown format, use the --style markdown option:
 
 ```bash
