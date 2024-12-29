@@ -2,11 +2,11 @@
 Version Action Module - Display Version Information
 """
 
-from ...core.file.pyproject_parse import get_version
+from ...__init__ import __version__
 from ...shared.logger import logger
 
 
 def run_version_action() -> None:
     """Display version information"""
-    version = get_version()
+    version = __version__
     logger.log(version)

@@ -5,7 +5,7 @@ CLI Run Module - Handling Command Line Arguments and Executing Corresponding Act
 import argparse
 from pathlib import Path
 
-from ..core.file.pyproject_parse import get_version
+from ..__init__ import __version__
 from ..shared.error_handle import handle_error
 from ..shared.logger import logger
 from .actions.default_action import run_default_action
@@ -79,8 +79,7 @@ def execute_action(directory: str, cwd: str | Path, options: argparse.Namespace)
         run_version_action()
         return
 
-    version = get_version()
-    logger.log(f"\n📦 Repomix v{version}\n")
+    logger.log(f"\n📦 Repomix v{__version__}\n")
 
     if options.init:
         run_init_action(cwd, options.use_global)
