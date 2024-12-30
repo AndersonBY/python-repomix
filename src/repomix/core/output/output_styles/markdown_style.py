@@ -90,15 +90,32 @@ class MarkdownStyle(OutputStyle):
         ext = Path(file_path).suffix
         language = self._get_language_by_extension(ext)
 
+        # Calculate the number of backticks needed
+        max_backticks = 3  # At least 3 by default
+        for line in content.split("\n"):
+            if "`" in line:
+                # Find consecutive backticks
+                current = 0
+                max_current = 0
+                for char in line:
+                    if char == "`":
+                        current += 1
+                        max_current = max(max_current, current)
+                    else:
+                        current = 0
+                max_backticks = max(max_backticks, max_current + 1)
+
+        fence = "`" * max_backticks
+
         # Generate file information
         section = f"\n## {file_path}\n\n"
         section += f"- Characters: {char_count}\n"
         section += f"- Tokens: {token_count}\n\n"
 
-        # Add code block
-        section += f"```{language}\n"
+        # Add code block with dynamic fence
+        section += f"{fence}{language}\n"
         section += content
-        section += "\n```\n"
+        section += f"\n{fence}\n"
 
         return section
 
