@@ -152,7 +152,7 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
                 all_dirs.append(rel_path)
 
     # Filter files
-    filtered_files = filter_paths(all_files, include_patterns, ignore_patterns)
+    filtered_files = filter_paths(all_files, include_patterns, ignore_patterns, root_dir)
 
     # Find empty directories
     empty_dirs = find_empty_directories(root_dir, all_dirs, ignore_patterns)
@@ -196,25 +196,47 @@ def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str
     return patterns
 
 
-def filter_paths(paths: List[str], include_patterns: List[str], ignore_patterns: List[str]) -> List[str]:
+def filter_paths(
+    paths: List[str],
+    include_patterns: List[str],
+    ignore_patterns: List[str],
+    base_dir: str | Path | None = None,
+) -> List[str]:
     """Filter file paths
 
     Args:
         paths: List of file paths
         include_patterns: List of include patterns
         ignore_patterns: List of ignore patterns
-
+        base_dir: Base directory for relative path calculation
     Returns:
         List of filtered file paths
     """
     filtered_paths: List[str] = []
 
     for path in paths:
-        # Check if it matches any include pattern
-        is_included = any(fnmatch.fnmatch(path, pattern) for pattern in include_patterns)
+        # Get relative path if base_dir is provided
+        if base_dir:
+            try:
+                rel_path = str(Path(path).relative_to(Path(base_dir)))
+            except ValueError:
+                rel_path = path
+        else:
+            rel_path = path
 
-        # Check if it matches any ignore pattern
-        is_ignored = any(fnmatch.fnmatch(path, pattern) for pattern in ignore_patterns)
+        # Normalize path separators
+        normalized_path = rel_path.replace("\\", "/")
+
+        # Check if it matches any include pattern
+        is_included = any(fnmatch.fnmatch(normalized_path, pattern.replace("\\", "/")) for pattern in include_patterns)
+
+        # Check if path matches any ignore pattern (similar to _build_file_tree_recursive)
+        is_ignored = any(
+            fnmatch.fnmatch(normalized_path, pattern.replace("\\", "/"))
+            or fnmatch.fnmatch(normalized_path + "/", pattern.replace("\\", "/"))
+            or normalized_path.startswith(pattern.rstrip("/") + "/")
+            for pattern in ignore_patterns
+        )
 
         if is_included and not is_ignored:
             filtered_paths.append(path)

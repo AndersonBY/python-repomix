@@ -20,45 +20,39 @@ from ..shared.git_utils import format_git_url, clone_repository
 gpt_4o_encoding = tiktoken.encoding_for_model("gpt-4o")
 
 
-def build_file_tree(root_dir: str | Path) -> Dict[str, Union[str, List]]:
-    """
-    Builds a tree-like dictionary representing the file structure.
-
-    Args:
-        root_dir: The root directory to scan.
-
-    Returns:
-        A dictionary where keys are directory/file names and values are either
-        strings (for files) or lists of dictionaries (for subdirectories).
-    """
-    root_path = Path(root_dir)
-    tree = {}
-
-    for path in root_path.iterdir():
-        if path.is_dir():
-            tree[path.name] = build_file_tree(path)
-        else:
-            tree[path.name] = ""  # Placeholder for file content, or leave empty if you just need the structure
-
-    return tree
-
-
 def build_file_tree_with_ignore(directory: str | Path, config: RepomixConfig) -> Dict:
     """Builds a file tree, respecting ignore patterns."""
     ignore_patterns = get_ignore_patterns(directory, config)
     return _build_file_tree_recursive(Path(directory), ignore_patterns)
 
 
-def _build_file_tree_recursive(directory: Path, ignore_patterns: List[str]) -> Dict:
+def _build_file_tree_recursive(directory: Path, ignore_patterns: List[str], base_dir: Path | None = None) -> Dict:
     """Recursive helper function for building the file tree."""
     tree = {}
+    if base_dir is None:
+        base_dir = directory
+
     for path in directory.iterdir():
-        rel_path = str(path.relative_to(directory))
-        if any(fnmatch(rel_path, pattern) for pattern in ignore_patterns):
+        # Get path relative to the base directory for pattern matching
+        rel_path = str(path.relative_to(base_dir))
+
+        # Normalize path separators to forward slashes for consistent matching
+        rel_path = rel_path.replace("\\", "/")
+
+        # For directories, ensure path ends with / to match directory patterns
+        if path.is_dir():
+            rel_path_for_match = rel_path + "/"
+        else:
+            rel_path_for_match = rel_path
+
+        if any(fnmatch(rel_path_for_match, pattern.replace("\\", "/")) for pattern in ignore_patterns):
             continue  # Skip ignored files/directories
 
         if path.is_dir():
-            tree[path.name] = _build_file_tree_recursive(path, ignore_patterns)
+            # Pass base_dir to maintain consistent relative paths
+            subtree = _build_file_tree_recursive(path, ignore_patterns, base_dir)
+            if subtree:  # Only add non-empty directories
+                tree[path.name] = subtree
         else:
             tree[path.name] = ""
     return tree
