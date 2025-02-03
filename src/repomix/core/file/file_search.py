@@ -176,6 +176,17 @@ def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str
     if config.ignore.use_default_ignore:
         patterns.extend(default_ignore_list)
 
+    repomixignore_path = Path(root_dir) / ".repomixignore"
+    if repomixignore_path.exists():
+        try:
+            patterns.extend(
+                line.strip()
+                for line in repomixignore_path.read_text().splitlines()
+                if line.strip() and not line.startswith("#")
+            )
+        except Exception as error:
+            logger.warn(f"Failed to read .repomixignore: {error}")
+
     # Add patterns from .gitignore
     if config.ignore.use_gitignore:
         gitignore_path = Path(root_dir) / ".gitignore"
