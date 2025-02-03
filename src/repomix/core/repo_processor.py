@@ -146,6 +146,8 @@ class RepoProcessor:
             if self.config.security.enable_security_check:
                 file_contents = {file.path: file.content for file in raw_files}
                 suspicious_files_results = check_files(self.directory, search_result.file_paths, file_contents)
+                suspicious_file_paths = {result.file_path for result in suspicious_files_results}
+                processed_files = [file for file in processed_files if file.path not in suspicious_file_paths]
 
             output_content = generate_output(
                 processed_files, self.config, file_char_counts, file_token_counts, file_tree
