@@ -29,6 +29,7 @@ class RepomixConfigOutput:
     show_line_numbers: bool = False
     copy_to_clipboard: bool = False
     include_empty_directories: bool = False
+    calculate_tokens: bool = False
 
     @property
     def style(self) -> RepomixOutputStyle:

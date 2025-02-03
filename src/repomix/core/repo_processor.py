@@ -3,7 +3,6 @@ from fnmatch import fnmatch
 from dataclasses import dataclass
 from typing import Dict, List, Union
 
-import tiktoken
 
 from ..config.config_load import load_config
 from ..config.config_schema import RepomixConfig
@@ -15,9 +14,6 @@ from ..core.security.security_check import check_files, SuspiciousFileResult
 from ..shared.error_handle import RepomixError
 from ..shared.fs_utils import create_temp_directory, cleanup_temp_directory
 from ..shared.git_utils import format_git_url, clone_repository
-
-
-gpt_4o_encoding = tiktoken.encoding_for_model("gpt-4o")
 
 
 def build_file_tree_with_ignore(directory: str | Path, config: RepomixConfig) -> Dict:
@@ -99,6 +95,13 @@ class RepoProcessor:
 
     def process(self, write_output: bool = True) -> RepoProcessorResult:
         """Process the code repository and return results."""
+        if self.config and self.config.output.calculate_tokens:
+            import tiktoken
+
+            gpt_4o_encoding = tiktoken.encoding_for_model("gpt-4o")
+        else:
+            gpt_4o_encoding = None
+
         try:
             if self.repo_url:
                 self.temp_dir = create_temp_directory()
@@ -129,11 +132,15 @@ class RepoProcessor:
 
             for processed_file in processed_files:
                 char_count = len(processed_file.content)
-                token_count = len(gpt_4o_encoding.encode(processed_file.content))
+                token_count = 0
+
+                if self.config.output.calculate_tokens and gpt_4o_encoding:
+                    token_count = len(gpt_4o_encoding.encode(processed_file.content))
+                    total_tokens += token_count
+
                 file_char_counts[processed_file.path] = char_count
                 file_token_counts[processed_file.path] = token_count
                 total_chars += char_count
-                total_tokens += token_count
 
             suspicious_files_results = []
             if self.config.security.enable_security_check:

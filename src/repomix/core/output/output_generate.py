@@ -47,7 +47,7 @@ def generate_output(
 
     # Add statistics
     total_chars = sum(file_char_counts.values())
-    total_tokens = sum(file_token_counts.values())
+    total_tokens = sum(file_token_counts.values()) if config.output.calculate_tokens else 0
 
     output += style.generate_statistics(len(processed_files), total_chars, total_tokens)
 

@@ -41,7 +41,10 @@ def print_summary(
     logger.log("────────────────")
     logger.log(f" Total Files: {total_files} files")
     logger.log(f" Total Characters: {total_characters} characters")
-    logger.log(f" Total Tokens: {total_tokens} tokens")
+    token_info = (
+        f"Total Tokens: {total_tokens} tokens" if config.output.calculate_tokens else "Token calculation: disabled"
+    )
+    logger.log(f" {token_info}")
     logger.log(f" Output to: {output_path}")
     logger.log(f" Security: {security_check_message}")
 
@@ -108,8 +111,9 @@ def print_top_files(
 
     for i, (file_path, char_count) in enumerate(top_files):
         token_count = file_token_counts[file_path]
+        token_info = f", {token_count} tokens" if token_count > 0 else ""
         index_string = f"{i + 1}.".ljust(3, " ")
-        logger.log(f"{index_string} {file_path} ({char_count} characters, {token_count} tokens)")
+        logger.log(f"{index_string} {file_path} ({char_count} characters{token_info})")
 
 
 def print_completion() -> None:
