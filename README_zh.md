@@ -109,11 +109,88 @@ python -m repomix --init
 
 Repomix 包含内置的安全检查，用于检测文件中潜在的敏感信息。这有助于防止在共享代码库时意外暴露秘密。
 
+安全检查使用 [detect-secrets](https://github.com/Yelp/detect-secrets) 库，可以识别各种类型的秘密，包括：
+
+- API 密钥
+- AWS 访问密钥
+- 数据库凭据
+- 私钥
+- 认证令牌
+
 您可以使用以下命令禁用安全检查：
 
 ```bash
 python -m repomix --no-security-check
 ```
+
+### 4.4 忽略模式
+
+Repomix 提供了多种方法来设置忽略模式，以便在打包过程中排除特定的文件或目录：
+
+#### 优先级顺序
+
+忽略模式按照以下优先级顺序应用（从高到低）：
+
+1. 配置文件中的自定义模式 (`ignore.custom_patterns`)
+2. `.repomixignore` 文件
+3. `.gitignore` 文件（如果 `ignore.use_gitignore` 为 true）
+4. 默认模式（如果 `ignore.use_default_ignore` 为 true）
+
+
+#### 忽略方法
+
+##### .gitignore
+默认情况下，Repomix 使用项目 `.gitignore` 文件中列出的模式。此行为可以通过配置文件中的 `ignore.use_gitignore` 选项来控制：
+
+
+```json
+{
+  "ignore": {
+    "use_gitignore": true
+  }
+}
+```
+
+##### 默认模式
+Repomix 包含一个默认的常用排除文件和目录列表（例如，`__pycache__`，`.git`，二进制文件）。此功能可以通过 `ignore.use_default_ignore` 选项进行控制：
+
+
+```json
+{
+  "ignore": {
+    "use_default_ignore": true
+  }
+}
+```
+
+完整的默认忽略模式列表可以在 [default_ignore.py](src/repomix/config/default_ignore.py) 中找到。
+
+
+##### .repomixignore
+你可以在你的项目根目录下创建一个 `.repomixignore` 文件来定义 Repomix 特有的忽略模式。这个文件的格式与 `.gitignore` 相同。
+
+##### 自定义模式
+可以使用配置文件中的 `ignore.custom_patterns` 选项来指定额外的忽略模式：
+
+
+```json
+{
+  "ignore": {
+    "custom_patterns": [
+      "*.log",
+      "*.tmp",
+      "tests/**/*.pyc"
+    ]
+  }
+}
+```
+
+#### 注释
+
+- 二进制文件默认不包含在打包输出中，但它们的路径会列在输出文件的“仓库结构”部分。这提供了仓库结构的完整概览，同时保持打包文件的高效性和基于文本的特性。
+- 忽略模式通过确保排除安全敏感文件和大型二进制文件来帮助优化生成的打包文件的大小，同时防止泄露机密信息。
+- 所有忽略模式都使用类似于 `.gitignore` 的 glob 模式语法。
+
 
 ## 🔒 5. 输出文件格式
 

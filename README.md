@@ -106,11 +106,83 @@ Create a `repomix.config.json` file in your project root for custom configuratio
 
 Repomix includes built-in security checks to detect potentially sensitive information in your files. This helps prevent accidental exposure of secrets when sharing your codebase.
 
+The security check is powered by the [detect-secrets](https://github.com/Yelp/detect-secrets) library, which can identify various types of secrets including:
+
+- API keys
+- AWS access keys
+- Database credentials
+- Private keys
+- Authentication tokens
+- And more...
+
 You can disable security checks using:
 
 ```bash
 python -m repomix --no-security-check
 ```
+
+### 4.4 Ignore Patterns
+
+Repomix provides multiple methods to set ignore patterns for excluding specific files or directories during the packing process:
+
+#### Priority Order
+
+Ignore patterns are applied in the following priority order (from highest to lowest):
+
+1. Custom patterns in configuration file (`ignore.custom_patterns`)
+2. `.repomixignore` file
+3. `.gitignore` file (if `ignore.use_gitignore` is true)
+4. Default patterns (if `ignore.use_default_ignore` is true)
+
+#### Ignore Methods
+
+##### .gitignore
+By default, Repomix uses patterns listed in your project's `.gitignore` file. This behavior can be controlled with the `ignore.use_gitignore` option in the configuration file:
+
+```json
+{
+  "ignore": {
+    "use_gitignore": true
+  }
+}
+```
+
+##### Default Patterns
+Repomix includes a default list of commonly excluded files and directories (e.g., `__pycache__`, `.git`, binary files). This feature can be controlled with the `ignore.use_default_ignore` option:
+
+```json
+{
+  "ignore": {
+    "use_default_ignore": true
+  }
+}
+```
+
+The complete list of default ignore patterns can be found in [default_ignore.py](src/repomix/config/default_ignore.py).
+
+##### .repomixignore
+You can create a `.repomixignore` file in your project root to define Repomix-specific ignore patterns. This file follows the same format as `.gitignore`.
+
+##### Custom Patterns
+Additional ignore patterns can be specified using the `ignore.custom_patterns` option in the configuration file:
+
+```json
+{
+  "ignore": {
+    "custom_patterns": [
+      "*.log",
+      "*.tmp",
+      "tests/**/*.pyc"
+    ]
+  }
+}
+```
+
+#### Notes
+
+- Binary files are not included in the packed output by default, but their paths are listed in the "Repository Structure" section of the output file. This provides a complete overview of the repository structure while keeping the packed file efficient and text-based.
+- Ignore patterns help optimize the size of the generated pack file by ensuring the exclusion of security-sensitive files and large binary files, while preventing the leakage of confidential information.
+- All ignore patterns use glob pattern syntax similar to `.gitignore`.
 
 ## 🔒 5. Output File Format
 
