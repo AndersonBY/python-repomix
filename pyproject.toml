@@ -1,6 +1,6 @@
 [project]
 name = "repomix"
-version = "0.1.8"
+version = "0.1.9"
 description = "A tool for analyzing and summarizing code repositories"
 authors = [{ name = "Anderson", email = "andersonby@163.com" }]
 dependencies = [
@@ -8,6 +8,7 @@ dependencies = [
     "chardet>=5.2.0",
     "pyperclip>=1.9.0",
     "tiktoken>=0.8.0",
+    "detect-secrets>=1.5.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
