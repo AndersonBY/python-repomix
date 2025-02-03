@@ -36,15 +36,6 @@ def get_global_directory() -> str:
         return str(base_dir / "repomix")
 
 
-def ensure_global_directory() -> None:
-    """Ensure global configuration directory exists
-
-    Creates the directory if it does not exist
-    """
-    directory = Path(get_global_directory())
-    directory.mkdir(parents=True, exist_ok=True)
-
-
 def get_global_config_path() -> str:
     """Get global configuration file path
 
