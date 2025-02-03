@@ -7,6 +7,9 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Set, Dict
 
+from detect_secrets.core.secrets_collection import SecretsCollection
+from detect_secrets.settings import default_settings
+
 from ...shared.logger import logger
 
 
@@ -127,6 +130,16 @@ class SecurityChecker:
 
         return []
 
+    def check_files_with_secretlint(self, file_path: Path) -> List[str]:
+        secrets = SecretsCollection()
+        with default_settings():
+            secrets.scan_file(filename=str(file_path.absolute()))
+
+            results = []
+            for secret in secrets:
+                results.append(f"Secret detected: {secret[1].type}")
+            return results
+
 
 def check_files(
     root_dir: str | Path, file_paths: List[str], file_contents: Dict[str, str]
@@ -154,7 +167,7 @@ def check_files(
         if full_path.exists():
             messages.extend(checker.check_file(full_path, content))
             messages.extend(checker.check_file_size(full_path))
-
+            messages.extend(checker.check_files_with_secretlint(full_path))
         if messages:
             # Keep using relative path string in results
             results.append(SuspiciousFileResult(file_path=file_path, messages=messages))
