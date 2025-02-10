@@ -79,7 +79,8 @@ python -m repomix --init
     "top_files_length": 5,
     "show_line_numbers": false,
     "copy_to_clipboard": false,
-    "include_empty_directories": false
+    "include_empty_directories": false,
+    "calculate_tokens": false
   },
   "security": {
     "enable_security_check": true,
