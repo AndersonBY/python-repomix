@@ -28,26 +28,45 @@ def _build_file_tree_recursive(directory: Path, ignore_patterns: List[str], base
     if base_dir is None:
         base_dir = directory
 
-    for path in directory.iterdir():
-        # Get path relative to the base directory for pattern matching
-        rel_path = str(path.relative_to(base_dir))
+    # Preprocess ignore patterns, add recursive matching support
+    processed_patterns = set()
+    for pattern in ignore_patterns:
+        pattern = pattern.replace("\\", "/")
+        # Original pattern
+        processed_patterns.add(pattern)
+        # Add recursive matching pattern
+        if not pattern.startswith("/"):
+            processed_patterns.add(f"**/{pattern}")
 
-        # Normalize path separators to forward slashes for consistent matching
-        rel_path = rel_path.replace("\\", "/")
-
-        # For directories, ensure path ends with / to match directory patterns
-        if path.is_dir():
-            rel_path_for_match = rel_path + "/"
+        # Handle directory slash variants
+        dir_variants = []
+        if pattern.endswith("/"):
+            dir_variants.append(pattern[:-1])  # Version without slash
+            dir_variants.append(pattern + "**")  # Recursive match for subdirectories
         else:
-            rel_path_for_match = rel_path
+            dir_variants.append(pattern + "/")
+            dir_variants.append(f"{pattern}/**")  # Recursive match for subdirectories
 
-        if any(fnmatch(rel_path_for_match, pattern.replace("\\", "/")) for pattern in ignore_patterns):
-            continue  # Skip ignored files/directories
+        for variant in dir_variants:
+            processed_patterns.add(variant)
+            if not variant.startswith("/"):
+                processed_patterns.add(f"**/{variant}")
 
-        if path.is_dir():
-            # Pass base_dir to maintain consistent relative paths
+    for path in directory.iterdir():
+        # Get path relative to base directory (keep POSIX format)
+        rel_path = path.relative_to(base_dir).as_posix()
+
+        # Special handling for directories: add slash suffix and recursive matching
+        is_dir = path.is_dir()
+        match_path = rel_path + "/" if is_dir else rel_path
+
+        # Check if matches any ignore pattern
+        if any(fnmatch(match_path, p) or fnmatch(rel_path, p) for p in processed_patterns):
+            continue
+
+        if is_dir:
             subtree = _build_file_tree_recursive(path, ignore_patterns, base_dir)
-            if subtree:  # Only add non-empty directories
+            if subtree:
                 tree[path.name] = subtree
         else:
             tree[path.name] = ""
