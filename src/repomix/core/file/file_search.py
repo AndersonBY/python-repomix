@@ -101,6 +101,64 @@ def find_empty_directories(root_dir: str | Path, directories: List[str], ignore_
     return empty_dirs
 
 
+def _should_ignore_path(path: str, ignore_patterns: List[str]) -> bool:
+    """Check if the path should be ignored"""
+    path = path.replace("\\", "/")  # Normalize to forward slashes
+
+    # Check if each part of the path should be ignored
+    path_parts = Path(path).parts
+    for i in range(len(path_parts)):
+        current_path = str(Path(*path_parts[: i + 1])).replace("\\", "/")
+
+        for pattern in ignore_patterns:
+            pattern = pattern.replace("\\", "/")
+
+            # Handle relative paths in patterns
+            if pattern.startswith("./"):
+                pattern = pattern[2:]
+            if current_path.startswith("./"):
+                current_path = current_path[2:]
+
+            # Check full path match
+            if fnmatch.fnmatch(current_path, pattern):
+                return True
+
+            # Check directory name match
+            if fnmatch.fnmatch(path_parts[i], pattern):
+                return True
+
+            # Check directory path match (ensure directory patterns match correctly)
+            if pattern.endswith("/"):
+                if fnmatch.fnmatch(current_path + "/", pattern):
+                    return True
+
+    return False
+
+
+def _scan_directory(
+    current_dir: Path, root_path: Path, ignore_patterns: List[str], all_files: List[str], all_dirs: List[str]
+) -> None:
+    """Recursively scan directory"""
+    try:
+        for entry in current_dir.iterdir():
+            rel_path = str(entry.relative_to(root_path))
+
+            # Check if the path should be ignored first
+            if _should_ignore_path(rel_path, ignore_patterns):
+                logger.debug(f"Ignoring path: {rel_path}")
+                continue
+
+            if entry.is_file():
+                all_files.append(rel_path)
+            elif entry.is_dir():
+                # Only add to directory list and continue recursion if directory is not ignored
+                if not _should_ignore_path(rel_path + "/", ignore_patterns):
+                    all_dirs.append(rel_path)
+                    _scan_directory(entry, root_path, ignore_patterns, all_files, all_dirs)
+    except Exception as error:
+        logger.debug(f"Error scanning directory {current_dir}: {error}")
+
+
 def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResult:
     """Search files
 
@@ -132,24 +190,7 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
     all_files: List[str] = []
     all_dirs: List[str] = []
 
-    for path in root_path.rglob("*"):
-        rel_path = str(path.relative_to(root_path))
-
-        # Modify ignore logic, place multiple conditions in a list for any judgment
-        ignore_conditions = [
-            fnmatch.fnmatch(rel_path, pattern)
-            or fnmatch.fnmatch(rel_path, pattern.lstrip("/"))
-            or fnmatch.fnmatch(rel_path, pattern.replace("**/", ""))
-            or any(part == pattern.lstrip("/") for part in Path(rel_path).parts)
-            for pattern in ignore_patterns
-        ]
-        should_ignore = any(ignore_conditions)
-
-        if not should_ignore:
-            if path.is_file():
-                all_files.append(rel_path)
-            elif path.is_dir():
-                all_dirs.append(rel_path)
+    _scan_directory(root_path, root_path, ignore_patterns, all_files, all_dirs)
 
     # Filter files
     filtered_files = filter_paths(all_files, include_patterns, ignore_patterns, root_dir)
@@ -161,15 +202,7 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
 
 
 def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str]:
-    """Get list of ignore patterns
-
-    Args:
-        root_dir: Root directory
-        config: Configuration object
-
-    Returns:
-        List of ignore patterns
-    """
+    """Get list of ignore patterns"""
     patterns: List[str] = []
 
     # Add default ignore patterns
@@ -179,11 +212,12 @@ def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str
     repomixignore_path = Path(root_dir) / ".repomixignore"
     if repomixignore_path.exists():
         try:
-            patterns.extend(
+            new_patterns = [
                 line.strip()
                 for line in repomixignore_path.read_text().splitlines()
                 if line.strip() and not line.startswith("#")
-            )
+            ]
+            patterns.extend(new_patterns)
         except Exception as error:
             logger.warn(f"Failed to read .repomixignore: {error}")
 
@@ -192,11 +226,12 @@ def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str
         gitignore_path = Path(root_dir) / ".gitignore"
         if gitignore_path.exists():
             try:
-                patterns.extend(
+                new_patterns = [
                     line.strip()
                     for line in gitignore_path.read_text().splitlines()
                     if line.strip() and not line.startswith("#")
-                )
+                ]
+                patterns.extend(new_patterns)
             except Exception as error:
                 logger.warn(f"Failed to read .gitignore file: {error}")
 
