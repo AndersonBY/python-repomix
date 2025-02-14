@@ -60,7 +60,7 @@ def load_global_config() -> Optional[RepomixConfig]:
         return None
 
     try:
-        config_dict = json.loads(global_config_path.read_text())
+        config_dict = json.loads(global_config_path.read_text(encoding="utf-8"))
         return RepomixConfig(**config_dict)
     except Exception as error:
         logger.warn(f"Failed to load global configuration: {error}")
@@ -100,7 +100,7 @@ def load_local_config(
         return None
 
     try:
-        config_dict = json.loads(config_path_obj.read_text())
+        config_dict = json.loads(config_path_obj.read_text(encoding="utf-8"))
         return RepomixConfig(**config_dict)
     except json.JSONDecodeError:
         raise RepomixError(f"Invalid configuration file format: {config_path_obj}")
