@@ -4,16 +4,47 @@ Process Concurrency Module - Handles functionalities related to process concurre
 
 import os
 import multiprocessing
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from typing import Union
+
+PoolExecutor = Union[ProcessPoolExecutor, ThreadPoolExecutor]
 
 
-def get_process_concurrency() -> ProcessPoolExecutor:
-    """Get the process pool executor
+def _is_running_on_lambda() -> bool:
+    """Check if running in AWS Lambda environment"""
+    return bool(os.getenv("AWS_EXECUTION_ENV"))
+
+
+def _get_concurrency_strategy() -> str:
+    """Get the concurrency strategy
 
     Returns:
-        Instance of ProcessPoolExecutor
+        'thread' or 'process'
+    """
+    # First check environment variable
+    env_strategy = os.getenv("REPOMIX_COCURRENCY_STRATEGY", "").lower()
+    if env_strategy in ("thread", "process"):
+        return env_strategy
+
+    # Then check if running in Lambda
+    if _is_running_on_lambda():
+        return "thread"
+
+    # Default to process pool
+    return "process"
+
+
+def get_process_concurrency() -> PoolExecutor:
+    """Get process pool or thread pool executor
+
+    Returns:
+        Instance of ProcessPoolExecutor or ThreadPoolExecutor
     """
     max_workers = _get_max_workers()
+    strategy = _get_concurrency_strategy()
+
+    if strategy == "thread":
+        return ThreadPoolExecutor(max_workers=max_workers)
     return ProcessPoolExecutor(max_workers=max_workers)
 
 
