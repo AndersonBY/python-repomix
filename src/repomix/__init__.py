@@ -1,6 +1,25 @@
-from .config.config_schema import RepomixConfig
 from .core.repo_processor import RepoProcessor, RepoProcessorResult
-from .config.config_load import load_config
+from .config import (
+    load_config,
+    RepomixConfig,
+    RepomixConfigOutput,
+    RepomixConfigSecurity,
+    RepomixConfigIgnore,
+    RepomixOutputStyle,
+    default_ignore_list,
+    get_global_directory,
+)
 
-__version__ = "0.2.0"
-__all__ = ["RepoProcessor", "RepoProcessorResult", "RepomixConfig", "load_config"]
+__version__ = "0.2.1"
+__all__ = [
+    "RepoProcessor",
+    "RepoProcessorResult",
+    "load_config",
+    "RepomixConfig",
+    "RepomixConfigOutput",
+    "RepomixConfigSecurity",
+    "RepomixConfigIgnore",
+    "RepomixOutputStyle",
+    "default_ignore_list",
+    "get_global_directory",
+]
