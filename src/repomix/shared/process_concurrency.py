@@ -3,6 +3,7 @@ Process Concurrency Module - Handles functionalities related to process concurre
 """
 
 import os
+import sys
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from typing import Union
@@ -51,13 +52,15 @@ def get_process_concurrency() -> PoolExecutor:
 def _get_max_workers() -> int:
     """Get the suggested number of concurrent processes"""
     # Get the number of CPU cores
-    if os.name != "nt":
-        cpu_count = len(os.sched_getaffinity(0))
-    else:
-        try:
+    try:
+        if sys.platform == 'linux':
+            # Linux specific method
+            cpu_count = len(os.sched_getaffinity(0))
+        else:
+            # Generic method for other platforms
             cpu_count = multiprocessing.cpu_count()
-        except NotImplementedError:
-            cpu_count = 1
+    except (AttributeError, NotImplementedError):
+        cpu_count = 1
 
     # Use 75% of the CPU core count as a baseline, but not exceeding 32
     suggested = max(1, int(cpu_count * 0.75))
