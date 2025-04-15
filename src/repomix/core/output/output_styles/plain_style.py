@@ -89,6 +89,13 @@ class PlainStyle(OutputStyle):
         section = "\n" + PLAIN_SHORT_SEPARATOR + "\n"
         section += f"File: {file_path}\n"
         section += PLAIN_SHORT_SEPARATOR + "\n"
+
+        # Only show file stats if configured to do so
+        if self.config.output.show_file_stats:
+            section += f"Characters: {char_count}\n"
+            section += f"Tokens: {token_count}\n"
+            section += PLAIN_SHORT_SEPARATOR + "\n"
+
         # Add file content
         section += f"{content}\n"
         return section

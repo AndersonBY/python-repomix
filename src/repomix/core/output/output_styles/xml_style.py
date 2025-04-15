@@ -83,11 +83,13 @@ class XmlStyle(OutputStyle):
         path_elem = ET.SubElement(file_elem, "path")
         path_elem.text = file_path
 
-        stats_elem = ET.SubElement(file_elem, "stats")
-        chars_elem = ET.SubElement(stats_elem, "chars")
-        chars_elem.text = str(char_count)
-        tokens_elem = ET.SubElement(stats_elem, "tokens")
-        tokens_elem.text = str(token_count)
+        # Only include stats if configured to do so
+        if self.config.output.show_file_stats:
+            stats_elem = ET.SubElement(file_elem, "stats")
+            chars_elem = ET.SubElement(stats_elem, "chars")
+            chars_elem.text = str(char_count)
+            tokens_elem = ET.SubElement(stats_elem, "tokens")
+            tokens_elem.text = str(token_count)
 
         # Add file content
         content_elem = ET.SubElement(file_elem, "content")

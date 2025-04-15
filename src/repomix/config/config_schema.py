@@ -30,15 +30,10 @@ class RepomixConfigOutput:
     copy_to_clipboard: bool = False
     include_empty_directories: bool = False
     calculate_tokens: bool = False
+    show_file_stats: bool = False
 
-    @property
-    def style(self) -> RepomixOutputStyle:
-        """Get the output style"""
-        return self._style
-
-    @style.setter
-    def style(self, value):
-        """Set the output style, supports string or RepomixOutputStyle enum"""
+    def _process_style_value(self, value):
+        """Process style value and set _style accordingly"""
         if isinstance(value, RepomixOutputStyle):
             self._style = value
         elif isinstance(value, str):
@@ -50,6 +45,16 @@ class RepomixConfigOutput:
                 )
         else:
             raise TypeError("Style must be either string or RepomixOutputStyle enum")
+
+    @property
+    def style(self) -> RepomixOutputStyle:
+        """Get the output style"""
+        return self._style
+
+    @style.setter
+    def style(self, value):
+        """Set the output style, supports string or RepomixOutputStyle enum"""
+        self._process_style_value(value)
 
 
 @dataclass
@@ -77,6 +82,27 @@ class RepomixConfig:
     security: RepomixConfigSecurity = field(default_factory=RepomixConfigSecurity)
     ignore: RepomixConfigIgnore = field(default_factory=RepomixConfigIgnore)
     include: List[str] = field(default_factory=list)
+
+    def __post_init__(self):
+        """Post-initialization processing to handle nested dictionaries"""
+        # Handle output if it's a dictionary
+        if isinstance(self.output, dict):
+            output_dict = self.output.copy()
+            # Handle style attribute specifically
+            style_value = output_dict.pop("style", None)
+            # Create output object with remaining parameters
+            self.output = RepomixConfigOutput(**output_dict)
+            # Set style if it was provided
+            if style_value is not None:
+                self.output.style = style_value
+
+        # Handle security if it's a dictionary
+        if isinstance(self.security, dict):
+            self.security = RepomixConfigSecurity(**self.security)
+
+        # Handle ignore if it's a dictionary
+        if isinstance(self.ignore, dict):
+            self.ignore = RepomixConfigIgnore(**self.ignore)
 
 
 # Default configuration

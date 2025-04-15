@@ -109,8 +109,11 @@ class MarkdownStyle(OutputStyle):
 
         # Generate file information
         section = f"\n## {file_path}\n\n"
-        section += f"- Characters: {char_count}\n"
-        section += f"- Tokens: {token_count}\n\n"
+
+        # Only show file stats if configured to do so
+        if self.config.output.show_file_stats:
+            section += f"- Characters: {char_count}\n"
+            section += f"- Tokens: {token_count}\n\n"
 
         # Add code block with dynamic fence
         section += f"{fence}{language}\n"
