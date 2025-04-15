@@ -80,7 +80,9 @@ python -m repomix --init
     "show_line_numbers": false,
     "copy_to_clipboard": false,
     "include_empty_directories": false,
-    "calculate_tokens": false
+    "calculate_tokens": false,
+    "show_file_stats": false,
+    "show_directory_structure": true
   },
   "security": {
     "enable_security_check": true,
@@ -188,7 +190,7 @@ Repomix 包含一个默认的常用排除文件和目录列表（例如，`__pyc
 
 #### 注释
 
-- 二进制文件默认不包含在打包输出中，但它们的路径会列在输出文件的“仓库结构”部分。这提供了仓库结构的完整概览，同时保持打包文件的高效性和基于文本的特性。
+- 二进制文件默认不包含在打包输出中，但它们的路径会列在输出文件的"仓库结构"部分。这提供了仓库结构的完整概览，同时保持打包文件的高效性和基于文本的特性。
 - 忽略模式通过确保排除安全敏感文件和大型二进制文件来帮助优化生成的打包文件的大小，同时防止泄露机密信息。
 - 所有忽略模式都使用类似于 `.gitignore` 的 glob 模式语法。
 

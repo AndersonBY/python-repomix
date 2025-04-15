@@ -78,7 +78,9 @@ Create a `repomix.config.json` file in your project root for custom configuratio
     "show_line_numbers": false,
     "copy_to_clipboard": false,
     "include_empty_directories": false,
-    "calculate_tokens": false
+    "calculate_tokens": false,
+    "show_file_stats": false,
+    "show_directory_structure": true
   },
   "security": {
     "enable_security_check": true,
