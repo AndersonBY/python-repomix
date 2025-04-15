@@ -39,8 +39,9 @@ def generate_output(
     # Generate output content
     output = style.generate_header()
 
-    # Add file tree
-    output += style.generate_file_tree_section(file_tree)
+    # Add file tree if configured to do so
+    if config.output.show_directory_structure:
+        output += style.generate_file_tree_section(file_tree)
 
     # Add files section
     output += style.generate_files_section(processed_files, file_char_counts, file_token_counts)

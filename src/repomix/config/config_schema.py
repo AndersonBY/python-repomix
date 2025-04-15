@@ -31,6 +31,7 @@ class RepomixConfigOutput:
     include_empty_directories: bool = False
     calculate_tokens: bool = False
     show_file_stats: bool = False
+    show_directory_structure: bool = True
 
     def _process_style_value(self, value):
         """Process style value and set _style accordingly"""
