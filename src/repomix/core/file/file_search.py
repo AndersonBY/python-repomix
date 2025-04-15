@@ -69,34 +69,27 @@ def check_directory_permissions(directory: str | Path) -> PermissionCheckResult:
 
 
 def find_empty_directories(root_dir: str | Path, directories: List[str], ignore_patterns: List[str]) -> List[str]:
-    """Find empty directories
-
-    Args:
-        root_dir: Root directory
-        directories: List of directories
-        ignore_patterns: List of ignore patterns
-
-    Returns:
-        List of empty directory paths
-    """
+    """Find empty directories, respecting ignore patterns."""
     empty_dirs: List[str] = []
     root_path = Path(root_dir)
 
-    for dir_path in directories:
-        full_path = root_path / dir_path
+    for dir_path_str in directories:  # dir_path_str 已经是相对posix路径
+        full_path = root_path / dir_path_str
         try:
-            has_visible_contents = any(not entry.name.startswith(".") for entry in full_path.iterdir())
+            # 简化：如果目录为空，我们再检查它或其父路径是否匹配忽略规则
+            is_empty = not any(full_path.iterdir())
 
-            if not has_visible_contents:
-                should_ignore = any(
-                    dir_path == pattern or str(Path(pattern)) in str(Path(dir_path)).split("/")
-                    for pattern in ignore_patterns
-                )
+            if is_empty:
+                # 再次确认这个空目录本身或其路径是否应被忽略
+                if not _should_ignore_path(dir_path_str, ignore_patterns):
+                    empty_dirs.append(dir_path_str)
+                # else:
+                #    logger.trace(f"Empty directory {dir_path_str} ignored due to patterns.")
 
-                if not should_ignore:
-                    empty_dirs.append(dir_path)
+        except PermissionError:
+            logger.warn(f"Permission denied checking directory {full_path}")
         except Exception as error:
-            logger.debug(f"Error checking directory {dir_path}: {error}")
+            logger.debug(f"Error checking directory {dir_path_str}: {error}")
 
     return empty_dirs
 
@@ -135,30 +128,52 @@ def _should_ignore_path(path: str, ignore_patterns: List[str]) -> bool:
     return False
 
 
-def _scan_directory(current_dir: Path, root_path: Path, all_files: List[str], all_dirs: List[str]) -> None:
-    """Recursively scan directory without applying ignore patterns initially."""
+def _scan_directory(
+    current_dir: Path,
+    root_path: Path,
+    all_files: List[str],
+    all_dirs: List[str],
+    ignore_patterns: List[str],
+) -> None:
+    """Recursively scan directory, pruning ignored directories early."""
+    # 优先处理根目录下的 .git (常见且高效)
     if current_dir.name == ".git" and current_dir.parent == root_path:
         logger.debug("Ignoring .git directory at root")
         return
 
     try:
         for entry in current_dir.iterdir():
-            if ".git" in entry.parts:
+            # 计算相对路径 (使用 as_posix 保证 '/' 分隔符)
+            try:
+                rel_path = entry.relative_to(root_path).as_posix()
+            except ValueError:
+                # 如果 entry 不在 root_path 下 (理论上不应发生，除非链接等复杂情况)
+                logger.warn(f"Entry {entry} seems outside root {root_path}, skipping.")
                 continue
 
-            rel_path = str(entry.relative_to(root_path))
+            # === 核心改动：在处理前检查忽略规则 ===
+            if _should_ignore_path(rel_path, ignore_patterns):
+                # logger.trace(f"Ignoring entry due to pattern match: {rel_path}")
+                continue
+            # =====================================
 
+            # 如果没有被忽略，则继续处理
             if entry.is_file():
-                all_files.append(rel_path)
+                all_files.append(rel_path)  # rel_path 已经是 posix 格式
             elif entry.is_dir():
-                all_dirs.append(rel_path)
-                _scan_directory(entry, root_path, all_files, all_dirs)
+                # logger.trace(f"Entering directory: {rel_path}") # Optional trace
+                all_dirs.append(rel_path)  # rel_path 已经是 posix 格式
+                # 递归调用，传递 ignore_patterns
+                _scan_directory(entry, root_path, all_files, all_dirs, ignore_patterns)  # 传递忽略模式
+    except PermissionError as e:
+        logger.warn(f"Permission denied accessing directory {current_dir}: {e}")
     except Exception as error:
+        # 记录其他可能的扫描错误，例如路径太长等，但继续尝试其他条目
         logger.debug(f"Error scanning directory {current_dir}: {error}")
 
 
 def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResult:
-    """Search files
+    """Search files, integrating ignore logic during scan.
 
     Args:
         root_dir: Root directory
@@ -184,99 +199,85 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
     raw_all_files: List[str] = []
     raw_all_dirs: List[str] = []
 
-    # 2. 完整扫描获取原始列表
-    logger.debug("Starting raw directory scan...")
-    _scan_directory(root_path, root_path, raw_all_files, raw_all_dirs)
-    logger.debug(f"Raw scan found {len(raw_all_files)} files and {len(raw_all_dirs)} directories.")
-
-    # 3. 获取 Include 和 Ignore 规则
+    # 2. 获取 Ignore 规则 *在扫描之前*
+    logger.debug("Calculating ignore patterns...")
     ignore_patterns = get_ignore_patterns(root_dir, config)
-    include_patterns = config.include  # 获取 include 列表
+    logger.debug(f"Using {len(ignore_patterns)} ignore patterns.")
 
-    # 4. 应用 Include 规则 (如果 include 列表不为空)
+    # 3. 执行带有忽略逻辑的扫描
+    logger.debug("Starting directory scan with integrated ignore logic...")
+    _scan_directory(root_path, root_path, raw_all_files, raw_all_dirs, ignore_patterns)  # 传递 ignore_patterns
+    logger.debug(f"Scan found {len(raw_all_files)} potentially relevant files and {len(raw_all_dirs)} directories.")
+
+    # 4. 获取 Include 规则
+    include_patterns = config.include
+
+    # 5. 应用 Include 规则
     if include_patterns:
         logger.debug(f"Applying include patterns: {include_patterns}")
         potentially_included_files = []
+        # 注意：include_patterns 也需要规范化处理路径分隔符，如果它们来自配置文件
         normalized_include_patterns = [p.replace("\\", "/") for p in include_patterns]
 
         for file_path in raw_all_files:
-            normalized_path = file_path.replace("\\", "/")
+            # file_path 来自 _scan_directory，已经是 posix 格式
             is_included = False
             for pattern in normalized_include_patterns:
-                # 1. Direct fnmatch check (for file patterns like *.py or specific files)
-                if fnmatch.fnmatch(normalized_path, pattern):
+                # 简化 include 匹配逻辑示例 (可能需要根据实际需求调整)
+                # fnmatch 对 posix 路径有效
+                if fnmatch.fnmatch(file_path, pattern):
                     is_included = True
-                    # logger.trace(f"Included '{normalized_path}' via fnmatch with pattern '{pattern}'")
                     break
-
-                # 2. Directory check: if pattern ends with '/', check if path starts with it
-                #    This handles patterns like "src/"
-                if pattern.endswith("/") and normalized_path.startswith(pattern):
+                # 处理目录 include (例如 "src/")
+                if pattern.endswith("/") and file_path.startswith(pattern):
                     is_included = True
-                    # logger.trace(f"Included '{normalized_path}' via startswith directory pattern '{pattern}'")
                     break
-
-                # 3. Directory check: if pattern doesn't look like a file glob, treat as dir
-                #    This handles patterns like "data" or "config" implicitly meaning "data/" or "config/"
-                #    We check if the pattern itself contains wildcards typical for files at the end
-                #    or doesn't contain a slash (implying a root level dir/file)
-                #    A simple heuristic: if no typical file wildcards are present, assume directory.
-                is_likely_dir_pattern = not any(c in pattern.split("/")[-1] for c in "*?")
-
-                if is_likely_dir_pattern:
-                    # Ensure directory patterns match from the start of the path segments
-                    dir_prefix = pattern.rstrip("/") + "/"
-                    if normalized_path.startswith(dir_prefix):
-                        is_included = True
-                        # logger.trace(f"Included '{normalized_path}' via implied directory pattern '{pattern}' (matching prefix '{dir_prefix}')")
-                        break
+                # 处理目录 include (例如 "src" 意为 "src/")
+                if (
+                    not pattern.endswith("/")
+                    and "*" not in pattern
+                    and "?" not in pattern
+                    and file_path.startswith(pattern + "/")
+                ):
+                    is_included = True
+                    break
 
             if is_included:
                 potentially_included_files.append(file_path)
-            # else:
-            # logger.trace(f"Excluding '{normalized_path}' - did not match any include patterns.")
 
         logger.debug(f"{len(potentially_included_files)} files potentially included after include filter.")
     else:
-        # 如果 include 为空，则所有文件都可能被包含 (等待 ignore 过滤)
-        logger.debug("Include list is empty, considering all raw files initially.")
+        logger.debug("Include list is empty, considering all scanned files.")
         potentially_included_files = raw_all_files
 
-    # 5. 应用 Ignore 规则 (这部分代码保持不变)
-    logger.debug(f"Applying ignore patterns: {ignore_patterns}")
+    # 6. 应用 Ignore 规则 (第二次过滤 - 轻量级)
+    # 这一步仍然需要，用于处理文件级忽略（如 *.log）以及可能被 include 覆盖的情况
+    logger.debug("Applying final ignore filter (for file-specific patterns)...")
     final_files: List[str] = []
-    # *** Pass the root_path to _should_ignore_path for context ***
+    # 假设 _should_ignore_path 内部处理好了路径规范化
     for file_path in potentially_included_files:
-        # 使用 _should_ignore_path 检查路径是否应被忽略
-        # IMPORTANT: Make sure _should_ignore_path receives root_path if needed for relative checks
-        # Assuming _should_ignore_path definition is:
-        # def _should_ignore_path(path: str, ignore_patterns: List[str], root_path: Path) -> bool:
-        # If not, adjust the call or the function signature.
-        # For now, assuming the original _should_ignore_path doesn't need root_path explicitly passed here.
-        # If it does, the call should be: if not _should_ignore_path(file_path, ignore_patterns, root_path):
-        if not _should_ignore_path(file_path, ignore_patterns):  # Pass root_path if needed by the function
-            final_files.append(file_path)
-        # else:
-        #     logger.trace(f"Ignoring file due to ignore patterns: {file_path}")
-    logger.debug(f"{len(final_files)} files remaining after ignore filter.")
-
-    # 5. 应用 Ignore 规则
-    logger.debug(f"Applying ignore patterns: {ignore_patterns}")
-    final_files: List[str] = []
-    for file_path in potentially_included_files:
-        # 使用 _should_ignore_path 检查路径是否应被忽略
         if not _should_ignore_path(file_path, ignore_patterns):
             final_files.append(file_path)
         # else:
-        #     logger.trace(f"Ignoring file due to ignore patterns: {file_path}")
-    logger.debug(f"{len(final_files)} files remaining after ignore filter.")
+        #     logger.trace(f"Ignoring file due to final ignore check: {file_path}")
+    logger.debug(f"{len(final_files)} files remaining after final ignore filter.")
 
-    # 6. 过滤目录列表以查找空目录 (也需要应用 ignore)
+    # 7. 过滤目录列表 (基于原始扫描结果，也需要应用ignore)
+    # raw_all_dirs 已经是被初步过滤（忽略目录）的结果
+    # 但仍需检查是否有目录本身被文件级模式忽略（虽然不常见，但可能）
+    # 或者检查其父目录是否在 include 规则中被排除（更复杂）
+    # 为了简化，我们直接使用 raw_all_dirs 作为基础，find_empty_directories 内部会再次检查
+    # 但更好的做法是确保 raw_all_dirs 本身是正确的最终候选目录列表
     final_dirs = [d for d in raw_all_dirs if not _should_ignore_path(d, ignore_patterns)]
 
-    # 7. 查找空目录 (基于过滤后的目录列表)
-    empty_dirs = find_empty_directories(root_dir, final_dirs, ignore_patterns)
-    logger.debug(f"Found {len(empty_dirs)} empty directories to include (if configured).")
+    # 8. 查找空目录 (基于过滤后的目录列表)
+    empty_dirs = []
+    if config.output.include_empty_directories:
+        # 注意：find_empty_directories 也需要知道 ignore_patterns
+        empty_dirs = find_empty_directories(root_dir, final_dirs, ignore_patterns)
+        logger.debug(f"Found {len(empty_dirs)} empty directories to include.")
+    else:
+        logger.debug("Empty directory inclusion is disabled.")
 
     return FileSearchResult(file_paths=final_files, empty_dir_paths=empty_dirs)
 
