@@ -11,7 +11,8 @@
     "copy_to_clipboard": false,
     "include_empty_directories": false,
     "calculate_tokens": false,
-    "show_file_stats": false
+    "show_file_stats": false,
+    "show_directory_structure": true
   },
   "security": {
     "enable_security_check": true,
