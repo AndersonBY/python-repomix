@@ -51,23 +51,44 @@ def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str
     Raises:
         RepomixError: When an error occurs during execution
     """
-    # Load configuration
+    # Prepare CLI overrides, only including options explicitly set or implied by flags
+    cli_options_override = {
+        "output": {
+            "file_path": options.get("output"),
+            "style": options.get("style"),
+            "show_line_numbers": options.get("output_show_line_numbers"),
+            "copy_to_clipboard": options.get("copy"),
+            "top_files_length": options.get("top_files_len"),
+        },
+        "ignore": {"custom_patterns": options.get("ignore", "").split(",") if options.get("ignore") else None},
+        "include": options.get("include", "").split(",") if options.get("include") else None,
+        "security": {},
+    }
+
+    if "no_security_check" in options and options.get("no_security_check"):
+        cli_options_override["security"]["enable_security_check"] = False
+    enable_security_check_override = None
+    if options.get("no_security_check") is True:  # Explicitly check for True set by argparse
+        enable_security_check_override = False
+    if enable_security_check_override is not None:
+        cli_options_override["security"]["enable_security_check"] = enable_security_check_override
+
+    final_cli_options = {}
+    for key, value in cli_options_override.items():
+        if isinstance(value, dict):
+            # Filter out None values within nested dictionaries
+            filtered_dict = {k: v for k, v in value.items() if v is not None}
+            if filtered_dict:  # Only add non-empty dicts
+                final_cli_options[key] = filtered_dict
+        elif value is not None:
+            final_cli_options[key] = value
+
+    # Load configuration using the refined overrides
     config = load_config(
         directory,
         cwd,
         options.get("config"),
-        {
-            "output": {
-                "file_path": options.get("output"),
-                "style": options.get("style"),
-                "show_line_numbers": options.get("output_show_line_numbers"),
-                "copy_to_clipboard": options.get("copy"),
-                "top_files_length": options.get("top_files_len"),
-            },
-            "ignore": {"custom_patterns": options.get("ignore", "").split(",") if options.get("ignore") else None},
-            "include": options.get("include", "").split(",") if options.get("include") else None,
-            "security": {"enable_security_check": not options.get("no_security_check")},
-        },
+        final_cli_options,
     )
 
     processor = RepoProcessor(directory, config=config)
