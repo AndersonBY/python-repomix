@@ -68,20 +68,30 @@ def check_directory_permissions(directory: str | Path) -> PermissionCheckResult:
         return PermissionCheckResult(has_permission=False, error=e)
 
 
-def find_empty_directories(root_dir: str | Path, directories: List[str], ignore_patterns: List[str]) -> List[str]:
+def find_empty_directories(
+    root_dir: str | Path, directories: List[str], ignore_patterns: List[str], config: Optional[RepomixConfig] = None
+) -> List[str]:
     """Find empty directories, respecting ignore patterns."""
     empty_dirs: List[str] = []
     root_path = Path(root_dir)
 
-    for dir_path_str in directories:  # dir_path_str 已经是相对posix路径
+    for dir_path_str in directories:
         full_path = root_path / dir_path_str
         try:
-            # 简化：如果目录为空，我们再检查它或其父路径是否匹配忽略规则
+            # Get all levels of .gitignore rules for the directory
+            current_ignore_patterns = ignore_patterns.copy()
+            if config and config.ignore.use_gitignore:
+                local_patterns = collect_gitignore_patterns(full_path, root_path)
+                if local_patterns:
+                    current_ignore_patterns.extend(local_patterns)
+
+            # Simplify: If the directory is empty, we check if it or its parent path matches the ignore rules
             is_empty = not any(full_path.iterdir())
 
             if is_empty:
-                # 再次确认这个空目录本身或其路径是否应被忽略
-                if not _should_ignore_path(dir_path_str, ignore_patterns):
+                # Confirm that the empty directory itself or its path should be ignored
+                current_dir = full_path if config else None
+                if not _should_ignore_path(dir_path_str, current_ignore_patterns, current_dir, root_path):
                     empty_dirs.append(dir_path_str)
                 # else:
                 #    logger.trace(f"Empty directory {dir_path_str} ignored due to patterns.")
@@ -94,9 +104,28 @@ def find_empty_directories(root_dir: str | Path, directories: List[str], ignore_
     return empty_dirs
 
 
-def _should_ignore_path(path: str, ignore_patterns: List[str]) -> bool:
-    """Check if the path should be ignored"""
+def _should_ignore_path(
+    path: str, ignore_patterns: List[str], current_dir: Optional[Path] = None, root_path: Optional[Path] = None
+) -> bool:
+    """Check if the path should be ignored
+
+    Args:
+        path: The path to check (relative to the project root)
+        ignore_patterns: The list of ignore patterns
+        current_dir: The current directory being processed (for subdirectory .gitignore matching)
+        root_path: The root path of the project
+    """
     path = path.replace("\\", "/")  # Normalize to forward slashes
+
+    # Process the path relative to the current directory (for subdirectory .gitignore rules)
+    if current_dir is not None and root_path is not None:
+        rel_to_current = None
+        try:
+            full_path = root_path / path
+            if full_path.exists() and str(full_path).startswith(str(current_dir)):
+                rel_to_current = str(full_path.relative_to(current_dir)).replace("\\", "/")
+        except Exception:
+            pass
 
     # Check if each part of the path should be ignored
     path_parts = Path(path).parts
@@ -120,9 +149,26 @@ def _should_ignore_path(path: str, ignore_patterns: List[str]) -> bool:
             if fnmatch.fnmatch(path_parts[i], pattern):
                 return True
 
+            # Check if the last part of the path matches (handles ignores in subdirectories)
+            if i == len(path_parts) - 1:
+                last_part = path_parts[i]
+                if fnmatch.fnmatch(last_part, pattern):
+                    return True
+
             # Check directory path match (ensure directory patterns match correctly)
             if pattern.endswith("/"):
                 if fnmatch.fnmatch(current_path + "/", pattern):
+                    return True
+
+                if i == len(path_parts) - 1 and fnmatch.fnmatch(path_parts[i] + "/", pattern):
+                    return True
+
+            # If there is a relative path to the current directory, check if it matches
+            if current_dir is not None and root_path is not None and rel_to_current is not None:
+                if pattern.endswith("/") and isinstance(rel_to_current, str):
+                    if fnmatch.fnmatch(rel_to_current + "/", pattern):
+                        return True
+                if isinstance(rel_to_current, str) and fnmatch.fnmatch(rel_to_current, pattern):
                     return True
 
     return False
@@ -134,41 +180,63 @@ def _scan_directory(
     all_files: List[str],
     all_dirs: List[str],
     ignore_patterns: List[str],
+    config: Optional[RepomixConfig] = None,
 ) -> None:
     """Recursively scan directory, pruning ignored directories early."""
-    # 优先处理根目录下的 .git (常见且高效)
+    # Process .git directory at root (common and efficient)
     if current_dir.name == ".git" and current_dir.parent == root_path:
         logger.debug("Ignoring .git directory at root")
         return
 
+    # Check if the current directory has a .gitignore file, and merge its rules
+    current_ignore_patterns = ignore_patterns.copy()
+    if config and config.ignore.use_gitignore:
+        gitignore_path = current_dir / ".gitignore"
+        if gitignore_path.exists() and gitignore_path != (root_path / ".gitignore"):
+            try:
+                with open(gitignore_path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                    local_patterns = [line.strip() for line in lines if line.strip() and not line.startswith("#")]
+                    if local_patterns:
+                        logger.debug(f"Found {len(local_patterns)} patterns in {gitignore_path}")
+                        current_ignore_patterns.extend(local_patterns)
+            except Exception as e:
+                logger.warn(f"Failed to read local .gitignore file at {gitignore_path}: {e}")
+
     try:
         for entry in current_dir.iterdir():
-            # 计算相对路径 (使用 as_posix 保证 '/' 分隔符)
+            # Calculate the relative path (using as_posix to ensure '/' separator)
             try:
                 rel_path = entry.relative_to(root_path).as_posix()
             except ValueError:
-                # 如果 entry 不在 root_path 下 (理论上不应发生，除非链接等复杂情况)
+                # If entry is not under root_path (should not happen unless complex link cases)
                 logger.warn(f"Entry {entry} seems outside root {root_path}, skipping.")
                 continue
 
-            # === 核心改动：在处理前检查忽略规则 ===
-            if _should_ignore_path(rel_path, ignore_patterns):
+            # Pass current_dir parameter to support subdirectory .gitignore rules
+            if _should_ignore_path(
+                rel_path,
+                current_ignore_patterns,
+                current_dir if config else None,
+                root_path,
+            ):
                 # logger.trace(f"Ignoring entry due to pattern match: {rel_path}")
                 continue
-            # =====================================
 
-            # 如果没有被忽略，则继续处理
+            # If not ignored, continue processing
             if entry.is_file():
-                all_files.append(rel_path)  # rel_path 已经是 posix 格式
+                all_files.append(rel_path)  # rel_path is already posix format
             elif entry.is_dir():
                 # logger.trace(f"Entering directory: {rel_path}") # Optional trace
-                all_dirs.append(rel_path)  # rel_path 已经是 posix 格式
-                # 递归调用，传递 ignore_patterns
-                _scan_directory(entry, root_path, all_files, all_dirs, ignore_patterns)  # 传递忽略模式
+                all_dirs.append(rel_path)
+                # Recursively call, passing current directory's ignore_patterns
+                _scan_directory(
+                    entry, root_path, all_files, all_dirs, current_ignore_patterns, config
+                )  # Pass current ignore patterns
     except PermissionError as e:
         logger.warn(f"Permission denied accessing directory {current_dir}: {e}")
     except Exception as error:
-        # 记录其他可能的扫描错误，例如路径太长等，但继续尝试其他条目
+        # Record other possible scanning errors, such as path too long, but continue trying other entries
         logger.debug(f"Error scanning directory {current_dir}: {error}")
 
 
@@ -185,7 +253,7 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
     Raises:
         PermissionError: When insufficient permissions to access the directory
     """
-    # 1. 检查权限 (保持不变)
+    # 1.  permissions
     permission_check = check_directory_permissions(root_dir)
     if not permission_check.has_permission:
         if isinstance(permission_check.error, PermissionError):
@@ -199,40 +267,40 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
     raw_all_files: List[str] = []
     raw_all_dirs: List[str] = []
 
-    # 2. 获取 Ignore 规则 *在扫描之前*
-    logger.debug("Calculating ignore patterns...")
-    ignore_patterns = get_ignore_patterns(root_dir, config)
-    logger.debug(f"Using {len(ignore_patterns)} ignore patterns.")
+    # 2. Get root directory's ignore rules *before scanning*
+    logger.debug("Calculating root ignore patterns...")
+    root_ignore_patterns = get_ignore_patterns(root_dir, config)
+    logger.debug(f"Using {len(root_ignore_patterns)} ignore patterns from root directory.")
 
-    # 3. 执行带有忽略逻辑的扫描
+    # 3. Execute directory scan with integrated ignore logic
     logger.debug("Starting directory scan with integrated ignore logic...")
-    _scan_directory(root_path, root_path, raw_all_files, raw_all_dirs, ignore_patterns)  # 传递 ignore_patterns
+    _scan_directory(root_path, root_path, raw_all_files, raw_all_dirs, root_ignore_patterns, config)  # Pass config
     logger.debug(f"Scan found {len(raw_all_files)} potentially relevant files and {len(raw_all_dirs)} directories.")
 
-    # 4. 获取 Include 规则
+    # 4. Get include rules
     include_patterns = config.include
 
-    # 5. 应用 Include 规则
+    # 5. Apply include rules
     if include_patterns:
         logger.debug(f"Applying include patterns: {include_patterns}")
         potentially_included_files = []
-        # 注意：include_patterns 也需要规范化处理路径分隔符，如果它们来自配置文件
+        # Note: include_patterns also need to normalize path separators, if they come from the config file
         normalized_include_patterns = [p.replace("\\", "/") for p in include_patterns]
 
         for file_path in raw_all_files:
-            # file_path 来自 _scan_directory，已经是 posix 格式
+            # file_path comes from _scan_directory, already in posix format
             is_included = False
             for pattern in normalized_include_patterns:
-                # 简化 include 匹配逻辑示例 (可能需要根据实际需求调整)
+                # Simplify include matching logic example (may need to adjust based on actual needs)
                 # fnmatch 对 posix 路径有效
                 if fnmatch.fnmatch(file_path, pattern):
                     is_included = True
                     break
-                # 处理目录 include (例如 "src/")
+                # Process directory include (e.g. "src/")
                 if pattern.endswith("/") and file_path.startswith(pattern):
                     is_included = True
                     break
-                # 处理目录 include (例如 "src" 意为 "src/")
+                # Process directory include (e.g. "src" means "src/")
                 if (
                     not pattern.endswith("/")
                     and "*" not in pattern
@@ -250,31 +318,57 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
         logger.debug("Include list is empty, considering all scanned files.")
         potentially_included_files = raw_all_files
 
-    # 6. 应用 Ignore 规则 (第二次过滤 - 轻量级)
-    # 这一步仍然需要，用于处理文件级忽略（如 *.log）以及可能被 include 覆盖的情况
-    logger.debug("Applying final ignore filter (for file-specific patterns)...")
+    # 6. Apply ignore rules again (final filter - lightweight)
+    logger.debug("Applying final ignore filter...")
     final_files: List[str] = []
-    # 假设 _should_ignore_path 内部处理好了路径规范化
+
+    # For each file, check if it should be ignored
+    # Note: In _scan_directory, subdirectory .gitignore rules have already been considered, this is the final verification
     for file_path in potentially_included_files:
-        if not _should_ignore_path(file_path, ignore_patterns):
+        full_path = root_path / file_path
+        containing_dir = full_path.parent
+
+        # Get all .gitignore rules from the directory containing the file and its parent directories
+        current_ignore_patterns = root_ignore_patterns.copy()
+        if config.ignore.use_gitignore:
+            try:
+                local_patterns = collect_gitignore_patterns(containing_dir, root_path)
+                if local_patterns:
+                    current_ignore_patterns.extend(local_patterns)
+            except Exception as e:
+                logger.debug(f"Error collecting local ignore patterns for {file_path}: {e}")
+
+        # Check if the file should be ignored
+        current_dir = containing_dir
+        if not _should_ignore_path(file_path, current_ignore_patterns, current_dir, root_path):
             final_files.append(file_path)
-        # else:
-        #     logger.trace(f"Ignoring file due to final ignore check: {file_path}")
+
     logger.debug(f"{len(final_files)} files remaining after final ignore filter.")
 
-    # 7. 过滤目录列表 (基于原始扫描结果，也需要应用ignore)
-    # raw_all_dirs 已经是被初步过滤（忽略目录）的结果
-    # 但仍需检查是否有目录本身被文件级模式忽略（虽然不常见，但可能）
-    # 或者检查其父目录是否在 include 规则中被排除（更复杂）
-    # 为了简化，我们直接使用 raw_all_dirs 作为基础，find_empty_directories 内部会再次检查
-    # 但更好的做法是确保 raw_all_dirs 本身是正确的最终候选目录列表
-    final_dirs = [d for d in raw_all_dirs if not _should_ignore_path(d, ignore_patterns)]
+    # 7. Filter directory list
+    final_dirs = []
+    for dir_path in raw_all_dirs:
+        full_dir_path = root_path / dir_path
 
-    # 8. 查找空目录 (基于过滤后的目录列表)
+        # Get all .gitignore rules from the directory and its parent directories
+        dir_ignore_patterns = root_ignore_patterns.copy()
+        if config.ignore.use_gitignore:
+            try:
+                local_patterns = collect_gitignore_patterns(full_dir_path.parent, root_path)
+                if local_patterns:
+                    dir_ignore_patterns.extend(local_patterns)
+            except Exception as e:
+                logger.debug(f"Error collecting local ignore patterns for directory {dir_path}: {e}")
+
+        current_dir = full_dir_path.parent
+        if not _should_ignore_path(dir_path, dir_ignore_patterns, current_dir, root_path):
+            final_dirs.append(dir_path)
+
+    # 8. Find empty directories (based on filtered directory list)
     empty_dirs = []
     if config.output.include_empty_directories:
-        # 注意：find_empty_directories 也需要知道 ignore_patterns
-        empty_dirs = find_empty_directories(root_dir, final_dirs, ignore_patterns)
+        # Pass config to support subdirectory .gitignore rules
+        empty_dirs = find_empty_directories(root_dir, final_dirs, root_ignore_patterns, config)
         logger.debug(f"Found {len(empty_dirs)} empty directories to include.")
     else:
         logger.debug("Empty directory inclusion is disabled.")
@@ -323,49 +417,38 @@ def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str
     return patterns
 
 
-def filter_paths(
-    paths: List[str],
-    include_patterns: List[str],
-    ignore_patterns: List[str],
-    base_dir: str | Path | None = None,
-) -> List[str]:
-    """Filter file paths
+def collect_gitignore_patterns(directory_path: Path, root_path: Path) -> List[str]:
+    """Collect .gitignore rules from the specified directory and all its parent directories.
 
     Args:
-        paths: List of file paths
-        include_patterns: List of include patterns
-        ignore_patterns: List of ignore patterns
-        base_dir: Base directory for relative path calculation
+        directory_path: The directory to start collecting .gitignore rules from
+        root_path: The root path of the project (to stop the collection)
+
     Returns:
-        List of filtered file paths
+        List of ignore patterns from .gitignore files
     """
-    filtered_paths: List[str] = []
+    patterns: List[str] = []
 
-    for path in paths:
-        # Get relative path if base_dir is provided
-        if base_dir:
+    # Start from the current directory and collect all parent directory's .gitignore rules
+    current_dir = directory_path
+    while str(current_dir).startswith(str(root_path)):
+        gitignore_path = current_dir / ".gitignore"
+
+        if gitignore_path.exists():
             try:
-                rel_path = str(Path(path).relative_to(Path(base_dir)))
-            except ValueError:
-                rel_path = path
-        else:
-            rel_path = path
+                with open(gitignore_path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                    dir_patterns = [line.strip() for line in lines if line.strip() and not line.startswith("#")]
+                    patterns.extend(dir_patterns)
+                    logger.debug(f"Added {len(dir_patterns)} patterns from {gitignore_path}")
+            except Exception as e:
+                logger.warn(f"Failed to read .gitignore file at {gitignore_path}: {e}")
 
-        # Normalize path separators
-        normalized_path = rel_path.replace("\\", "/")
+        # If we've reached the project root, stop
+        if current_dir == root_path:
+            break
 
-        # Check if it matches any include pattern
-        is_included = any(fnmatch.fnmatch(normalized_path, pattern.replace("\\", "/")) for pattern in include_patterns)
+        # Move to the parent directory
+        current_dir = current_dir.parent
 
-        # Check if path matches any ignore pattern (similar to _build_file_tree_recursive)
-        is_ignored = any(
-            fnmatch.fnmatch(normalized_path, pattern.replace("\\", "/"))
-            or fnmatch.fnmatch(normalized_path + "/", pattern.replace("\\", "/"))
-            or normalized_path.startswith(pattern.rstrip("/") + "/")
-            for pattern in ignore_patterns
-        )
-
-        if is_included and not is_ignored:
-            filtered_paths.append(path)
-
-    return filtered_paths
+    return patterns
