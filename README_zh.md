@@ -15,8 +15,10 @@ Repomix 是一个强大的工具，可以将你的整个仓库打包成一个单
 -   **Token 计数**: 使用 tiktoken 为每个文件和整个仓库提供 token 计数。
 -   **简单易用**: 只需一个命令即可打包整个仓库。
 -   **可定制**: 轻松配置要包含或排除的内容。
--   **Git 感知**: 自动遵守你的 .gitignore 文件。
--   **安全至上**: 内置安全检查，以检测并防止包含敏感信息。
+-   **Git 感知**: 自动遵守你的 `.gitignore` 文件。
+-   **安全至上**: 内置安全检查，以检测并防止包含敏感信息（基于 `detect-secrets`）。
+-   ⚡ **性能**: 利用多进程或多线程在多核系统上实现更快的分析。
+-   ⚙️ **编码感知**: 自动检测并处理除 UTF-8 之外的多种文件编码（使用 `chardet`），增强健壮性。
 
 ## 🚀 3. 快速开始
 
@@ -29,10 +31,16 @@ pip install repomix
 然后在任何项目目录下运行：
 
 ```bash
+repomix
+```
+
+或者，你也可以使用:
+
+```bash
 python -m repomix
 ```
 
-就这样！Repomix 将会在你当前目录下生成一个 `repomix-output.md` 文件，其中包含你整个仓库的 AI 友好格式。
+就这样！Repomix 将会在你当前目录下生成一个 `repomix-output.md` 文件（默认），其中包含你整个仓库的 AI 友好格式。
 
 
 ## 📖 4. 用法
@@ -42,30 +50,32 @@ python -m repomix
 要打包你的整个仓库：
 
 ```bash
-python -m repomix
+repomix
 ```
 
 要打包特定目录：
 
 ```bash
-python -m repomix path/to/directory
+repomix path/to/directory
 ```
 
 要打包一个远程仓库：
 
 ```bash
-python -m repomix --remote https://github.com/username/repo
+repomix --remote https://github.com/username/repo
 ```
 
 要初始化一个新的配置文件：
 
 ```bash
-python -m repomix --init
+repomix --init
+# 使用 --global 创建一个全局配置文件（详见下文配置选项）
+repomix --init --global
 ```
 
 ### 4.2 配置选项
 
-在你的项目根目录创建一个 `repomix.config.json` 文件来进行自定义配置：
+在你的项目根目录创建一个 `repomix.config.json` 文件来进行自定义配置。Repomix 也会自动加载全局配置文件（如果存在，例如 Linux 上的 `~/.config/repomix/repomix.config.json`），其优先级低于本地配置和命令行选项。
 
 ```json
 {
@@ -97,42 +107,42 @@ python -m repomix --init
 }
 ```
 
+> [!NOTE]
+> *关于 `remove_comments` 的注意*：此功能能够感知语言，可以正确处理 Python、JavaScript、C++、HTML 等多种语言的注释语法，而不是使用简单的通用模式。
+
 **命令行选项**
 
--   `-v, --version`: 显示版本
--   `-o, --output <file>`: 指定输出文件名
--   `--style <style>`: 指定输出样式 (plain, xml, markdown)
--   `--remote <url>`: 处理远程 Git 仓库
--   `--init`: 初始化配置文件
--   `--no-security-check`: 禁用安全检查
--   `--verbose`: 启用详细日志
+-   `repomix [directory]`: 目标目录（默认为当前目录）。
+-   `-v, --version`: 显示版本。
+-   `-o, --output <file>`: 指定输出文件名。
+-   `--style <style>`: 指定输出样式 (plain, xml, markdown)。
+-   `--remote <url>`: 处理远程 Git 仓库。
+-   `--remote-branch <name>`: 指定远程分支、标签或提交哈希。
+-   `--init`: 在当前目录初始化配置文件 (`repomix.config.json`)。
+-   `--global`: 与 `--init` 配合使用，用于创建/管理全局配置文件（位于特定于平台的用户配置目录，例如 Linux 上的 `~/.config/repomix`）。如果全局配置存在，它会被自动加载。
+-   `--no-security-check`: 禁用安全检查。
+-   `--include <patterns>`: 逗号分隔的包含模式列表 (glob 格式)。
+-   `-i, --ignore <patterns>`: 额外的逗号分隔的忽略模式。
+-   `-c, --config <path>`: 自定义配置文件的路径。
+-   `--copy`: 将生成的输出复制到系统剪贴板。
+-   `--top-files-len <number>`: 在摘要中显示的最大文件数量（按大小）。
+-   `--output-show-line-numbers`: 在输出代码块中添加行号。
+-   `--verbose`: 启用详细日志记录，用于调试。
 
 
 ### 4.3 安全检查
 
-Repomix 包含内置的安全检查，用于检测文件中潜在的敏感信息。这有助于防止在共享代码库时意外暴露秘密。
+Repomix 包含内置的安全检查，使用 [detect-secrets](https://github.com/Yelp/detect-secrets) 库来检测潜在的敏感信息（API 密钥、凭证等）。默认情况下 (`exclude_suspicious_files: true`)，检测到的文件会从输出中排除。
 
-安全检查使用 [detect-secrets](https://github.com/Yelp/detect-secrets) 库，可以识别各种类型的秘密，包括：
-
-- API 密钥
-- AWS 访问密钥
-- 数据库凭据
-- 私钥
-- 认证令牌
-
-您可以使用以下命令禁用安全检查：
+可通过配置或命令行禁用检查：
 
 ```bash
-python -m repomix --no-security-check
+repomix --no-security-check
 ```
 
 ### 4.4 忽略模式
 
-Repomix 提供了多种方法来设置忽略模式，以便在打包过程中排除特定的文件或目录：
-
-#### 优先级顺序
-
-忽略模式按照以下优先级顺序应用（从高到低）：
+Repomix 使用多个来源的忽略模式，并按以下优先级顺序应用：
 
 1. 配置文件中的自定义模式 (`ignore.custom_patterns`)
 2. `.repomixignore` 文件
@@ -379,6 +389,10 @@ result = processor.process()
 - `file_statistics.py`: 文件统计示例
 - `remote_repo_usage.py`: 远程仓库处理示例
 
+### 6.3 环境变量
+
+*   `REPOMIX_COCURRENCY_STRATEGY`: 设置为 `thread` 或 `process` 来手动控制用于文件处理的并发策略（默认为 `process`，但在 AWS Lambda 等环境中或显式设置时可能会自动使用 `thread`）。
+
 ## 🤖 7. AI 使用指南
 
 ### 7.1 提示示例
@@ -436,4 +450,6 @@ result = processor.process()
 
 本项目根据 MIT 许可证获得许可。
 
-有关用法和配置选项的更多详细信息，请访问[文档](https://github.com/andersonby/python-repomix)。
+---
+
+有关用法和配置选项的更多详细信息，请访问[仓库](https://github.com/andersonby/python-repomix)。

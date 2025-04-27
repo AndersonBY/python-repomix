@@ -15,7 +15,9 @@ The original [Repomix](https://github.com/yamadashy/repomix) is written in JavaS
 -   **Simple to Use**: Pack your entire repository with just one command.
 -   **Customizable**: Easily configure what to include or exclude.
 -   **Git-Aware**: Automatically respects your .gitignore files.
--   **Security-Focused**: Built-in security checks to detect and prevent the inclusion of sensitive information.
+-   **Security-Focused**: Built-in security checks to detect and prevent the inclusion of sensitive information (powered by `detect-secrets`).
+-   ⚡ **Performance**: Utilizes multiprocessing or threading for faster analysis on multi-core systems.
+-   ⚙️ **Encoding Aware**: Automatically detects and handles various file encodings (using `chardet`) beyond UTF-8, increasing robustness.
 
 ## 🚀 3. Quick Start
 
@@ -25,13 +27,19 @@ You can install Repomix using pip:
 pip install repomix
 ```
 
-Then run in any project directory:
+Then run in any project directory (using the installed script is preferred):
+
+```bash
+repomix
+```
+
+Alternatively, you can use:
 
 ```bash
 python -m repomix
 ```
 
-That's it! Repomix will generate a `repomix-output.md` file in your current directory, containing your entire repository in an AI-friendly format.
+That's it! Repomix will generate a `repomix-output.md` file (by default) in your current directory, containing your entire repository in an AI-friendly format.
 
 ## 📖 4. Usage
 
@@ -40,30 +48,32 @@ That's it! Repomix will generate a `repomix-output.md` file in your current dire
 To pack your entire repository:
 
 ```bash
-python -m repomix
+repomix
 ```
 
 To pack a specific directory:
 
 ```bash
-python -m repomix path/to/directory
+repomix path/to/directory
 ```
 
 To pack a remote repository:
 
 ```bash
-python -m repomix --remote https://github.com/username/repo
+repomix --remote https://github.com/username/repo
 ```
 
 To initialize a new configuration file:
 
 ```bash
-python -m repomix --init
+repomix --init
+# Use --global to create a global configuration file (see Configuration Options below)
+repomix --init --global
 ```
 
 ### 4.2 Configuration Options
 
-Create a `repomix.config.json` file in your project root for custom configurations:
+Create a `repomix.config.json` file in your project root for custom configurations. Repomix also automatically loads a global configuration file if it exists (e.g., `~/.config/repomix/repomix.config.json` on Linux), merging it with lower priority than local config and CLI options.
 
 ```json
 {
@@ -95,33 +105,36 @@ Create a `repomix.config.json` file in your project root for custom configuratio
 }
 ```
 
+> [!NOTE]
+> *Note on `remove_comments`*: This feature is language-aware, correctly handling comment syntax for various languages like Python, JavaScript, C++, HTML, etc., rather than using a simple generic pattern.*
+
 **Command Line Options**
 
--   `-v, --version`: Show version
--   `-o, --output <file>`: Specify output file name
--   `--style <style>`: Specify output style (plain, xml, markdown)
--   `--remote <url>`: Process a remote Git repository
--   `--init`: Initialize configuration file
--   `--no-security-check`: Disable security check
--   `--verbose`: Enable verbose logging
+-   `repomix [directory]`: Target directory (defaults to current directory).
+-   `-v, --version`: Show version.
+-   `-o, --output <file>`: Specify output file name.
+-   `--style <style>`: Specify output style (plain, xml, markdown).
+-   `--remote <url>`: Process a remote Git repository.
+-   `--remote-branch <name>`: Specify remote branch, tag, or commit hash.
+-   `--init`: Initialize configuration file (`repomix.config.json`) in the current directory.
+-   `--global`: Use with `--init` to create/manage the global configuration file (located in a platform-specific user config directory, e.g., `~/.config/repomix` on Linux). The global config is automatically loaded if present.
+-   `--no-security-check`: Disable security check.
+-   `--include <patterns>`: Comma-separated list of include patterns (glob format).
+-   `-i, --ignore <patterns>`: Additional comma-separated ignore patterns.
+-   `-c, --config <path>`: Path to a custom configuration file.
+-   `--copy`: Copy generated output to system clipboard.
+-   `--top-files-len <number>`: Max number of largest files to display in summary.
+-   `--output-show-line-numbers`: Add line numbers to output code blocks.
+-   `--verbose`: Enable verbose logging for debugging.
 
 ### 4.3 Security Check
 
-Repomix includes built-in security checks to detect potentially sensitive information in your files. This helps prevent accidental exposure of secrets when sharing your codebase.
+Repomix includes built-in security checks using the [detect-secrets](https://github.com/Yelp/detect-secrets) library to detect potentially sensitive information (API keys, credentials, etc.). By default (`exclude_suspicious_files: true`), detected files are excluded from the output.
 
-The security check is powered by the [detect-secrets](https://github.com/Yelp/detect-secrets) library, which can identify various types of secrets including:
-
-- API keys
-- AWS access keys
-- Database credentials
-- Private keys
-- Authentication tokens
-- And more...
-
-You can disable security checks using:
+Disable checks via configuration or CLI:
 
 ```bash
-python -m repomix --no-security-check
+repomix --no-security-check
 ```
 
 ### 4.4 Ignore Patterns
@@ -369,6 +382,10 @@ For more example code, check out the `examples` directory:
 -   `file_statistics.py`: File statistics examples
 -   `remote_repo_usage.py`: Remote repository processing examples
 
+### 6.3 Environment Variables
+
+*   `REPOMIX_COCURRENCY_STRATEGY`: Set to `thread` or `process` to manually control the concurrency strategy used for file processing (default is `process`, but `thread` might be used automatically in environments like AWS Lambda or if set explicitly).
+
 ## 🤖 7. AI Usage Guide
 
 ### 7.1 Prompt Examples
@@ -428,4 +445,4 @@ This project is licensed under the MIT License.
 
 ---
 
-For more detailed information about usage and configuration options, please visit the [documentation](https://github.com/andersonby/python-repomix).
+For more detailed information, please visit the [repository](https://github.com/andersonby/python-repomix).
