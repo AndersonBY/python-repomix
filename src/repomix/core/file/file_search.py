@@ -68,9 +68,7 @@ def check_directory_permissions(directory: str | Path) -> PermissionCheckResult:
         return PermissionCheckResult(has_permission=False, error=e)
 
 
-def find_empty_directories(
-    root_dir: str | Path, directories: List[str], ignore_patterns: List[str], config: Optional[RepomixConfig] = None
-) -> List[str]:
+def find_empty_directories(root_dir: str | Path, directories: List[str], ignore_patterns: List[str], config: Optional[RepomixConfig] = None) -> List[str]:
     """Find empty directories, respecting ignore patterns."""
     empty_dirs: List[str] = []
     root_path = Path(root_dir)
@@ -104,9 +102,7 @@ def find_empty_directories(
     return empty_dirs
 
 
-def _should_ignore_path(
-    path: str, ignore_patterns: List[str], current_dir: Optional[Path] = None, root_path: Optional[Path] = None
-) -> bool:
+def _should_ignore_path(path: str, ignore_patterns: List[str], current_dir: Optional[Path] = None, root_path: Optional[Path] = None) -> bool:
     """Check if the path should be ignored
 
     Args:
@@ -183,10 +179,27 @@ def _scan_directory(
     config: Optional[RepomixConfig] = None,
 ) -> None:
     """Recursively scan directory, pruning ignored directories early."""
+    is_root = current_dir == root_path
+    if is_root:
+        logger.debug(f"Scanning root directory: {current_dir}")
+
     # Process .git directory at root (common and efficient)
     if current_dir.name == ".git" and current_dir.parent == root_path:
         logger.debug("Ignoring .git directory at root")
         return
+
+    # Check if there are single files specified in the configuration
+    if config and config.include:
+        for include_pattern in config.include:
+            # Handle the case of single file
+            if "*" not in include_pattern and "?" not in include_pattern and not include_pattern.endswith("/"):
+                normalized_pattern = include_pattern.replace("\\", "/")
+                file_path = root_path / normalized_pattern
+                if file_path.exists() and file_path.is_file():
+                    rel_path = file_path.relative_to(root_path).as_posix()
+                    if is_root and rel_path not in all_files:
+                        logger.debug(f"Found directly specified file from include pattern: {rel_path}")
+                        all_files.append(rel_path)
 
     # Check if the current directory has a .gitignore file, and merge its rules
     current_ignore_patterns = ignore_patterns.copy()
@@ -230,9 +243,7 @@ def _scan_directory(
                 # logger.trace(f"Entering directory: {rel_path}") # Optional trace
                 all_dirs.append(rel_path)
                 # Recursively call, passing current directory's ignore_patterns
-                _scan_directory(
-                    entry, root_path, all_files, all_dirs, current_ignore_patterns, config
-                )  # Pass current ignore patterns
+                _scan_directory(entry, root_path, all_files, all_dirs, current_ignore_patterns, config)  # Pass current ignore patterns
     except PermissionError as e:
         logger.warn(f"Permission denied accessing directory {current_dir}: {e}")
     except Exception as error:
@@ -267,6 +278,19 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
     raw_all_files: List[str] = []
     raw_all_dirs: List[str] = []
 
+    # 1.5 Preprocess single file paths in include patterns
+    single_file_includes = []
+    if config.include:
+        for pattern in config.include:
+            normalized_pattern = pattern.replace("\\", "/")
+            # Check if it's a single file pattern (no wildcards and not ending with /)
+            if "*" not in normalized_pattern and "?" not in normalized_pattern and not normalized_pattern.endswith("/"):
+                file_path = root_path / normalized_pattern
+                if file_path.exists() and file_path.is_file():
+                    rel_path = file_path.relative_to(root_path).as_posix()
+                    single_file_includes.append(rel_path)
+                    logger.debug(f"Pre-processing: Found single file include: {rel_path}")
+
     # 2. Get root directory's ignore rules *before scanning*
     logger.debug("Calculating root ignore patterns...")
     root_ignore_patterns = get_ignore_patterns(root_dir, config)
@@ -286,32 +310,43 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
         potentially_included_files = []
         # Note: include_patterns also need to normalize path separators, if they come from the config file
         normalized_include_patterns = [p.replace("\\", "/") for p in include_patterns]
+        logger.debug(f"Normalized include patterns: {normalized_include_patterns}")
 
         for file_path in raw_all_files:
             # file_path comes from _scan_directory, already in posix format
             is_included = False
+            logger.debug(f"Checking file: {file_path}")
+
             for pattern in normalized_include_patterns:
-                # Simplify include matching logic example (may need to adjust based on actual needs)
-                # fnmatch 对 posix 路径有效
+                # First check for exact file match, priority processing
+                if file_path == pattern:
+                    is_included = True
+                    logger.debug(f"Exact file match: {file_path} matches pattern {pattern}")
+                    break
+
+                # Standard fnmatch wildcard matching
                 if fnmatch.fnmatch(file_path, pattern):
                     is_included = True
+                    logger.debug(f"Wildcard match: {file_path} matches pattern {pattern}")
                     break
-                # Process directory include (e.g. "src/")
+
+                # Handle directory include pattern (ending with "/")
                 if pattern.endswith("/") and file_path.startswith(pattern):
                     is_included = True
+                    logger.debug(f"Directory prefix match: {file_path} in directory {pattern}")
                     break
-                # Process directory include (e.g. "src" means "src/")
-                if (
-                    not pattern.endswith("/")
-                    and "*" not in pattern
-                    and "?" not in pattern
-                    and file_path.startswith(pattern + "/")
-                ):
+
+                # Handle directory include pattern (not ending with "/")
+                if not pattern.endswith("/") and "*" not in pattern and "?" not in pattern and file_path.startswith(pattern + "/"):
                     is_included = True
+                    logger.debug(f"Implicit directory match: {file_path} in directory {pattern}/")
                     break
 
             if is_included:
                 potentially_included_files.append(file_path)
+                logger.debug(f"File included: {file_path}")
+            else:
+                logger.debug(f"File excluded: {file_path} (did not match any include patterns)")
 
         logger.debug(f"{len(potentially_included_files)} files potentially included after include filter.")
     else:
@@ -340,7 +375,12 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
 
         # Check if the file should be ignored
         current_dir = containing_dir
-        if not _should_ignore_path(file_path, current_ignore_patterns, current_dir, root_path):
+        should_ignore = _should_ignore_path(file_path, current_ignore_patterns, current_dir, root_path)
+
+        if should_ignore:
+            logger.debug(f"Final filter: Ignoring file {file_path} due to ignore patterns")
+        else:
+            logger.debug(f"Final filter: Including file {file_path}")
             final_files.append(file_path)
 
     logger.debug(f"{len(final_files)} files remaining after final ignore filter.")
@@ -373,6 +413,13 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
     else:
         logger.debug("Empty directory inclusion is disabled.")
 
+    # 9. Ensure single files are always included in the final result
+    if single_file_includes:
+        for file_path in single_file_includes:
+            if file_path not in final_files:
+                logger.debug(f"Ensuring single file include is in final result: {file_path}")
+                final_files.append(file_path)
+
     return FileSearchResult(file_paths=final_files, empty_dir_paths=empty_dirs)
 
 
@@ -387,11 +434,7 @@ def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str
     repomixignore_path = Path(root_dir) / ".repomixignore"
     if repomixignore_path.exists():
         try:
-            new_patterns = [
-                line.strip()
-                for line in repomixignore_path.read_text().splitlines()
-                if line.strip() and not line.startswith("#")
-            ]
+            new_patterns = [line.strip() for line in repomixignore_path.read_text().splitlines() if line.strip() and not line.startswith("#")]
             patterns.extend(new_patterns)
         except Exception as error:
             logger.warn(f"Failed to read .repomixignore: {error}")
@@ -401,11 +444,7 @@ def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str
         gitignore_path = Path(root_dir) / ".gitignore"
         if gitignore_path.exists():
             try:
-                new_patterns = [
-                    line.strip()
-                    for line in gitignore_path.read_text().splitlines()
-                    if line.strip() and not line.startswith("#")
-                ]
+                new_patterns = [line.strip() for line in gitignore_path.read_text().splitlines() if line.strip() and not line.startswith("#")]
                 patterns.extend(new_patterns)
             except Exception as error:
                 logger.warn(f"Failed to read .gitignore file: {error}")
