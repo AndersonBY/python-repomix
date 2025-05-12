@@ -392,6 +392,7 @@ result = processor.process()
 ### 6.3 环境变量
 
 *   `REPOMIX_COCURRENCY_STRATEGY`: 设置为 `thread` 或 `process` 来手动控制用于文件处理的并发策略（默认为 `process`，但在 AWS Lambda 等环境中或显式设置时可能会自动使用 `thread`）。
+*   `REPOMIX_LOG_LEVEL`: 设置日志级别。可用的值有 `TRACE`、`DEBUG`、`INFO`、`SUCCESS`、`WARN` 和 `ERROR`（默认为 `INFO`）。此设置控制日志输出的详细程度，不受 `--verbose` 标志的影响。
 
 ## 🤖 7. AI 使用指南
 

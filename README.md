@@ -385,6 +385,7 @@ For more example code, check out the `examples` directory:
 ### 6.3 Environment Variables
 
 *   `REPOMIX_COCURRENCY_STRATEGY`: Set to `thread` or `process` to manually control the concurrency strategy used for file processing (default is `process`, but `thread` might be used automatically in environments like AWS Lambda or if set explicitly).
+*   `REPOMIX_LOG_LEVEL`: Set the logging level. Available values are `TRACE`, `DEBUG`, `INFO`, `SUCCESS`, `WARN`, and `ERROR` (default is `INFO`). This setting controls the verbosity of log output regardless of the `--verbose` flag.
 
 ## 🤖 7. AI Usage Guide
 
