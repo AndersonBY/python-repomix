@@ -56,6 +56,15 @@ def process_content(content: str, file_path: str, config: RepomixConfig) -> str:
     processed_content = content
     manipulator = get_file_manipulator(file_path)
 
+    # Apply compression if enabled
+    if config.compression.enabled and manipulator:
+        processed_content = manipulator.compress_code(
+            processed_content,
+            keep_signatures=config.compression.keep_signatures,
+            keep_docstrings=config.compression.keep_docstrings,
+            keep_interfaces=config.compression.keep_interfaces,
+        )
+
     # Remove comments based on configuration
     if config.output.remove_comments and manipulator:
         processed_content = manipulator.remove_comments(processed_content)

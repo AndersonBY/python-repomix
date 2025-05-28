@@ -44,6 +44,7 @@ def run_init_action(cwd: str | Path, use_global: bool = False) -> None:
     config_dict = {
         "output": config.output.__dict__,
         "security": config.security.__dict__,
+        "compression": config.compression.__dict__,
         "ignore": config.ignore.__dict__,
         "include": config.include,
     }

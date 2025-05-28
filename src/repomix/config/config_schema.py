@@ -41,9 +41,7 @@ class RepomixConfigOutput:
             try:
                 self._style = RepomixOutputStyle(value.lower())
             except ValueError:
-                raise ValueError(
-                    f"Invalid style value: {value}. Must be one of: {', '.join(s.value for s in RepomixOutputStyle)}"
-                )
+                raise ValueError(f"Invalid style value: {value}. Must be one of: {', '.join(s.value for s in RepomixOutputStyle)}")
         else:
             raise TypeError("Style must be either string or RepomixOutputStyle enum")
 
@@ -76,12 +74,23 @@ class RepomixConfigIgnore:
 
 
 @dataclass
+class RepomixConfigCompression:
+    """Compression configuration"""
+
+    enabled: bool = False
+    keep_signatures: bool = True
+    keep_docstrings: bool = True
+    keep_interfaces: bool = True
+
+
+@dataclass
 class RepomixConfig:
     """Repomix main configuration class"""
 
     output: RepomixConfigOutput = field(default_factory=RepomixConfigOutput)
     security: RepomixConfigSecurity = field(default_factory=RepomixConfigSecurity)
     ignore: RepomixConfigIgnore = field(default_factory=RepomixConfigIgnore)
+    compression: RepomixConfigCompression = field(default_factory=RepomixConfigCompression)
     include: List[str] = field(default_factory=list)
 
     def __post_init__(self):
@@ -104,6 +113,9 @@ class RepomixConfig:
         # Handle ignore if it's a dictionary
         if isinstance(self.ignore, dict):
             self.ignore = RepomixConfigIgnore(**self.ignore)
+
+        if isinstance(self.compression, dict):
+            self.compression = RepomixConfigCompression(**self.compression)
 
 
 # Default configuration

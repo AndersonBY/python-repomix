@@ -3,6 +3,8 @@ File Manipulation Module - Provides Various Methods for File Content Operations
 """
 
 import re
+import ast
+import warnings
 from typing import Dict
 from pathlib import Path
 
@@ -31,6 +33,21 @@ class FileManipulator:
             Content with empty lines removed
         """
         return "\n".join(line for line in content.splitlines() if line.strip())
+
+    def compress_code(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+        """Compress code by removing unnecessary elements
+
+        Args:
+            content: File content
+            keep_signatures: Whether to keep function/class signatures
+            keep_docstrings: Whether to keep docstrings
+            keep_interfaces: Whether to keep only interface (signatures + docstrings, but remove implementation)
+
+        Returns:
+            Compressed content
+        """
+        warnings.warn("Code compression not implemented for this file type", UserWarning)
+        return content
 
 
 class StripCommentsManipulator(FileManipulator):
@@ -95,6 +112,151 @@ class PythonManipulator(FileManipulator):
         content = re.sub(r"#.*", "", content)
         return content
 
+    def compress_code(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+        """Compress Python code using AST
+
+        Args:
+            content: Python source code
+            keep_signatures: Whether to keep function/class signatures
+            keep_docstrings: Whether to keep docstrings
+            keep_interfaces: Whether to keep only interface (signatures + docstrings, but remove implementation)
+
+        Returns:
+            Compressed Python code
+        """
+        try:
+            tree = ast.parse(content)
+            compressed_tree = self._compress_ast_node(tree, keep_signatures, keep_docstrings, keep_interfaces)
+            if compressed_tree is not None:
+                return ast.unparse(compressed_tree)
+            else:
+                return ""
+        except SyntaxError:
+            warnings.warn("Failed to parse Python code for compression, returning original content", UserWarning)
+            return content
+        except Exception as e:
+            warnings.warn(f"Error during Python code compression: {e}, returning original content", UserWarning)
+            return content
+
+    def _compress_ast_node(self, node: ast.AST, keep_signatures: bool, keep_docstrings: bool, keep_interfaces: bool) -> ast.AST | None:
+        """Recursively compress AST nodes
+
+        Args:
+            node: AST node to compress
+            keep_signatures: Whether to keep function/class signatures
+            keep_docstrings: Whether to keep docstrings
+            keep_interfaces: Whether to keep only interface (signatures + docstrings, but remove implementation)
+
+        Returns:
+            Compressed AST node, or None if node should be removed
+        """
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            return self._compress_function_or_class(node, keep_signatures, keep_docstrings, keep_interfaces)
+        elif isinstance(node, ast.Module):
+            # Process module body
+            new_body = []
+            for child in node.body:
+                compressed_child = self._compress_ast_node(child, keep_signatures, keep_docstrings, keep_interfaces)
+                if compressed_child is not None:
+                    new_body.append(compressed_child)
+            node.body = new_body
+            return node
+        else:
+            # For other nodes, recursively process children
+            for field, value in ast.iter_fields(node):
+                if isinstance(value, list):
+                    new_list = []
+                    for item in value:
+                        if isinstance(item, ast.AST):
+                            compressed_item = self._compress_ast_node(item, keep_signatures, keep_docstrings, keep_interfaces)
+                            if compressed_item is not None:
+                                new_list.append(compressed_item)
+                        else:
+                            new_list.append(item)
+                    setattr(node, field, new_list)
+                elif isinstance(value, ast.AST):
+                    compressed_value = self._compress_ast_node(value, keep_signatures, keep_docstrings, keep_interfaces)
+                    if compressed_value is not None:
+                        setattr(node, field, compressed_value)
+            return node
+
+    def _compress_function_or_class(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef, keep_signatures: bool, keep_docstrings: bool, keep_interfaces: bool
+    ) -> ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | None:
+        """Compress function or class definition
+
+        Args:
+            node: Function or class AST node
+            keep_signatures: Whether to keep function/class signatures
+            keep_docstrings: Whether to keep docstrings
+            keep_interfaces: Whether to keep only interface (signatures + docstrings, but remove implementation)
+
+        Returns:
+            Compressed function or class node, or None if completely removed
+        """
+        if not keep_signatures:
+            # If not keeping signatures, remove the entire function/class
+            return None
+
+        # Handle interface mode
+        if keep_interfaces:
+            new_body = []
+
+            # Handle docstring - always keep in interface mode
+            first_stmt = node.body[0] if node.body else None
+            if isinstance(first_stmt, ast.Expr) and isinstance(first_stmt.value, ast.Constant) and isinstance(first_stmt.value.value, str):
+                # This is a docstring - keep it
+                new_body.append(first_stmt)
+                body_to_process = node.body[1:]
+            else:
+                body_to_process = node.body
+
+            # For classes in interface mode, recursively process methods to keep their interfaces
+            if isinstance(node, ast.ClassDef):
+                for stmt in body_to_process:
+                    if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        # Recursively process methods to keep their interfaces
+                        compressed_method = self._compress_ast_node(stmt, keep_signatures, keep_docstrings, keep_interfaces)
+                        if compressed_method is not None:
+                            new_body.append(compressed_method)
+                    # Skip other statements in class body (like assignments, etc.)
+
+            # If no methods were added (for functions or empty classes), add pass
+            if len(new_body) <= 1:  # Only docstring or nothing
+                new_body.append(ast.Pass())
+
+            node.body = new_body
+            return node
+
+        # Keep the signature but compress the body
+        if hasattr(node, "body") and node.body:
+            new_body = []
+
+            # Handle docstring
+            first_stmt = node.body[0] if node.body else None
+            if isinstance(first_stmt, ast.Expr) and isinstance(first_stmt.value, ast.Constant) and isinstance(first_stmt.value.value, str):
+                # This is a docstring
+                if keep_docstrings:
+                    new_body.append(first_stmt)
+                # Skip the docstring in further processing
+                body_to_process = node.body[1:]
+            else:
+                body_to_process = node.body
+
+            # Process the rest of the body
+            for stmt in body_to_process:
+                compressed_stmt = self._compress_ast_node(stmt, keep_signatures, keep_docstrings, keep_interfaces)
+                if compressed_stmt is not None:
+                    new_body.append(compressed_stmt)
+
+            # If body is empty after compression, add a pass statement
+            if not new_body:
+                new_body.append(ast.Pass())
+
+            node.body = new_body
+
+        return node
+
 
 class CompositeManipulator(FileManipulator):
     """Composite File Manipulator for handling multi-language mixed files (like Vue)"""
@@ -112,6 +274,12 @@ class CompositeManipulator(FileManipulator):
         """Process content using all manipulators"""
         for manipulator in self.manipulators:
             content = manipulator.remove_comments(content)
+        return content
+
+    def compress_code(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+        """Compress code using all manipulators"""
+        for manipulator in self.manipulators:
+            content = manipulator.compress_code(content, keep_signatures, keep_docstrings, keep_interfaces)
         return content
 
 

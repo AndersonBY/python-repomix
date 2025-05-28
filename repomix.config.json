@@ -18,6 +18,12 @@
     "enable_security_check": true,
     "exclude_suspicious_files": true
   },
+  "compression": {
+    "enabled": false,
+    "keep_signatures": true,
+    "keep_docstrings": true,
+    "keep_interfaces": true
+  },
   "ignore": {
     "custom_patterns": [],
     "use_gitignore": true,
