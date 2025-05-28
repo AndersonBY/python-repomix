@@ -25,3 +25,8 @@ distribution = true
 
 [project.scripts]
 repomix = "repomix.cli:run"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
