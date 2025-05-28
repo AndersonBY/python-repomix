@@ -16,6 +16,7 @@ The original [Repomix](https://github.com/yamadashy/repomix) is written in JavaS
 -   **Customizable**: Easily configure what to include or exclude.
 -   **Git-Aware**: Automatically respects your .gitignore files.
 -   **Security-Focused**: Built-in security checks to detect and prevent the inclusion of sensitive information (powered by `detect-secrets`).
+-   **Code Compression**: Advanced code compression with multiple modes to reduce output size while preserving essential information.
 -   ⚡ **Performance**: Utilizes multiprocessing or threading for faster analysis on multi-core systems.
 -   ⚙️ **Encoding Aware**: Automatically detects and handles various file encodings (using `chardet`) beyond UTF-8, increasing robustness.
 
@@ -101,6 +102,12 @@ Create a `repomix.config.json` file in your project root for custom configuratio
     "use_gitignore": true,
     "use_default_ignore": true
   },
+  "compression": {
+    "enabled": false,
+    "keep_signatures": true,
+    "keep_docstrings": true,
+    "keep_interfaces": true
+  },
   "include": []
 }
 ```
@@ -137,7 +144,108 @@ Disable checks via configuration or CLI:
 repomix --no-security-check
 ```
 
-### 4.4 Ignore Patterns
+### 4.4 Code Compression
+
+Repomix provides advanced code compression capabilities to reduce output size while preserving essential information. This feature is particularly useful when working with large codebases or when you need to focus on specific aspects of your code.
+
+#### 4.4.1 Compression Modes
+
+**Interface Mode** (`keep_interfaces: true`)
+- Preserves function and class signatures with their complete type annotations
+- Keeps all docstrings for comprehensive API documentation
+- Removes implementation details, replacing them with `pass` statements
+- Perfect for generating API documentation or understanding code structure
+
+**Signature Mode** (`keep_signatures: true`, `keep_interfaces: false`)
+- Preserves function and class definitions
+- Optionally keeps docstrings based on `keep_docstrings` setting
+- Maintains full implementation code
+- Useful for standard code compression while keeping functionality
+
+**Minimal Mode** (`keep_signatures: false`)
+- Removes all function and class definitions
+- Keeps only global variables, imports, and module-level code
+- Maximum compression for focusing on configuration and constants
+
+#### 4.4.2 Configuration Options
+
+```json
+{
+  "compression": {
+    "enabled": false,           // Enable/disable compression
+    "keep_signatures": true,    // Keep function/class signatures
+    "keep_docstrings": true,    // Keep docstrings
+    "keep_interfaces": true     // Interface mode (signatures + docstrings only)
+  }
+}
+```
+
+#### 4.4.3 Usage Examples
+
+**Generate API Documentation:**
+```bash
+# Create interface-only output for API documentation
+repomix --config-override '{"compression": {"enabled": true, "keep_interfaces": true}}'
+```
+
+**Compress Implementation Details:**
+```bash
+# Keep signatures but remove implementation for code overview
+repomix --config-override '{"compression": {"enabled": true, "keep_interfaces": false, "keep_signatures": true, "keep_docstrings": false}}'
+```
+
+**Extract Configuration Only:**
+```bash
+# Keep only global variables and constants
+repomix --config-override '{"compression": {"enabled": true, "keep_signatures": false}}'
+```
+
+#### 4.4.4 Language Support
+
+Currently, advanced compression features are fully supported for:
+- **Python**: Complete AST-based compression with all modes
+- **Other Languages**: Basic compression with warnings (future enhancement planned)
+
+#### 4.4.5 Example Output
+
+**Original Python Code:**
+```python
+def calculate_sum(a: int, b: int) -> int:
+    """
+    Calculate the sum of two integers.
+    
+    Args:
+        a: First integer
+        b: Second integer
+        
+    Returns:
+        The sum of a and b
+    """
+    if not isinstance(a, int) or not isinstance(b, int):
+        raise TypeError("Both arguments must be integers")
+    
+    result = a + b
+    print(f"Calculating {a} + {b} = {result}")
+    return result
+```
+
+**Interface Mode Output:**
+```python
+def calculate_sum(a: int, b: int) -> int:
+    """
+    Calculate the sum of two integers.
+    
+    Args:
+        a: First integer
+        b: Second integer
+        
+    Returns:
+        The sum of a and b
+    """
+    pass
+```
+
+### 4.5 Ignore Patterns
 
 Repomix provides multiple methods to set ignore patterns for excluding specific files or directories during the packing process:
 
@@ -364,12 +472,54 @@ config.output.show_line_numbers = True
 config.security.enable_security_check = True
 config.security.exclude_suspicious_files = True
 
+# Compression settings
+config.compression.enabled = True
+config.compression.keep_signatures = True
+config.compression.keep_docstrings = True
+config.compression.keep_interfaces = True  # Interface mode for API documentation
+
 # Include/Ignore patterns
 config.include = ["src/**/*", "tests/**/*"]
 config.ignore.custom_patterns = ["*.log", "*.tmp"]
 config.ignore.use_gitignore = True
 
 # Process repository with custom config
+processor = RepoProcessor(".", config=config)
+result = processor.process()
+```
+
+#### 6.2.1 Compression Examples
+
+```python
+from repomix import RepoProcessor, RepomixConfig
+
+# Example 1: Generate API documentation (Interface Mode)
+config = RepomixConfig()
+config.compression.enabled = True
+config.compression.keep_interfaces = True  # Keep signatures + docstrings only
+config.output.file_path = "api-documentation.md"
+
+processor = RepoProcessor(".", config=config)
+result = processor.process()
+print(f"API documentation generated: {result.config.output.file_path}")
+
+# Example 2: Code overview without implementation details
+config = RepomixConfig()
+config.compression.enabled = True
+config.compression.keep_signatures = True
+config.compression.keep_docstrings = False
+config.compression.keep_interfaces = False  # Keep full signatures but remove docstrings
+config.output.file_path = "code-overview.md"
+
+processor = RepoProcessor(".", config=config)
+result = processor.process()
+
+# Example 3: Extract only configuration and constants
+config = RepomixConfig()
+config.compression.enabled = True
+config.compression.keep_signatures = False  # Remove all functions/classes
+config.output.file_path = "config-only.md"
+
 processor = RepoProcessor(".", config=config)
 result = processor.process()
 ```
@@ -429,6 +579,27 @@ Get a high-level understanding of the library
 
 ```
 This file contains the entire codebase of library. Please provide a comprehensive overview of the library, including its main purpose, key features, and overall architecture.
+```
+
+#### API Documentation Review
+For reviewing API interfaces (when using interface mode compression):
+
+```
+This file contains the API interfaces of my codebase with all implementation details removed. Please review the API design, suggest improvements for consistency, and identify any missing documentation or unclear method signatures.
+```
+
+#### Code Architecture Analysis
+For analyzing code structure (when using signature mode compression):
+
+```
+This file contains the code structure with function signatures but minimal implementation details. Please analyze the overall architecture, identify design patterns used, and suggest improvements for better modularity and separation of concerns.
+```
+
+#### Configuration Analysis
+For analyzing configuration and constants (when using minimal mode compression):
+
+```
+This file contains only the configuration, constants, and global variables from my codebase. Please review these settings, identify potential configuration issues, and suggest best practices for configuration management.
 ```
 
 Feel free to modify these prompts based on your specific needs and the capabilities of the AI tool you're using.

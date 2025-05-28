@@ -17,6 +17,7 @@ Repomix 是一个强大的工具，可以将你的整个仓库打包成一个单
 -   **可定制**: 轻松配置要包含或排除的内容。
 -   **Git 感知**: 自动遵守你的 `.gitignore` 文件。
 -   **安全至上**: 内置安全检查，以检测并防止包含敏感信息（基于 `detect-secrets`）。
+-   **代码压缩**: 高级代码压缩功能，提供多种模式以减少输出大小同时保留关键信息。
 -   ⚡ **性能**: 利用多进程或多线程在多核系统上实现更快的分析。
 -   ⚙️ **编码感知**: 自动检测并处理除 UTF-8 之外的多种文件编码（使用 `chardet`），增强健壮性。
 
@@ -103,6 +104,12 @@ repomix --init --global
     "use_gitignore": true,
     "use_default_ignore": true
   },
+  "compression": {
+    "enabled": false,
+    "keep_signatures": true,
+    "keep_docstrings": true,
+    "keep_interfaces": true
+  },
   "include": []
 }
 ```
@@ -140,7 +147,108 @@ Repomix 包含内置的安全检查，使用 [detect-secrets](https://github.com
 repomix --no-security-check
 ```
 
-### 4.4 忽略模式
+### 4.4 代码压缩
+
+Repomix 提供高级代码压缩功能，可以在保留关键信息的同时减少输出大小。此功能在处理大型代码库或需要专注于代码特定方面时特别有用。
+
+#### 4.4.1 压缩模式
+
+**接口模式** (`keep_interfaces: true`)
+- 保留函数和类签名及其完整的类型注解
+- 保留所有文档字符串以提供全面的 API 文档
+- 移除实现细节，用 `pass` 语句替换
+- 非常适合生成 API 文档或理解代码结构
+
+**签名模式** (`keep_signatures: true`, `keep_interfaces: false`)
+- 保留函数和类定义
+- 根据 `keep_docstrings` 设置选择性保留文档字符串
+- 保持完整的实现代码
+- 适用于标准代码压缩同时保持功能性
+
+**最小模式** (`keep_signatures: false`)
+- 移除所有函数和类定义
+- 仅保留全局变量、导入和模块级代码
+- 最大压缩，专注于配置和常量
+
+#### 4.4.2 配置选项
+
+```json
+{
+  "compression": {
+    "enabled": false,           // 启用/禁用压缩
+    "keep_signatures": true,    // 保留函数/类签名
+    "keep_docstrings": true,    // 保留文档字符串
+    "keep_interfaces": true     // 接口模式（仅签名 + 文档字符串）
+  }
+}
+```
+
+#### 4.4.3 使用示例
+
+**生成 API 文档：**
+```bash
+# 创建仅接口的输出用于 API 文档
+repomix --config-override '{"compression": {"enabled": true, "keep_interfaces": true}}'
+```
+
+**压缩实现细节：**
+```bash
+# 保留签名但移除实现以获得代码概览
+repomix --config-override '{"compression": {"enabled": true, "keep_interfaces": false, "keep_signatures": true, "keep_docstrings": false}}'
+```
+
+**仅提取配置：**
+```bash
+# 仅保留全局变量和常量
+repomix --config-override '{"compression": {"enabled": true, "keep_signatures": false}}'
+```
+
+#### 4.4.4 语言支持
+
+目前，高级压缩功能完全支持：
+- **Python**: 基于 AST 的完整压缩，支持所有模式
+- **其他语言**: 基础压缩并显示警告（计划未来增强）
+
+#### 4.4.5 示例输出
+
+**原始 Python 代码：**
+```python
+def calculate_sum(a: int, b: int) -> int:
+    """
+    计算两个整数的和。
+    
+    Args:
+        a: 第一个整数
+        b: 第二个整数
+        
+    Returns:
+        a 和 b 的和
+    """
+    if not isinstance(a, int) or not isinstance(b, int):
+        raise TypeError("两个参数都必须是整数")
+    
+    result = a + b
+    print(f"计算 {a} + {b} = {result}")
+    return result
+```
+
+**接口模式输出：**
+```python
+def calculate_sum(a: int, b: int) -> int:
+    """
+    计算两个整数的和。
+    
+    Args:
+        a: 第一个整数
+        b: 第二个整数
+        
+    Returns:
+        a 和 b 的和
+    """
+    pass
+```
+
+### 4.5 忽略模式
 
 Repomix 使用多个来源的忽略模式，并按以下优先级顺序应用：
 
@@ -371,12 +479,54 @@ config.output.show_line_numbers = True
 config.security.enable_security_check = True
 config.security.exclude_suspicious_files = True
 
+# 压缩设置
+config.compression.enabled = True
+config.compression.keep_signatures = True
+config.compression.keep_docstrings = True
+config.compression.keep_interfaces = True  # 接口模式用于 API 文档
+
 # 包含/忽略模式
 config.include = ["src/**/*", "tests/**/*"]
 config.ignore.custom_patterns = ["*.log", "*.tmp"]
 config.ignore.use_gitignore = True
 
 # 使用自定义配置处理仓库
+processor = RepoProcessor(".", config=config)
+result = processor.process()
+```
+
+#### 6.2.1 压缩功能示例
+
+```python
+from repomix import RepoProcessor, RepomixConfig
+
+# 示例 1: 生成 API 文档（接口模式）
+config = RepomixConfig()
+config.compression.enabled = True
+config.compression.keep_interfaces = True  # 仅保留签名 + 文档字符串
+config.output.file_path = "api-documentation.md"
+
+processor = RepoProcessor(".", config=config)
+result = processor.process()
+print(f"API 文档已生成: {result.config.output.file_path}")
+
+# 示例 2: 代码概览，不包含实现细节
+config = RepomixConfig()
+config.compression.enabled = True
+config.compression.keep_signatures = True
+config.compression.keep_docstrings = False
+config.compression.keep_interfaces = False  # 保留完整签名但移除文档字符串
+config.output.file_path = "code-overview.md"
+
+processor = RepoProcessor(".", config=config)
+result = processor.process()
+
+# 示例 3: 仅提取配置和常量
+config = RepomixConfig()
+config.compression.enabled = True
+config.compression.keep_signatures = False  # 移除所有函数/类
+config.output.file_path = "config-only.md"
+
 processor = RepoProcessor(".", config=config)
 result = processor.process()
 ```
@@ -438,6 +588,27 @@ result = processor.process()
 
 ```
 这个文件包含了库的整个代码库。请提供该库的全面概述，包括其主要目的、关键特性和整体架构。
+```
+
+#### API 文档审查
+用于审查 API 接口（使用接口模式压缩时）：
+
+```
+这个文件包含了我的代码库的 API 接口，所有实现细节都已移除。请审查 API 设计，建议一致性改进，并识别任何缺失的文档或不清楚的方法签名。
+```
+
+#### 代码架构分析
+用于分析代码结构（使用签名模式压缩时）：
+
+```
+这个文件包含了代码结构和函数签名，但实现细节很少。请分析整体架构，识别使用的设计模式，并建议改进以获得更好的模块化和关注点分离。
+```
+
+#### 配置分析
+用于分析配置和常量（使用最小模式压缩时）：
+
+```
+这个文件仅包含我的代码库中的配置、常量和全局变量。请审查这些设置，识别潜在的配置问题，并建议配置管理的最佳实践。
 ```
 
 ### 7.2 最佳实践
