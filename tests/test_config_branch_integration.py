@@ -127,16 +127,9 @@ class TestConfigBranchIntegration:
         """Test CLI options processing includes branch parameter"""
         # This would be tested more comprehensively with actual CLI integration
         # For now, we test the options dict structure
-        options = {"branch": "feature/test-branch", "remote_branch": "main", "remote": "jstrieb/github-stats"}
-
-        # Test that branch takes precedence over remote_branch when both are provided
-        branch_value = options.get("branch") or options.get("remote_branch")
-        assert branch_value == "feature/test-branch"
-
-        # Test fallback to remote_branch when branch is not provided
-        options_no_branch = {"remote_branch": "develop", "remote": "jstrieb/github-stats"}
-        branch_value = options_no_branch.get("branch") or options_no_branch.get("remote_branch")
-        assert branch_value == "develop"
+        options = {"branch": "dark-mode", "remote": "jstrieb/github-stats"}
+        branch_value = options.get("branch")
+        assert branch_value == "dark-mode"
 
     def test_config_precedence(self):
         """Test that CLI options override config file settings"""

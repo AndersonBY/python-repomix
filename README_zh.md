@@ -143,8 +143,7 @@ repomix --init --global
 -   `-o, --output <file>`: 指定输出文件名。
 -   `--style <style>`: 指定输出样式 (plain, xml, markdown)。
 -   `--remote <url>`: 处理远程 Git 仓库。
--   `--remote-branch <name>`: 指定远程分支、标签或提交哈希。
--   `--branch <name>`: 指定远程仓库的分支（--remote-branch 的替代选项）。
+-   `--branch <name>`: 指定远程仓库的分支。
 -   `--init`: 在当前目录初始化配置文件 (`repomix.config.json`)。
 -   `--global`: 与 `--init` 配合使用，用于创建/管理全局配置文件（位于特定于平台的用户配置目录，例如 Linux 上的 `~/.config/repomix`）。如果全局配置存在，它会被自动加载。
 -   `--no-security-check`: 禁用安全检查。

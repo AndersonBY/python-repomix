@@ -141,8 +141,7 @@ When a remote URL is specified in the configuration, Repomix will process the re
 -   `-o, --output <file>`: Specify output file name.
 -   `--style <style>`: Specify output style (plain, xml, markdown).
 -   `--remote <url>`: Process a remote Git repository.
--   `--remote-branch <name>`: Specify remote branch, tag, or commit hash.
--   `--branch <name>`: Specify branch for remote repository (alternative to --remote-branch).
+-   `--branch <name>`: Specify branch for remote repository.
 -   `--init`: Initialize configuration file (`repomix.config.json`) in the current directory.
 -   `--global`: Use with `--init` to create/manage the global configuration file (located in a platform-specific user config directory, e.g., `~/.config/repomix` on Linux). The global config is automatically loaded if present.
 -   `--no-security-check`: Disable security check.

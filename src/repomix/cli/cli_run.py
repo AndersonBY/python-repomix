@@ -41,11 +41,6 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--global", dest="use_global", action="store_true", help="Use global configuration (only for --init)")
     parser.add_argument("--remote", metavar="<url>", help="Process remote Git repository")
     parser.add_argument(
-        "--remote-branch",
-        metavar="<name>",
-        help="Specify remote branch name, tag, or commit hash (defaults to repository default branch)",
-    )
-    parser.add_argument(
         "--branch",
         metavar="<name>",
         help="Specify branch name for remote repository (can be set in config file)",

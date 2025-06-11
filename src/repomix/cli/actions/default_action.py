@@ -65,7 +65,7 @@ def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str
         "security": {},
         "remote": {
             "url": options.get("remote"),
-            "branch": options.get("branch") or options.get("remote_branch"),
+            "branch": options.get("branch"),
         },
     }
 
