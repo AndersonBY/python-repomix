@@ -91,6 +91,7 @@ class RepoProcessor:
         self,
         directory: str | Path | None = None,
         repo_url: str | None = None,
+        branch: str | None = None,
         config: RepomixConfig | None = None,
         config_path: str | None = None,
         cli_options: Dict | None = None,
@@ -100,6 +101,7 @@ class RepoProcessor:
 
         self.repo_url = repo_url
         self.temp_dir = None
+        self.branch = branch
         self.directory = directory
         self.config = config
         self.config_path = config_path
@@ -124,7 +126,7 @@ class RepoProcessor:
         try:
             if self.repo_url:
                 self.temp_dir = create_temp_directory()
-                clone_repository(format_git_url(self.repo_url), self.temp_dir)
+                clone_repository(format_git_url(self.repo_url), self.temp_dir, self.branch)
                 self.directory = self.temp_dir
 
             if self.config is None:
