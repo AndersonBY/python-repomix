@@ -1,0 +1,39 @@
+{
+    "output": {
+        "file_path": "remote-repo-output.md",
+        "style": "markdown",
+        "show_line_numbers": false,
+        "copy_to_clipboard": false,
+        "calculate_tokens": true,
+        "show_file_stats": true
+    },
+    "remote": {
+        "url": "https://github.com/jstrieb/github-stats",
+        "branch": "dark-mode"
+    },
+    "security": {
+        "enable_security_check": true,
+        "exclude_suspicious_files": true
+    },
+    "compression": {
+        "enabled": false,
+        "keep_signatures": true,
+        "keep_docstrings": true,
+        "keep_interfaces": true
+    },
+    "ignore": {
+        "custom_patterns": [
+            "*.log",
+            "*.tmp",
+            "node_modules/",
+            "__pycache__/"
+        ],
+        "use_gitignore": true,
+        "use_default_ignore": true
+    },
+    "include": [
+        "*.py",
+        "*.md",
+        "*.json"
+    ]
+}

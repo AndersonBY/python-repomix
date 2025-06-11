@@ -1,4 +1,8 @@
 {
+  "remote": {
+    "url": "",
+    "branch": ""
+  },
   "output": {
     "file_path": "repomix-output.md",
     "style": "markdown",

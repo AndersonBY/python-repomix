@@ -29,9 +29,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("-c", "--config", metavar="<path>", help="Custom configuration file path")
     parser.add_argument("--copy", action="store_true", help="Copy generated output to system clipboard")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
-    parser.add_argument(
-        "--top-files-len", type=int, metavar="<number>", help="Specify maximum number of files to display"
-    )
+    parser.add_argument("--top-files-len", type=int, metavar="<number>", help="Specify maximum number of files to display")
     parser.add_argument("--output-show-line-numbers", action="store_true", help="Add line numbers to output")
     parser.add_argument(
         "--style",
@@ -40,14 +38,17 @@ def create_parser() -> argparse.ArgumentParser:
         help="Specify output style (plain, xml, markdown)",
     )
     parser.add_argument("--init", action="store_true", help="Initialize new repomix.config.json file")
-    parser.add_argument(
-        "--global", dest="use_global", action="store_true", help="Use global configuration (only for --init)"
-    )
+    parser.add_argument("--global", dest="use_global", action="store_true", help="Use global configuration (only for --init)")
     parser.add_argument("--remote", metavar="<url>", help="Process remote Git repository")
     parser.add_argument(
         "--remote-branch",
         metavar="<name>",
         help="Specify remote branch name, tag, or commit hash (defaults to repository default branch)",
+    )
+    parser.add_argument(
+        "--branch",
+        metavar="<name>",
+        help="Specify branch name for remote repository (can be set in config file)",
     )
     parser.add_argument("--no-security-check", action="store_true", help="Disable security check")
 

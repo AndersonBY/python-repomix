@@ -64,6 +64,12 @@ To pack a remote repository:
 repomix --remote https://github.com/username/repo
 ```
 
+To pack a specific branch of a remote repository:
+
+```bash
+repomix --remote https://github.com/username/repo --branch feature-branch
+```
+
 To initialize a new configuration file:
 
 ```bash
@@ -108,12 +114,25 @@ Create a `repomix.config.json` file in your project root for custom configuratio
     "keep_docstrings": true,
     "keep_interfaces": true
   },
+  "remote": {
+    "url": "",
+    "branch": ""
+  },
   "include": []
 }
 ```
 
 > [!NOTE]
 > *Note on `remove_comments`*: This feature is language-aware, correctly handling comment syntax for various languages like Python, JavaScript, C++, HTML, etc., rather than using a simple generic pattern.*
+
+#### Remote Repository Configuration
+
+The `remote` section allows you to configure remote repository processing:
+
+- `url`: The URL of the remote Git repository to process
+- `branch`: The specific branch, tag, or commit hash to process (optional, defaults to repository's default branch)
+
+When a remote URL is specified in the configuration, Repomix will process the remote repository instead of the local directory. This can be overridden by CLI parameters.
 
 **Command Line Options**
 
@@ -123,6 +142,7 @@ Create a `repomix.config.json` file in your project root for custom configuratio
 -   `--style <style>`: Specify output style (plain, xml, markdown).
 -   `--remote <url>`: Process a remote Git repository.
 -   `--remote-branch <name>`: Specify remote branch, tag, or commit hash.
+-   `--branch <name>`: Specify branch for remote repository (alternative to --remote-branch).
 -   `--init`: Initialize configuration file (`repomix.config.json`) in the current directory.
 -   `--global`: Use with `--init` to create/manage the global configuration file (located in a platform-specific user config directory, e.g., `~/.config/repomix` on Linux). The global config is automatically loaded if present.
 -   `--no-security-check`: Disable security check.
@@ -448,6 +468,10 @@ from repomix import RepoProcessor
 processor = RepoProcessor(".")
 result = processor.process()
 
+# Process remote repository with specific branch
+processor = RepoProcessor(repo_url="https://github.com/username/repo", branch="feature-branch")
+result = processor.process()
+
 # Access processing results
 print(f"Total files: {result.total_files}")
 print(f"Total characters: {result.total_chars}")
@@ -482,6 +506,10 @@ config.compression.keep_interfaces = True  # Interface mode for API documentatio
 config.include = ["src/**/*", "tests/**/*"]
 config.ignore.custom_patterns = ["*.log", "*.tmp"]
 config.ignore.use_gitignore = True
+
+# Remote repository configuration
+config.remote.url = "https://github.com/username/repo"
+config.remote.branch = "feature-branch"
 
 # Process repository with custom config
 processor = RepoProcessor(".", config=config)

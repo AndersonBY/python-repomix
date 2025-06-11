@@ -63,6 +63,10 @@ def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str
         "ignore": {"custom_patterns": options.get("ignore", "").split(",") if options.get("ignore") else None},
         "include": options.get("include", "").split(",") if options.get("include") else None,
         "security": {},
+        "remote": {
+            "url": options.get("remote"),
+            "branch": options.get("branch") or options.get("remote_branch"),
+        },
     }
 
     if "no_security_check" in options and options.get("no_security_check"):
@@ -91,7 +95,13 @@ def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str
         final_cli_options,
     )
 
-    processor = RepoProcessor(directory, config=config)
+    # Determine if we should use remote repository from config
+    if config.remote.url:
+        # Use remote repository from configuration
+        processor = RepoProcessor(repo_url=config.remote.url, branch=config.remote.branch if config.remote.branch else None, config=config)
+    else:
+        # Use local directory
+        processor = RepoProcessor(directory, config=config)
     result = processor.process()
 
     # Print summary information

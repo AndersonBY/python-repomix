@@ -41,8 +41,14 @@ def run_init_action(cwd: str | Path, use_global: bool = False) -> None:
     config = RepomixConfig()
 
     # Convert configuration to serializable dictionary
+    output_dict = config.output.__dict__.copy()
+    # Convert _style to style for better readability in config file
+    if "_style" in output_dict:
+        output_dict["style"] = output_dict.pop("_style").value
+
     config_dict = {
-        "output": config.output.__dict__,
+        "remote": config.remote.__dict__,
+        "output": output_dict,
         "security": config.security.__dict__,
         "compression": config.compression.__dict__,
         "ignore": config.ignore.__dict__,

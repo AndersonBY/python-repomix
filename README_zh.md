@@ -66,6 +66,12 @@ repomix path/to/directory
 repomix --remote https://github.com/username/repo
 ```
 
+要打包远程仓库的特定分支：
+
+```bash
+repomix --remote https://github.com/username/repo --branch feature-branch
+```
+
 要初始化一个新的配置文件：
 
 ```bash
@@ -110,12 +116,25 @@ repomix --init --global
     "keep_docstrings": true,
     "keep_interfaces": true
   },
+  "remote": {
+    "url": "",
+    "branch": ""
+  },
   "include": []
 }
 ```
 
 > [!NOTE]
 > *关于 `remove_comments` 的注意*：此功能能够感知语言，可以正确处理 Python、JavaScript、C++、HTML 等多种语言的注释语法，而不是使用简单的通用模式。
+
+#### 远程仓库配置
+
+`remote` 部分允许你配置远程仓库处理：
+
+- `url`: 要处理的远程 Git 仓库的 URL
+- `branch`: 要处理的特定分支、标签或提交哈希（可选，默认为仓库的默认分支）
+
+当在配置中指定远程 URL 时，Repomix 将处理远程仓库而不是本地目录。这可以通过 CLI 参数覆盖。
 
 **命令行选项**
 
@@ -125,6 +144,7 @@ repomix --init --global
 -   `--style <style>`: 指定输出样式 (plain, xml, markdown)。
 -   `--remote <url>`: 处理远程 Git 仓库。
 -   `--remote-branch <name>`: 指定远程分支、标签或提交哈希。
+-   `--branch <name>`: 指定远程仓库的分支（--remote-branch 的替代选项）。
 -   `--init`: 在当前目录初始化配置文件 (`repomix.config.json`)。
 -   `--global`: 与 `--init` 配合使用，用于创建/管理全局配置文件（位于特定于平台的用户配置目录，例如 Linux 上的 `~/.config/repomix`）。如果全局配置存在，它会被自动加载。
 -   `--no-security-check`: 禁用安全检查。
@@ -455,6 +475,10 @@ from repomix import RepoProcessor
 processor = RepoProcessor(".")
 result = processor.process()
 
+# 处理指定分支的远程仓库
+processor = RepoProcessor(repo_url="https://github.com/username/repo", branch="feature-branch")
+result = processor.process()
+
 # 访问处理结果
 print(f"总文件数: {result.total_files}")
 print(f"总字符数: {result.total_chars}")
@@ -489,6 +513,10 @@ config.compression.keep_interfaces = True  # 接口模式用于 API 文档
 config.include = ["src/**/*", "tests/**/*"]
 config.ignore.custom_patterns = ["*.log", "*.tmp"]
 config.ignore.use_gitignore = True
+
+# 远程仓库配置
+config.remote.url = "https://github.com/username/repo"
+config.remote.branch = "feature-branch"
 
 # 使用自定义配置处理仓库
 processor = RepoProcessor(".", config=config)

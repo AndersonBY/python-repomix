@@ -84,6 +84,14 @@ class RepomixConfigCompression:
 
 
 @dataclass
+class RepomixConfigRemote:
+    """Remote repository configuration"""
+
+    url: str = ""
+    branch: str = ""
+
+
+@dataclass
 class RepomixConfig:
     """Repomix main configuration class"""
 
@@ -91,6 +99,7 @@ class RepomixConfig:
     security: RepomixConfigSecurity = field(default_factory=RepomixConfigSecurity)
     ignore: RepomixConfigIgnore = field(default_factory=RepomixConfigIgnore)
     compression: RepomixConfigCompression = field(default_factory=RepomixConfigCompression)
+    remote: RepomixConfigRemote = field(default_factory=RepomixConfigRemote)
     include: List[str] = field(default_factory=list)
 
     def __post_init__(self):
@@ -116,6 +125,10 @@ class RepomixConfig:
 
         if isinstance(self.compression, dict):
             self.compression = RepomixConfigCompression(**self.compression)
+
+        # Handle remote if it's a dictionary
+        if isinstance(self.remote, dict):
+            self.remote = RepomixConfigRemote(**self.remote)
 
 
 # Default configuration

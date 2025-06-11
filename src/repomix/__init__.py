@@ -10,7 +10,7 @@ from .config import (
     get_global_directory,
 )
 
-__version__ = "0.2.8"
+__version__ = "0.2.9"
 __all__ = [
     "RepoProcessor",
     "RepoProcessorResult",
