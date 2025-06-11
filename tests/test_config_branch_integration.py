@@ -4,6 +4,7 @@ Test suite for branch functionality integration with configuration and CLI
 
 from pathlib import Path
 from unittest.mock import patch, Mock
+import os
 
 from src.repomix.config.config_schema import RepomixConfig, RepomixConfigRemote
 from src.repomix.cli.actions.default_action import run_default_action
@@ -44,16 +45,17 @@ class TestConfigBranchIntegration:
         assert config.output.file_path == "test-output.md"
 
     @patch("src.repomix.cli.actions.default_action.load_config")
-    @patch("src.repomix.core.repo_processor.RepoProcessor")
+    @patch("src.repomix.cli.actions.default_action.RepoProcessor")
+    @patch.dict(os.environ, {"REPOMIX_COCURRENCY_STRATEGY": "thread"})
     def test_default_action_with_remote_config(self, mock_repo_processor, mock_load_config):
         """Test default action uses remote config when available"""
-        # Setup mock config with remote settings
-        mock_config = Mock()
-        mock_config.remote.url = "jstrieb/github-stats"
-        mock_config.remote.branch = "dark-mode"
-        mock_config.output.copy_to_clipboard = False
-        mock_config.output.top_files_length = 5
-        mock_load_config.return_value = mock_config
+        # Setup real config with remote settings to avoid pickling issues
+        real_config = RepomixConfig()
+        real_config.remote.url = "jstrieb/github-stats"
+        real_config.remote.branch = "dark-mode"
+        real_config.output.copy_to_clipboard = False
+        real_config.output.top_files_length = 5
+        mock_load_config.return_value = real_config
 
         # Setup mock processor and result
         mock_processor = Mock()
@@ -61,7 +63,7 @@ class TestConfigBranchIntegration:
         mock_result.total_files = 10
         mock_result.total_chars = 1000
         mock_result.total_tokens = 200
-        mock_result.config = mock_config
+        mock_result.config = real_config
         mock_result.suspicious_files_results = []
         mock_result.file_char_counts = {}
         mock_result.file_token_counts = {}
@@ -79,21 +81,22 @@ class TestConfigBranchIntegration:
             result = run_default_action(".", Path.cwd(), options)
 
         # Verify RepoProcessor was called with remote config
-        mock_repo_processor.assert_called_once_with(repo_url="jstrieb/github-stats", branch="dark-mode", config=mock_config)
+        mock_repo_processor.assert_called_once_with(repo_url="jstrieb/github-stats", branch="dark-mode", config=real_config)
 
         assert result.total_files == 10
 
     @patch("src.repomix.cli.actions.default_action.load_config")
-    @patch("src.repomix.core.repo_processor.RepoProcessor")
+    @patch("src.repomix.cli.actions.default_action.RepoProcessor")
+    @patch.dict(os.environ, {"REPOMIX_COCURRENCY_STRATEGY": "thread"})
     def test_default_action_with_local_directory(self, mock_repo_processor, mock_load_config):
         """Test default action uses local directory when no remote config"""
-        # Setup mock config without remote settings
-        mock_config = Mock()
-        mock_config.remote.url = ""  # No remote URL
-        mock_config.remote.branch = ""
-        mock_config.output.copy_to_clipboard = False
-        mock_config.output.top_files_length = 5
-        mock_load_config.return_value = mock_config
+        # Setup real config without remote settings to avoid pickling issues
+        real_config = RepomixConfig()
+        real_config.remote.url = ""  # No remote URL
+        real_config.remote.branch = ""
+        real_config.output.copy_to_clipboard = False
+        real_config.output.top_files_length = 5
+        mock_load_config.return_value = real_config
 
         # Setup mock processor and result
         mock_processor = Mock()
@@ -101,7 +104,7 @@ class TestConfigBranchIntegration:
         mock_result.total_files = 5
         mock_result.total_chars = 500
         mock_result.total_tokens = 100
-        mock_result.config = mock_config
+        mock_result.config = real_config
         mock_result.suspicious_files_results = []
         mock_result.file_char_counts = {}
         mock_result.file_token_counts = {}
@@ -116,10 +119,11 @@ class TestConfigBranchIntegration:
             patch("src.repomix.cli.actions.default_action.print_top_files"),
             patch("src.repomix.cli.actions.default_action.print_completion"),
         ):
-            result = run_default_action("./test_dir", Path.cwd(), options)
+            # Fix: Use current directory instead of non-existent test_dir
+            result = run_default_action(".", Path.cwd(), options)
 
         # Verify RepoProcessor was called with local directory
-        mock_repo_processor.assert_called_once_with("./test_dir", config=mock_config)
+        mock_repo_processor.assert_called_once_with(".", config=real_config)
 
         assert result.total_files == 5
 
