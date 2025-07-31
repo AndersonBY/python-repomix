@@ -59,6 +59,7 @@ def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str
         "ignore": {"custom_patterns": options.get("ignore", "").split(",") if options.get("ignore") else None},
         "include": options.get("include", "").split(",") if options.get("include") else None,
         "security": {},
+        "compression": {"enabled": options.get("compress", False)},
         "remote": {
             "url": options.get("remote"),
             "branch": options.get("branch"),

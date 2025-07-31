@@ -420,7 +420,20 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
                 logger.debug(f"Ensuring single file include is in final result: {file_path}")
                 final_files.append(file_path)
 
-    return FileSearchResult(file_paths=final_files, empty_dir_paths=empty_dirs)
+    # 10. Remove duplicates from final_files (preserving order)
+    seen = set()
+    unique_final_files = []
+    for file_path in final_files:
+        if file_path not in seen:
+            seen.add(file_path)
+            unique_final_files.append(file_path)
+        else:
+            logger.debug(f"Removing duplicate file from final result: {file_path}")
+    
+    if len(unique_final_files) < len(final_files):
+        logger.debug(f"Removed {len(final_files) - len(unique_final_files)} duplicate files from final result")
+
+    return FileSearchResult(file_paths=unique_final_files, empty_dir_paths=empty_dirs)
 
 
 def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str]:

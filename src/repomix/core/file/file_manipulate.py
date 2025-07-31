@@ -8,6 +8,8 @@ import warnings
 from typing import Dict
 from pathlib import Path
 
+from ..tree_sitter.parse_file import parse_file, can_parse_file
+
 
 class FileManipulator:
     """Base File Manipulator Class"""
@@ -258,6 +260,78 @@ class PythonManipulator(FileManipulator):
         return node
 
 
+class TreeSitterManipulator(FileManipulator):
+    """Tree-sitter based file manipulator for code compression"""
+    
+    def __init__(self, file_path: str):
+        """Initialize with file path for language detection
+        
+        Args:
+            file_path: Path to the file being processed
+        """
+        super().__init__()
+        self.file_path = file_path
+    
+    def compress_code(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+        """Compress code using tree-sitter parsing
+        
+        Args:
+            content: File content
+            keep_signatures: Whether to keep function/class signatures (unused, always True for tree-sitter)
+            keep_docstrings: Whether to keep docstrings (unused, tree-sitter handles this)
+            keep_interfaces: Whether to keep only interface (unused, tree-sitter handles this)
+            
+        Returns:
+            Compressed content using tree-sitter, or fallback compression if parsing fails
+        """
+        if not can_parse_file(self.file_path):
+            return self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)
+        
+        try:
+            compressed = parse_file(content, self.file_path)
+            if compressed is not None:
+                # Check if tree-sitter compression was actually effective
+                if len(compressed) < len(content):
+                    return compressed
+                else:
+                    # Tree-sitter compression made content larger, try fallback
+                    fallback = self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)
+                    # Return the smaller result
+                    return fallback if len(fallback) < len(compressed) else compressed
+            else:
+                # Tree-sitter parsing failed, use fallback
+                return self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)
+        except Exception as e:
+            warnings.warn(f"Tree-sitter compression failed for {self.file_path}: {e}", UserWarning)
+            return self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)
+    
+    def _fallback_compression(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+        """Fallback to traditional compression based on file extension
+        
+        Args:
+            content: File content
+            keep_signatures: Whether to keep function/class signatures
+            keep_docstrings: Whether to keep docstrings  
+            keep_interfaces: Whether to keep only interface
+            
+        Returns:
+            Compressed content using traditional methods
+        """
+        from pathlib import Path
+        ext = Path(self.file_path).suffix
+        
+        # Try traditional manipulator for this file extension
+        traditional_manipulator = manipulators.get(ext)
+        if traditional_manipulator:
+            try:
+                return traditional_manipulator.compress_code(content, keep_signatures, keep_docstrings, keep_interfaces)
+            except Exception as e:
+                warnings.warn(f"Fallback compression failed for {self.file_path}: {e}", UserWarning)
+        
+        # Final fallback: return original content
+        return content
+
+
 class CompositeManipulator(FileManipulator):
     """Composite File Manipulator for handling multi-language mixed files (like Vue)"""
 
@@ -324,12 +398,19 @@ manipulators: Dict[str, FileManipulator] = {
 
 def get_file_manipulator(file_path: str | Path) -> FileManipulator | None:
     """Get the corresponding file manipulator based on file extension
-
+    
     Args:
         file_path: File path (string or Path object)
-
+        
     Returns:
         Corresponding file manipulator instance, or None if no matching manipulator
     """
+    file_path_str = str(file_path)
+    
+    # First try tree-sitter manipulator if file can be parsed
+    if can_parse_file(file_path_str):
+        return TreeSitterManipulator(file_path_str)
+    
+    # Fallback to traditional manipulators
     ext = Path(file_path).suffix
     return manipulators.get(ext)

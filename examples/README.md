@@ -33,6 +33,13 @@ This directory contains example code for using Repomix as a Python library. Each
    - Supports automatic cloning and temporary directory management
    - Provides complete analysis functionality for remote repositories
 
+6. `tree_sitter_compression.py` - Tree-sitter Compression Demonstration
+   - Shows the difference between normal and tree-sitter compressed output
+   - Demonstrates compression effects on real code files
+   - Explains when compression is beneficial vs. when it adds overhead
+   - Lists supported languages and file extensions
+   - Provides practical examples using the python-repomix repository itself
+
 ## Running Examples
 
 1. Ensure Repomix is installed:
@@ -52,6 +59,7 @@ This directory contains example code for using Repomix as a Python library. Each
    python security_check.py
    python file_statistics.py
    python remote_repo_usage.py
+   python tree_sitter_compression.py
    ```
 
 ## Notes

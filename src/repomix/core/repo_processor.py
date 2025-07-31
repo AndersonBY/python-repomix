@@ -2,6 +2,9 @@ from pathlib import Path
 from fnmatch import fnmatch
 from dataclasses import dataclass
 from typing import Dict, List, Union
+import re
+import logging
+from functools import lru_cache
 
 
 from ..config.config_load import load_config
@@ -15,61 +18,124 @@ from ..shared.error_handle import RepomixError
 from ..shared.fs_utils import create_temp_directory, cleanup_temp_directory
 from ..shared.git_utils import format_git_url, clone_repository
 
+logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1000)
+def cached_fnmatch(filename: str, pattern: str) -> bool:
+    """Cached version of fnmatch for better performance."""
+    try:
+        return fnmatch(filename, pattern)
+    except (re.error, OverflowError, RecursionError):
+        return False
+
 
 def build_file_tree_with_ignore(directory: str | Path, config: RepomixConfig) -> Dict:
-    """Builds a file tree, respecting ignore patterns."""
+    """Builds a file tree, respecting ignore patterns - HEAVILY OPTIMIZED for large projects."""
     ignore_patterns = get_ignore_patterns(directory, config)
-    return _build_file_tree_recursive(Path(directory), ignore_patterns)
+    
+    # OPTIMIZATION: Pre-compile common ignore patterns for faster matching
+    common_ignores = {
+        'node_modules', '.git', '__pycache__', '.pytest_cache', 
+        'venv', '.venv', 'env', '.env', 'build', 'dist', 
+        '.idea', '.vscode', 'logs', 'tmp', 'cache'
+    }
+    
+    # Separate patterns by type for faster processing
+    dir_exact_matches = set()  # Exact directory names to ignore
+    dir_patterns = []          # Pattern-based directory ignores
+    file_patterns = []         # File-specific patterns
+    
+    for pattern in ignore_patterns:
+        pattern = pattern.replace("\\", "/").strip()
+        if not pattern:
+            continue
+            
+        # Handle exact directory matches (fastest)
+        if '/' not in pattern and '*' not in pattern and '[' not in pattern:
+            dir_exact_matches.add(pattern)
+        elif pattern.endswith("/"):
+            clean_pattern = pattern[:-1]
+            if '/' not in clean_pattern and '*' not in clean_pattern and '[' not in clean_pattern:
+                dir_exact_matches.add(clean_pattern)
+            else:
+                dir_patterns.append(clean_pattern)
+        else:
+            file_patterns.append(pattern)
+            # Also check as directory pattern
+            dir_patterns.append(pattern)
+    
+    # Add common ignores to exact matches for super fast filtering
+    dir_exact_matches.update(common_ignores)
+    
+    return _build_file_tree_super_optimized(Path(directory), dir_exact_matches, dir_patterns, file_patterns)
 
 
-def _build_file_tree_recursive(directory: Path, ignore_patterns: List[str], base_dir: Path | None = None) -> Dict:
-    """Recursive helper function for building the file tree."""
+def _build_file_tree_super_optimized(directory: Path, dir_exact_matches: set, dir_patterns: List[str], file_patterns: List[str], base_dir: Path | None = None) -> Dict:
+    """Super optimized recursive file tree builder with aggressive pruning."""
     tree = {}
     if base_dir is None:
         base_dir = directory
-
-    # Preprocess ignore patterns, add recursive matching support
-    processed_patterns = set()
-    for pattern in ignore_patterns:
-        pattern = pattern.replace("\\", "/")
-        # Original pattern
-        processed_patterns.add(pattern)
-        # Add recursive matching pattern
-        if not pattern.startswith("/"):
-            processed_patterns.add(f"**/{pattern}")
-
-        # Handle directory slash variants
-        dir_variants = []
-        if pattern.endswith("/"):
-            dir_variants.append(pattern[:-1])  # Version without slash
-            dir_variants.append(pattern + "**")  # Recursive match for subdirectories
-        else:
-            dir_variants.append(pattern + "/")
-            dir_variants.append(f"{pattern}/**")  # Recursive match for subdirectories
-
-        for variant in dir_variants:
-            processed_patterns.add(variant)
-            if not variant.startswith("/"):
-                processed_patterns.add(f"**/{variant}")
-
-    for path in directory.iterdir():
-        # Get path relative to base directory (keep POSIX format)
-        rel_path = path.relative_to(base_dir).as_posix()
-
-        # Special handling for directories: add slash suffix and recursive matching
-        is_dir = path.is_dir()
-        match_path = rel_path + "/" if is_dir else rel_path
-
-        # Check if matches any ignore pattern
-        if any(fnmatch(match_path, p) or fnmatch(rel_path, p) for p in processed_patterns):
+    
+    try:
+        entries = list(directory.iterdir())
+    except (OSError, PermissionError):
+        return tree
+    
+    for path in entries:
+        try:
+            path_name = path.name
+            is_dir = path.is_dir()
+            
+            if is_dir:
+                # SUPER OPTIMIZATION 1: Check exact matches first (O(1) lookup)
+                if path_name in dir_exact_matches:
+                    continue  # Skip immediately - no need to even calculate relative path
+                
+                # SUPER OPTIMIZATION 2: Early skip for hidden/temp directories
+                if path_name.startswith('.') and path_name in {'.git', '.svn', '.hg', '.cache'}:
+                    continue
+                
+                # Only calculate relative path if needed for pattern matching
+                rel_path = path.relative_to(base_dir).as_posix()
+                
+                # Check directory patterns
+                should_ignore_dir = False
+                for pattern in dir_patterns:
+                    if cached_fnmatch(rel_path, pattern):
+                        should_ignore_dir = True
+                        break
+                
+                if should_ignore_dir:
+                    continue
+                
+                # Recursively build subtree
+                subtree = _build_file_tree_super_optimized(path, dir_exact_matches, dir_patterns, file_patterns, base_dir)
+                if subtree:
+                    tree[path_name] = subtree
+            else:
+                # SUPER OPTIMIZATION 3: Quick file extension checks
+                if path_name.endswith(('.pyc', '.pyo', '.class', '.o', '.so', '.dll')):
+                    continue  # Skip compiled files immediately
+                
+                # Only check file patterns if needed
+                if file_patterns:
+                    rel_path = path.relative_to(base_dir).as_posix()
+                    should_ignore_file = False
+                    for pattern in file_patterns:
+                        if cached_fnmatch(rel_path, pattern):
+                            should_ignore_file = True
+                            break
+                    
+                    if not should_ignore_file:
+                        tree[path_name] = ""
+                else:
+                    tree[path_name] = ""
+                    
+        except Exception as e:
+            logger.debug(f"Error processing path '{path}': {e}")
             continue
-
-        if is_dir:
-            subtree = _build_file_tree_recursive(path, ignore_patterns, base_dir)
-            if subtree:
-                tree[path.name] = subtree
-        else:
-            tree[path.name] = ""
+            
     return tree
 
 
@@ -151,17 +217,29 @@ class RepoProcessor:
             total_chars = 0
             total_tokens = 0
 
-            for processed_file in processed_files:
-                char_count = len(processed_file.content)
-                token_count = 0
-
-                if self.config.output.calculate_tokens and gpt_4o_encoding:
-                    token_count = len(gpt_4o_encoding.encode(processed_file.content))
-                    total_tokens += token_count
-
-                file_char_counts[processed_file.path] = char_count
-                file_token_counts[processed_file.path] = token_count
-                total_chars += char_count
+            # Optimize character and token counting
+            if self.config.output.calculate_tokens and gpt_4o_encoding:
+                # Token calculation enabled - process files with error handling
+                for processed_file in processed_files:
+                    char_count = len(processed_file.content)
+                    file_char_counts[processed_file.path] = char_count
+                    total_chars += char_count
+                    
+                    # Token calculation with error handling for better performance
+                    try:
+                        token_count = len(gpt_4o_encoding.encode(processed_file.content))
+                        file_token_counts[processed_file.path] = token_count
+                        total_tokens += token_count
+                    except Exception as e:
+                        logger.debug(f"Token calculation failed for {processed_file.path}: {e}")
+                        file_token_counts[processed_file.path] = 0
+            else:
+                # Only count characters if tokens not needed - much faster
+                for processed_file in processed_files:
+                    char_count = len(processed_file.content)
+                    file_char_counts[processed_file.path] = char_count
+                    file_token_counts[processed_file.path] = 0
+                    total_chars += char_count
 
             suspicious_files_results = []
             if self.config.security.enable_security_check:

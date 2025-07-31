@@ -48,6 +48,7 @@ def create_parser() -> argparse.ArgumentParser:
         help="Specify branch name for remote repository (can be set in config file)",
     )
     parser.add_argument("--no-security-check", action="store_true", help="Disable security check")
+    parser.add_argument("--compress", action="store_true", help="Enable tree-sitter based code compression")
     parser.add_argument("--mcp", action="store_true", help="Run as MCP (Model Context Protocol) server")
 
     return parser
@@ -92,7 +93,7 @@ async def run_cli(
             "no_security_check": not cli_options.security_check,
             "remote": None,
             "branch": None,
-            "compress": cli_options.compress,  # TODO: Need to implement compression
+            "compress": cli_options.compress,
         }
         
         # Set quiet mode if requested
