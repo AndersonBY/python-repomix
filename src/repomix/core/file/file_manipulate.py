@@ -290,14 +290,9 @@ class TreeSitterManipulator(FileManipulator):
         try:
             compressed = parse_file(content, self.file_path)
             if compressed is not None:
-                # Check if tree-sitter compression was actually effective
-                if len(compressed) < len(content):
-                    return compressed
-                else:
-                    # Tree-sitter compression made content larger, try fallback
-                    fallback = self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)
-                    # Return the smaller result
-                    return fallback if len(fallback) < len(compressed) else compressed
+                # Tree-sitter parsing succeeded, use it regardless of size
+                # Tree-sitter provides structural compression with separators
+                return compressed
             else:
                 # Tree-sitter parsing failed, use fallback
                 return self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)

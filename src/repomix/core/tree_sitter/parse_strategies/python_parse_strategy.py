@@ -38,6 +38,7 @@ class PythonParseStrategy(ParseStrategy):
         
         # Deduplicate and merge
         chunks = self.deduplicate_chunks(chunks)
+        chunks = self.merge_adjacent_imports(chunks)
         chunks = self.merge_adjacent_chunks(chunks)
         
         return chunks
@@ -155,6 +156,58 @@ class PythonParseStrategy(ParseStrategy):
     def _process_statement(self, node: Node, source_lines: List[str]) -> str:
         """Process Python statements (global, nonlocal, etc.)."""
         return self.extract_node_content(node, source_lines)
+    
+    def merge_adjacent_imports(self, chunks: List[ParsedChunk]) -> List[ParsedChunk]:
+        """Merge adjacent import statements that are separated by at most one blank line."""
+        if not chunks:
+            return chunks
+        
+        # Sort chunks by start line
+        sorted_chunks = sorted(chunks, key=lambda c: c.start_line)
+        merged = []
+        
+        i = 0
+        while i < len(sorted_chunks):
+            current = sorted_chunks[i]
+            
+            # Only process import chunks
+            if current.node_type == "definition.import":
+                # Collect all adjacent imports (allowing one blank line between them)
+                import_group = [current]
+                j = i + 1
+                
+                while j < len(sorted_chunks):
+                    next_chunk = sorted_chunks[j]
+                    if (next_chunk.node_type == "definition.import" and 
+                        next_chunk.start_line - import_group[-1].end_line <= 2):
+                        import_group.append(next_chunk)
+                        j += 1
+                    else:
+                        break
+                
+                # If we have multiple imports, merge them
+                if len(import_group) > 1:
+                    # Combine the content of all imports in the group
+                    combined_lines = []
+                    for imp in import_group:
+                        combined_lines.append(imp.content)
+                    
+                    new_chunk = ParsedChunk(
+                        content='\n'.join(combined_lines),
+                        start_line=import_group[0].start_line,
+                        end_line=import_group[-1].end_line,
+                        node_type="definition.import"
+                    )
+                    merged.append(new_chunk)
+                    i = j
+                else:
+                    merged.append(current)
+                    i += 1
+            else:
+                merged.append(current)
+                i += 1
+        
+        return merged
 
 
 # Register the Python strategy

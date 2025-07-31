@@ -77,15 +77,17 @@ class ParseStrategy(ABC):
         for current in sorted_chunks[1:]:
             last_merged = merged[-1]
             
-            # Check if chunks can be merged (more permissive merging for better structure)
-            if last_merged.end_line + 3 >= current.start_line:  # Allow small gaps
+            # Only merge chunks that are truly adjacent (no gaps) and of same type
+            # This preserves separate chunks for proper separator usage
+            if (last_merged.end_line + 1 >= current.start_line and 
+                last_merged.node_type == current.node_type):
                 # Merge the chunks without adding extra separators
                 new_content = last_merged.content + '\n' + current.content
                 new_chunk = ParsedChunk(
                     content=new_content,
                     start_line=min(last_merged.start_line, current.start_line),
                     end_line=max(last_merged.end_line, current.end_line),
-                    node_type=f"{last_merged.node_type}+{current.node_type}"
+                    node_type=last_merged.node_type
                 )
                 merged[-1] = new_chunk
             else:

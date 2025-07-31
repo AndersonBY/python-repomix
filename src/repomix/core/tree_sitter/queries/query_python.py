@@ -16,7 +16,7 @@ query_python = """
 (module 
   (expression_statement
     (assignment
-      left: (identifier) @name.definition.variable))) @definition.variable
+      left: (identifier))) @definition.variable)
 
 ; Decorators
 (decorator) @definition.decorator
