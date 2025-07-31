@@ -642,17 +642,19 @@ result = processor.process()
 
 Repomix 可以作为 MCP 服务器运行，允许 AI 助手如 Claude 直接与你的代码库交互，无需手动文件准备。
 
+> **📦 需要安装**: 在使用 MCP 功能之前，请确保已安装 repomix：`pip install repomix`
+
 #### 启动 MCP 服务器
 
 ```bash
 # 启动 MCP 服务器（详细日志输出到 stderr）
-pdm run python -m repomix --mcp
+repomix --mcp
 ```
 
 启动后你会看到类似这样的日志：
 
 ```
-📦 Repomix v0.2.9
+📦 Repomix v0.3.0
 
 Starting Repomix MCP Server...
 🔧 Creating MCP server...
@@ -679,9 +681,9 @@ Starting Repomix MCP Server...
 {
   "mcpServers": {
     "repomix": {
-      "command": "pdm",
-      "args": ["run", "python", "-m", "repomix", "--mcp"],
-      "cwd": "/path/to/python-repomix"
+      "command": "repomix",
+      "args": ["--mcp"],
+      "cwd": "/path/to/your/project"
     }
   }
 }
@@ -694,9 +696,9 @@ Starting Repomix MCP Server...
 {
   "mcpServers": {
     "repomix": {
-      "command": "pdm", 
-      "args": ["run", "python", "-m", "repomix", "--mcp"],
-      "cwd": "/path/to/python-repomix"
+      "command": "repomix",
+      "args": ["--mcp"],
+      "cwd": "/path/to/your/project"
     }
   }
 }
@@ -704,10 +706,31 @@ Starting Repomix MCP Server...
 
 **Claude Code**
 ```bash
-# 从项目目录运行
-cd /path/to/python-repomix
-claude mcp add repomix -- pdm run python -m repomix --mcp
+# 安装 repomix 后可从任意目录运行
+claude mcp add repomix -- repomix --mcp
 ```
+
+#### 关于 `cwd` 参数
+
+MCP 配置中的 `cwd`（当前工作目录）参数决定 repomix 命令的运行位置。以下是推荐的设置：
+
+- **通用使用**: 设置 `cwd` 为你的主目录或任何稳定位置，如 `"/Users/yourusername"`（macOS）或 `"/home/yourusername"`（Linux）
+- **特定项目**: 设置 `cwd` 为你经常分析的主项目目录
+- **开发用途**: 你可以使用任何目录，因为 repomix 可以处理工具调用中指定的任何路径
+
+**示例**:
+```json
+// 通用使用 - 从任何地方工作
+"cwd": "/Users/yourusername"
+
+// 项目特定 - 方便频繁分析
+"cwd": "/Users/yourusername/projects/my-main-project"
+
+// 开发 - 灵活的起始点
+"cwd": "/Users/yourusername/dev"
+```
+
+> **💡 专业提示**: MCP 工具允许你在工具参数中指定目标目录，所以 `cwd` 只是起始位置。无论服务器从哪里启动，你都可以分析任何可访问的目录。
 
 #### 可用 MCP 工具
 

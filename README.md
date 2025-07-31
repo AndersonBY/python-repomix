@@ -635,17 +635,19 @@ Feel free to modify these prompts based on your specific needs and the capabilit
 
 Repomix can run as an MCP server, allowing AI assistants like Claude to directly interact with your codebase without manual file preparation.
 
+> **📦 Installation Required**: Before using MCP features, make sure you have installed repomix: `pip install repomix`
+
 #### Starting the MCP Server
 
 ```bash
 # Start the MCP server (detailed logs output to stderr)
-pdm run python -m repomix --mcp
+repomix --mcp
 ```
 
 After starting, you'll see logs like:
 
 ```
-📦 Repomix v0.2.9
+📦 Repomix v0.3.0
 
 Starting Repomix MCP Server...
 🔧 Creating MCP server...
@@ -672,9 +674,9 @@ Add to `claude_desktop_config.json`:
 {
   "mcpServers": {
     "repomix": {
-      "command": "pdm",
-      "args": ["run", "python", "-m", "repomix", "--mcp"],
-      "cwd": "/path/to/python-repomix"
+      "command": "repomix",
+      "args": ["--mcp"],
+      "cwd": "/path/to/your/project"
     }
   }
 }
@@ -687,9 +689,9 @@ Add to `cline_mcp_settings.json`:
 {
   "mcpServers": {
     "repomix": {
-      "command": "pdm", 
-      "args": ["run", "python", "-m", "repomix", "--mcp"],
-      "cwd": "/path/to/python-repomix"
+      "command": "repomix", 
+      "args": ["--mcp"],
+      "cwd": "/path/to/your/project"
     }
   }
 }
@@ -697,10 +699,31 @@ Add to `cline_mcp_settings.json`:
 
 **Claude Code**
 ```bash
-# From project directory
-cd /path/to/python-repomix
-claude mcp add repomix -- pdm run python -m repomix --mcp
+# From any directory (after installing repomix)
+claude mcp add repomix -- repomix --mcp
 ```
+
+#### About the `cwd` Parameter
+
+The `cwd` (current working directory) parameter in MCP configuration determines where the repomix command runs from. Here are the recommended settings:
+
+- **For general use**: Set `cwd` to your home directory or any stable location like `"/Users/yourusername"` (macOS) or `"/home/yourusername"` (Linux)
+- **For specific projects**: Set `cwd` to your main project directory that you frequently analyze
+- **For development**: You can use any directory since repomix can process any path you specify in the tool calls
+
+**Examples**:
+```json
+// General use - works from anywhere
+"cwd": "/Users/yourusername"
+
+// Project-specific - convenient for frequent analysis  
+"cwd": "/Users/yourusername/projects/my-main-project"
+
+// Development - flexible starting point
+"cwd": "/Users/yourusername/dev"
+```
+
+> **💡 Pro Tip**: The MCP tools allow you to specify target directories in the tool parameters, so the `cwd` is just the starting location. You can analyze any accessible directory regardless of where the server starts.
 
 #### Available MCP Tools
 

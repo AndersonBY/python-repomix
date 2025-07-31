@@ -1,7 +1,9 @@
 """Main MCP server implementation for Repomix."""
 
 import asyncio
-from typing import Callable, Awaitable
+import os
+import signal
+import sys
 from mcp.server.fastmcp import FastMCP
 
 from ..shared.logger import logger
@@ -79,22 +81,46 @@ async def run_mcp_server() -> None:
     """Run the MCP server with stdio transport."""
     server = create_mcp_server(silent=False)
     
+    def signal_handler() -> None:
+        """Handle shutdown signals by immediately exiting."""
+        logger.log("\n🛑 Received shutdown signal, exiting immediately...")
+        # Force exit immediately using os._exit() which bypasses cleanup
+        os._exit(0)
+    
+    # Set up signal handlers for graceful shutdown
+    if sys.platform != "win32":
+        # Unix-like systems
+        loop = asyncio.get_running_loop()
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            loop.add_signal_handler(sig, signal_handler)
+    else:
+        # Windows - use signal.signal() instead
+        def win_signal_handler(signum, frame):
+            # Schedule the async signal handler
+            try:
+                loop = asyncio.get_running_loop()
+                loop.call_soon_threadsafe(signal_handler)
+            except RuntimeError:
+                # No event loop running, exit immediately
+                logger.log("\n🛑 Received shutdown signal, exiting immediately...")
+                os._exit(0)
+        
+        signal.signal(signal.SIGINT, win_signal_handler)
+        if hasattr(signal, 'SIGTERM'):
+            signal.signal(signal.SIGTERM, win_signal_handler)
+    
     try:
         logger.log("🚀 Starting Repomix MCP Server on stdio transport...")
         logger.log("📡 Waiting for MCP client connections...")
         logger.log("💡 Use Ctrl+C to stop the server")
         logger.log("─" * 50)
         
-        # Add a hook to log when we receive requests
-        original_run_stdio: Callable[[], Awaitable[None]] = server.run_stdio_async
-        
-        async def logged_run_stdio() -> None:
-            logger.trace("MCP server stdio transport started")
-            await original_run_stdio()
-            
-        await logged_run_stdio()
+        # Create and run server task - this will run until interrupted
+        server_task = asyncio.create_task(server.run_stdio_async())
+        await server_task
         
     except KeyboardInterrupt:
+        # Fallback handler if signal handlers don't work
         logger.log("\n🛑 Received keyboard interrupt, shutting down...")
         
     except Exception as error:
