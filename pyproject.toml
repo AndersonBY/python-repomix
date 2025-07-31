@@ -9,6 +9,7 @@ dependencies = [
     "pyperclip>=1.9.0",
     "tiktoken>=0.8.0",
     "detect-secrets>=1.5.0",
+    "mcp>=1.2.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -27,4 +28,30 @@ distribution = true
 repomix = "repomix.cli:run"
 
 [dependency-groups]
-dev = ["pytest>=8.3.5"]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.1.0",
+    "ruff>=0.8.0",
+    "pyright>=1.1.390",
+]
+
+[tool.pyright]
+include = ["src", "tests"]
+exclude = ["**/__pycache__"]
+pythonVersion = "3.10"
+pythonPlatform = "All"
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnusedImport = true
+reportUnusedClass = true
+reportUnusedFunction = true
+reportUnusedVariable = true
+reportDuplicateImport = true
+reportOptionalSubscript = true
+reportOptionalMemberAccess = true
+reportOptionalCall = true
+reportOptionalIterable = true
+reportOptionalContextManager = true
+reportOptionalOperand = true
+reportTypedDictNotRequiredAccess = false

@@ -4,6 +4,7 @@ CLI Run Module - Handling Command Line Arguments and Executing Corresponding Act
 
 import argparse
 from pathlib import Path
+from typing import List, Optional
 
 from ..__init__ import __version__
 from ..shared.error_handle import handle_error
@@ -12,6 +13,7 @@ from .actions.default_action import run_default_action
 from .actions.init_action import run_init_action
 from .actions.remote_action import run_remote_action
 from .actions.version_action import run_version_action
+from .types import CliOptions, CliResult
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -46,6 +48,7 @@ def create_parser() -> argparse.ArgumentParser:
         help="Specify branch name for remote repository (can be set in config file)",
     )
     parser.add_argument("--no-security-check", action="store_true", help="Disable security check")
+    parser.add_argument("--mcp", action="store_true", help="Run as MCP (Model Context Protocol) server")
 
     return parser
 
@@ -61,7 +64,61 @@ def run() -> None:
         handle_error(e)
 
 
-def execute_action(directory: str, cwd: str | Path, options: argparse.Namespace) -> None:
+async def run_cli(
+    directories: List[str], 
+    cwd: str, 
+    cli_options: CliOptions
+) -> Optional[CliResult]:
+    """Run CLI programmatically for MCP tools.
+    
+    Args:
+        directories: List of directories to process (usually just one)
+        cwd: Current working directory 
+        cli_options: CLI options object
+        
+    Returns:
+        CliResult with pack_result
+    """
+    try:
+        # Convert CliOptions to dict format expected by default_action
+        options = {
+            "output": cli_options.output,
+            "style": cli_options.style,
+            "output_show_line_numbers": False,
+            "copy": False,
+            "top_files_len": cli_options.top_files_len,
+            "ignore": cli_options.ignore,
+            "include": cli_options.include,
+            "no_security_check": not cli_options.security_check,
+            "remote": None,
+            "branch": None,
+            "compress": cli_options.compress,  # TODO: Need to implement compression
+        }
+        
+        # Set quiet mode if requested
+        original_verbose = logger.is_verbose()
+        logger.set_verbose(not cli_options.quiet)
+        
+        try:
+            # Use the first directory (MCP typically processes one at a time)
+            directory = directories[0] if directories else "."
+            
+            # Run default action and get the result
+            result = run_default_action(directory, cwd, options)
+            
+            # Return the result
+            return CliResult(pack_result=result.pack_result)
+            
+        finally:
+            # Restore original verbose setting
+            logger.set_verbose(original_verbose)
+            
+    except Exception as e:
+        logger.error(f"Error in run_cli: {e}")
+        return None
+
+
+def execute_action(directory: str, cwd: Path, options: argparse.Namespace) -> None:
     """Execute corresponding action
 
     Args:
@@ -79,6 +136,21 @@ def execute_action(directory: str, cwd: str | Path, options: argparse.Namespace)
 
     if options.init:
         run_init_action(cwd, options.use_global)
+        return
+
+    if options.mcp:
+        import asyncio
+        from ..mcp.mcp_server import run_mcp_server
+        
+        # For MCP mode, redirect logs to stderr so they don't interfere with stdio protocol
+        import sys
+        logger.log = lambda message="": print(str(message), file=sys.stderr)
+        logger.warn = lambda message, error=None: print(f"⚠️ {message}", file=sys.stderr) 
+        logger.error = lambda message: print(f"❌ {message}", file=sys.stderr)
+        logger.success = lambda message: print(f"✅ {message}", file=sys.stderr)
+        
+        logger.log("Starting Repomix MCP Server...")
+        asyncio.run(run_mcp_server())
         return
 
     if options.remote:

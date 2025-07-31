@@ -638,7 +638,128 @@ result = processor.process()
 这个文件仅包含我的代码库中的配置、常量和全局变量。请审查这些设置，识别潜在的配置问题，并建议配置管理的最佳实践。
 ```
 
-### 7.2 最佳实践
+### 7.2 MCP (Model Context Protocol) 服务器
+
+Repomix 可以作为 MCP 服务器运行，允许 AI 助手如 Claude 直接与你的代码库交互，无需手动文件准备。
+
+#### 启动 MCP 服务器
+
+```bash
+# 启动 MCP 服务器（详细日志输出到 stderr）
+pdm run python -m repomix --mcp
+```
+
+启动后你会看到类似这样的日志：
+
+```
+📦 Repomix v0.2.9
+
+Starting Repomix MCP Server...
+🔧 Creating MCP server...
+📦 Registering MCP tools...
+  ✅ pack_codebase
+  ✅ pack_remote_repository  
+  ✅ read_repomix_output
+  ✅ grep_repomix_output
+  ✅ file_system_read_file
+  ✅ file_system_read_directory
+🎯 Repomix MCP Server configured with 6 tools
+🚀 Starting Repomix MCP Server on stdio transport...
+📡 Waiting for MCP client connections...
+💡 Use Ctrl+C to stop the server
+──────────────────────────────────────────────────
+```
+
+#### 在 AI 助手中配置
+
+**Claude Desktop**
+在 `claude_desktop_config.json` 中添加：
+
+```json
+{
+  "mcpServers": {
+    "repomix": {
+      "command": "pdm",
+      "args": ["run", "python", "-m", "repomix", "--mcp"],
+      "cwd": "/path/to/python-repomix"
+    }
+  }
+}
+```
+
+**VS Code / Cline**
+在 `cline_mcp_settings.json` 中添加：
+
+```json
+{
+  "mcpServers": {
+    "repomix": {
+      "command": "pdm", 
+      "args": ["run", "python", "-m", "repomix", "--mcp"],
+      "cwd": "/path/to/python-repomix"
+    }
+  }
+}
+```
+
+**Claude Code**
+```bash
+# 从项目目录运行
+cd /path/to/python-repomix
+claude mcp add repomix -- pdm run python -m repomix --mcp
+```
+
+#### 可用 MCP 工具
+
+1. **pack_codebase** - 打包本地代码库为 XML 格式
+   - 参数: directory, compress, include_patterns, ignore_patterns, top_files_length
+   
+2. **read_repomix_output** - 读取生成的输出文件
+   - 参数: output_id, start_line, end_line
+   
+3. **grep_repomix_output** - 在输出文件中搜索
+   - 参数: output_id, pattern, context_lines, ignore_case
+   
+4. **file_system_read_file** - 从文件系统读取文件
+   - 参数: path
+   
+5. **file_system_read_directory** - 列出目录内容
+   - 参数: path
+
+6. **pack_remote_repository** - 打包远程仓库（即将推出）
+   - 参数: remote, compress, include_patterns, ignore_patterns
+
+#### 工具调用日志
+
+当 AI 助手调用工具时，你会在服务器终端看到详细日志：
+
+```
+🔨 MCP Tool Called: pack_codebase
+   📁 Directory: /path/to/project
+   🗜️ Compress: false
+   📊 Top files: 10
+   🏗️ Creating workspace...
+   📝 Output will be saved to: /tmp/repomix_mcp_xxx/repomix-output.xml
+   🔄 Processing repository...
+   ✅ Processing completed!
+   📊 Files processed: 45
+   📝 Characters: 125,432
+   🎯 Tokens: 0
+   🎉 MCP response generated successfully
+```
+
+#### 功能特点
+
+- ✅ 完整的 MCP 协议支持
+- ✅ 详细的操作日志
+- ✅ 安全文件检查
+- ✅ 多种输出格式
+- ✅ 文件搜索和读取
+- ✅ 临时文件管理
+- 🔄 远程仓库支持（开发中）
+- 🔄 代码压缩功能（开发中）
+
+### 7.3 最佳实践
 
 *   **具体明确：** 在提示 AI 时，尽可能具体地说明你想要什么。你提供的上下文越多，结果就越好。
 *   **迭代：** 不要害怕迭代你的提示。如果你第一次没有得到想要的结果，请改进你的提示并再次尝试。

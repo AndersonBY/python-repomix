@@ -46,12 +46,16 @@ class SecurityChecker:
 
     # Suspicious file content patterns
     SUSPICIOUS_CONTENT_PATTERNS = [
-        # API keys
-        r"api[_-]?key.*['\"][0-9a-zA-Z]{32,}['\"]",
-        r"api[_-]?secret.*['\"][0-9a-zA-Z]{32,}['\"]",
+        # API keys - more flexible patterns
+        r"api[_-]?key.*['\"][^'\"]{10,}['\"]",
+        r"api[_-]?secret.*['\"][^'\"]{10,}['\"]",
         # Access tokens
-        r"access[_-]?token.*['\"][0-9a-zA-Z]{32,}['\"]",
-        r"auth[_-]?token.*['\"][0-9a-zA-Z]{32,}['\"]",
+        r"access[_-]?token.*['\"][^'\"]{10,}['\"]",
+        r"auth[_-]?token.*['\"][^'\"]{10,}['\"]",
+        # Common API key patterns - more flexible
+        r"['\"]sk[-_][0-9a-zA-Z_-]*[0-9a-zA-Z]['\"]",  # Stripe-like keys (sk- or sk_)
+        r"['\"]pk[-_][0-9a-zA-Z_-]*[0-9a-zA-Z]['\"]",  # Public keys  
+        r"['\"]ghp_[0-9a-zA-Z]{30,}['\"]",              # GitHub personal access tokens (more flexible length)
         # AWS related
         r"AKIA[0-9A-Z]{16}",  # AWS access key ID
         r"aws[_-]?secret.*['\"][0-9a-zA-Z/+=]{32,}['\"]",
@@ -61,10 +65,13 @@ class SecurityChecker:
         r"postgres://[^/\s]+:[^/\s]+@[^/\s]+",  # PostgreSQL connection URI
         # Private keys
         r"-----BEGIN (?:RSA )?PRIVATE KEY-----",
-        # Passwords
-        r"password.*['\"][^'\"\s]{8,}['\"]",
-        r"passwd.*['\"][^'\"\s]{8,}['\"]",
-        r"pwd.*['\"][^'\"\s]{8,}['\"]",
+        # Passwords - case insensitive
+        r"password.*['\"][^'\"\s]{6,}['\"]",
+        r"passwd.*['\"][^'\"\s]{6,}['\"]", 
+        r"pwd.*['\"][^'\"\s]{6,}['\"]",
+        # Generic secret/token patterns - more flexible
+        r"secret.*['\"][^'\"]{8,}['\"]",
+        r"token.*['\"][^'\"]{15,}['\"]",
     ]
 
     def __init__(self):

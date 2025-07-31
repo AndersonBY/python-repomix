@@ -83,7 +83,7 @@ class TestConfigBranchIntegration:
         # Verify RepoProcessor was called with remote config
         mock_repo_processor.assert_called_once_with(repo_url="jstrieb/github-stats", branch="dark-mode", config=real_config)
 
-        assert result.total_files == 10
+        assert result.pack_result.total_files == 10
 
     @patch("src.repomix.cli.actions.default_action.load_config")
     @patch("src.repomix.cli.actions.default_action.RepoProcessor")
@@ -125,7 +125,7 @@ class TestConfigBranchIntegration:
         # Verify RepoProcessor was called with local directory
         mock_repo_processor.assert_called_once_with(".", config=real_config)
 
-        assert result.total_files == 5
+        assert result.pack_result.total_files == 5
 
     def test_cli_options_with_branch(self):
         """Test CLI options processing includes branch parameter"""

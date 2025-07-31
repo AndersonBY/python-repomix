@@ -631,7 +631,128 @@ This file contains only the configuration, constants, and global variables from 
 
 Feel free to modify these prompts based on your specific needs and the capabilities of the AI tool you're using.
 
-### 7.2 Best Practices
+### 7.2 MCP (Model Context Protocol) Server
+
+Repomix can run as an MCP server, allowing AI assistants like Claude to directly interact with your codebase without manual file preparation.
+
+#### Starting the MCP Server
+
+```bash
+# Start the MCP server (detailed logs output to stderr)
+pdm run python -m repomix --mcp
+```
+
+After starting, you'll see logs like:
+
+```
+📦 Repomix v0.2.9
+
+Starting Repomix MCP Server...
+🔧 Creating MCP server...
+📦 Registering MCP tools...
+  ✅ pack_codebase
+  ✅ pack_remote_repository  
+  ✅ read_repomix_output
+  ✅ grep_repomix_output
+  ✅ file_system_read_file
+  ✅ file_system_read_directory
+🎯 Repomix MCP Server configured with 6 tools
+🚀 Starting Repomix MCP Server on stdio transport...
+📡 Waiting for MCP client connections...
+💡 Use Ctrl+C to stop the server
+──────────────────────────────────────────────────
+```
+
+#### Configuring in AI Assistants
+
+**Claude Desktop**
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "repomix": {
+      "command": "pdm",
+      "args": ["run", "python", "-m", "repomix", "--mcp"],
+      "cwd": "/path/to/python-repomix"
+    }
+  }
+}
+```
+
+**VS Code / Cline**
+Add to `cline_mcp_settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "repomix": {
+      "command": "pdm", 
+      "args": ["run", "python", "-m", "repomix", "--mcp"],
+      "cwd": "/path/to/python-repomix"
+    }
+  }
+}
+```
+
+**Claude Code**
+```bash
+# From project directory
+cd /path/to/python-repomix
+claude mcp add repomix -- pdm run python -m repomix --mcp
+```
+
+#### Available MCP Tools
+
+1. **pack_codebase** - Package local codebase into XML format
+   - Parameters: directory, compress, include_patterns, ignore_patterns, top_files_length
+   
+2. **read_repomix_output** - Read generated output files
+   - Parameters: output_id, start_line, end_line
+   
+3. **grep_repomix_output** - Search within output files
+   - Parameters: output_id, pattern, context_lines, ignore_case
+   
+4. **file_system_read_file** - Read files from filesystem
+   - Parameters: path
+   
+5. **file_system_read_directory** - List directory contents
+   - Parameters: path
+
+6. **pack_remote_repository** - Package remote repositories (coming soon)
+   - Parameters: remote, compress, include_patterns, ignore_patterns
+
+#### Tool Call Logs
+
+When AI assistants call tools, you'll see detailed logs in the server terminal:
+
+```
+🔨 MCP Tool Called: pack_codebase
+   📁 Directory: /path/to/project
+   🗜️ Compress: false
+   📊 Top files: 10
+   🏗️ Creating workspace...
+   📝 Output will be saved to: /tmp/repomix_mcp_xxx/repomix-output.xml
+   🔄 Processing repository...
+   ✅ Processing completed!
+   📊 Files processed: 45
+   📝 Characters: 125,432
+   🎯 Tokens: 0
+   🎉 MCP response generated successfully
+```
+
+#### Features
+
+- ✅ Complete MCP protocol support
+- ✅ Detailed operation logging
+- ✅ Security file checking
+- ✅ Multiple output formats
+- ✅ File search and reading
+- ✅ Temporary file management
+- 🔄 Remote repository support (in development)
+- 🔄 Code compression features (in development)
+
+### 7.3 Best Practices
 
 *   **Be Specific:** When prompting the AI, be as specific as possible about what you want. The more context you provide, the better the results will be.
 *   **Iterate:** Don't be afraid to iterate on your prompts. If you don't get the results you want on the first try, refine your prompt and try again.

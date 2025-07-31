@@ -26,15 +26,11 @@ class DefaultActionRunnerResult:
 
     Attributes:
         config: Merged configuration object
-        total_files: Total number of files
-        total_chars: Total character count
-        total_tokens: Total token count
+        pack_result: Complete repo processor result
     """
 
     config: RepomixConfig
-    total_files: int
-    total_chars: int
-    total_tokens: int
+    pack_result: Any  # Will be RepoProcessorResult but avoiding circular import
 
 
 def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str, Any]) -> DefaultActionRunnerResult:
@@ -137,7 +133,5 @@ def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str
 
     return DefaultActionRunnerResult(
         config=config,
-        total_files=result.total_files,
-        total_chars=result.total_chars,
-        total_tokens=result.total_tokens,
+        pack_result=result,
     )
