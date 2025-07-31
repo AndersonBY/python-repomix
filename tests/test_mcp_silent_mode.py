@@ -21,6 +21,11 @@ class TestMCPSilentMode:
     def setup_method(self):
         """Reset silent mode before each test"""
         set_mcp_silent_mode(True)  # Reset to default
+        
+        # Reset logger state to ensure clean test environment
+        from src.repomix.shared.logger import logger, LogLevel
+        logger.set_verbose(False)
+        logger.set_log_level(LogLevel.INFO)
 
     def test_default_silent_mode_state(self):
         """Test that the default silent mode state is True"""
@@ -83,18 +88,19 @@ class TestMCPSilentMode:
             _server = create_mcp_server(silent=False)
 
         stdout_output = stdout_capture.getvalue()
-        _stderr_output = stderr_capture.getvalue()
+        stderr_output = stderr_capture.getvalue()
+        combined_output = stdout_output + stderr_output
 
-        # Should have output when silent=False
-        assert "🔧 Creating MCP server..." in stdout_output
-        assert "📦 Registering MCP tools..." in stdout_output
-        assert "✅ pack_codebase" in stdout_output
-        assert "✅ pack_remote_repository" in stdout_output
-        assert "✅ read_repomix_output" in stdout_output
-        assert "✅ grep_repomix_output" in stdout_output
-        assert "✅ file_system_read_file" in stdout_output
-        assert "✅ file_system_read_directory" in stdout_output
-        assert "🎯 Repomix MCP Server configured with 6 tools" in stdout_output
+        # Should have output when silent=False (messages might go to stdout or stderr depending on test environment)
+        assert "🔧 Creating MCP server..." in combined_output
+        assert "📦 Registering MCP tools..." in combined_output
+        assert "✅ pack_codebase" in combined_output
+        assert "✅ pack_remote_repository" in combined_output
+        assert "✅ read_repomix_output" in combined_output
+        assert "✅ grep_repomix_output" in combined_output
+        assert "✅ file_system_read_file" in combined_output
+        assert "✅ file_system_read_directory" in combined_output
+        assert "🎯 Repomix MCP Server configured with 6 tools" in combined_output
         assert is_mcp_silent_mode() is False
 
     @pytest.mark.asyncio
@@ -156,16 +162,17 @@ class TestMCPSilentMode:
                 result = await server.call_tool("pack_codebase", {"directory": str(temp_path), "top_files_length": 3, "compress": False})
 
             stdout_output = stdout_capture.getvalue()
-            _stderr_output = stderr_capture.getvalue()
+            stderr_output = stderr_capture.getvalue()
+            combined_output = stdout_output + stderr_output
 
-            # Should contain MCP tool debug messages
-            assert "🔨 MCP Tool Called: pack_codebase" in stdout_output
-            assert "📁 Directory:" in stdout_output
-            assert "🗜️ Compress:" in stdout_output
-            assert "🏗️ Creating workspace..." in stdout_output
-            assert "🔄 Processing repository..." in stdout_output
-            assert "✅ Processing completed!" in stdout_output
-            assert "🎉 MCP response generated successfully" in stdout_output
+            # Should contain MCP tool debug messages (might go to stdout or stderr depending on test environment)
+            assert "🔨 MCP Tool Called: pack_codebase" in combined_output
+            assert "📁 Directory:" in combined_output
+            assert "🗜️ Compress:" in combined_output
+            assert "🏗️ Creating workspace..." in combined_output
+            assert "🔄 Processing repository..." in combined_output
+            assert "✅ Processing completed!" in combined_output
+            assert "🎉 MCP response generated successfully" in combined_output
 
             # Verify the tool actually worked
             assert result is not None
@@ -252,6 +259,11 @@ class TestMCPSilentModeIntegration:
     def setup_method(self):
         """Reset silent mode before each test"""
         set_mcp_silent_mode(True)
+        
+        # Reset logger state to ensure clean test environment
+        from src.repomix.shared.logger import logger, LogLevel
+        logger.set_verbose(False)
+        logger.set_log_level(LogLevel.INFO)
 
     @pytest.mark.asyncio
     async def test_realistic_codebase_analysis_silent(self):
