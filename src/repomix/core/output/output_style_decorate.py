@@ -70,7 +70,7 @@ class OutputStyle(ABC):
         repository_instruction = ""
         if self.config.output.instruction_file_path:
             if Path(self.config.output.instruction_file_path).exists():
-                with open(self.config.output.instruction_file_path, "r", encoding="utf-8") as file:
+                with open(self.config.output.instruction_file_path, encoding="utf-8") as file:
                     repository_instruction = f"\n{file.read().strip()}"
         return SUMMARY_USAGE_GUIDELINES.format(header_text=header_text, repository_instruction=repository_instruction)
 
@@ -79,10 +79,11 @@ class OutputStyle(ABC):
         """Get summary notes"""
         remove_comments_tip = "\n- Code comments have been removed." if self.config.output.remove_comments else ""
         show_line_numbers_tip = "\n- Line numbers have been added to the beginning of each line." if self.config.output.show_line_numbers else ""
+        parsable_style_tip = f"\n- Content has been formatted for parsing in {self.config.output.style_enum.value} style." if self.config.output.parsable_style else ""
         return SUMMARY_NOTES.format(
             remove_comments_tip=remove_comments_tip,
             show_line_numbers_tip=show_line_numbers_tip,
-        )
+        ) + parsable_style_tip
 
     @property
     def summary_additional_info(self) -> str:

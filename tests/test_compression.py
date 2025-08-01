@@ -23,96 +23,96 @@ class TestPythonManipulator:
 def calculate_sum(a: int, b: int) -> int:
     """
     Calculate the sum of two integers.
-    
+
     Args:
         a: First integer
         b: Second integer
-        
+
     Returns:
         The sum of a and b
     """
     # Validate inputs
     if not isinstance(a, int) or not isinstance(b, int):
         raise TypeError("Both arguments must be integers")
-    
+
     # Perform calculation
     result = a + b
-    
+
     # Log the operation
     print(f"Calculating {a} + {b} = {result}")
-    
+
     return result
 
 class DataProcessor:
     """
     A class for processing various types of data.
-    
+
     This class provides methods for data validation, transformation,
     and analysis operations.
     """
-    
+
     def __init__(self, data_source: str):
         """
         Initialize the DataProcessor.
-        
+
         Args:
             data_source: Path to the data source
         """
         self.data_source = data_source
         self.processed_count = 0
         self._validate_source()
-    
+
     def process_data(self, data: list) -> dict:
         """
         Process the input data and return results.
-        
+
         Args:
             data: List of data items to process
-            
+
         Returns:
             Dictionary containing processed results
         """
         if not data:
             return {"status": "empty", "count": 0}
-        
+
         # Complex processing logic
         processed_items = []
         for item in data:
             if self._is_valid_item(item):
                 processed_item = self._transform_item(item)
                 processed_items.append(processed_item)
-        
+
         self.processed_count += len(processed_items)
-        
+
         return {
             "status": "success",
             "count": len(processed_items),
             "items": processed_items
         }
-    
+
     async def async_process(self, data: list) -> dict:
         """
         Asynchronously process data.
-        
+
         Args:
             data: Data to process
-            
+
         Returns:
             Processing results
         """
         import asyncio
         await asyncio.sleep(0.1)
         return {"async": True, "data": data}
-    
+
     def _validate_source(self):
         """Private method to validate data source."""
         # Implementation details...
         pass
-    
+
     def _is_valid_item(self, item):
         """Check if an item is valid for processing."""
         return item is not None
-    
+
     def _transform_item(self, item):
         """Transform a single item."""
         return str(item).upper()
@@ -281,7 +281,7 @@ def hello_world():
 
 class Greeter:
     """A simple greeter class."""
-    
+
     def greet(self, name: str) -> str:
         """Greet a person by name."""
         return f"Hello, {name}!"
@@ -395,10 +395,10 @@ class TestTreeSitterManipulator:
         return '''
 def calculate_area(radius: float) -> float:
     """Calculate the area of a circle.
-    
+
     Args:
         radius: The radius of the circle
-        
+
     Returns:
         The area of the circle
     """
@@ -407,17 +407,17 @@ def calculate_area(radius: float) -> float:
 
 class Calculator:
     """A simple calculator class."""
-    
+
     def __init__(self, precision: int = 2):
         """Initialize the calculator."""
         self.precision = precision
-    
+
     def add(self, a: float, b: float) -> float:
         """Add two numbers."""
         return round(a + b, self.precision)
-    
+
     def subtract(self, a: float, b: float) -> float:
-        """Subtract b from a.""" 
+        """Subtract b from a."""
         return round(a - b, self.precision)
 
 # Constants
@@ -437,21 +437,21 @@ interface User {
 
 class UserService {
     private users: User[] = [];
-    
+
     constructor() {
         this.loadUsers();
     }
-    
+
     public addUser(user: User): void {
         this.users.push(user);
         this.saveUsers();
     }
-    
+
     private loadUsers(): void {
         // Load users from storage
         console.log("Loading users...");
     }
-    
+
     private saveUsers(): void {
         // Save users to storage
         console.log("Saving users...");
@@ -542,15 +542,15 @@ def main():
 
 class Application:
     """Main application class."""
-    
+
     def __init__(self):
         """Initialize the application."""
         self.config = self.load_config()
-    
+
     def run(self):
         """Run the application."""
         print("Application running!")
-    
+
     def load_config(self):
         """Load configuration."""
         return {"debug": True}

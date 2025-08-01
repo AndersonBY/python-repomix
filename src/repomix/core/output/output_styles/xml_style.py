@@ -93,7 +93,17 @@ class XmlStyle(OutputStyle):
 
         # Add file content
         content_elem = ET.SubElement(file_elem, "content")
-        content_elem.text = content
+
+        # Apply parsable style formatting if enabled
+        if self.config.output.parsable_style:
+            # For parsable XML, ensure content is properly CDATA wrapped if it contains special characters
+            if any(char in content for char in ['<', '>', '&']):
+                # Use CDATA section for content with XML special characters
+                content_elem.text = f"<![CDATA[{content}]]>"
+            else:
+                content_elem.text = content
+        else:
+            content_elem.text = content
 
         # Convert to string and format
         xml_str = ET.tostring(file_elem, encoding="unicode")

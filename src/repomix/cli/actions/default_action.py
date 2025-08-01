@@ -7,12 +7,11 @@ from pathlib import Path
 from typing import Dict, Any
 from dataclasses import dataclass
 
-import pyperclip
-
 from ...config.config_schema import RepomixConfig
 from ...config.config_load import load_config
 from ...core.repo_processor import RepoProcessor
 from ...core.file.file_stdin import read_file_paths_from_stdin
+from ...core.packager.copy_to_clipboard import copy_to_clipboard_if_enabled
 from ..cli_print import (
     print_summary,
     print_security_check,
@@ -159,6 +158,13 @@ def _build_cli_options_override(options: Dict[str, Any]) -> Dict[str, Any]:
             "show_line_numbers": options.get("output_show_line_numbers"),
             "copy_to_clipboard": options.get("copy"),
             "top_files_length": options.get("top_files_len"),
+            "parsable_style": options.get("parsable_style"),
+            "remove_comments": options.get("remove_comments"),
+            "remove_empty_lines": options.get("remove_empty_lines"),
+            "truncate_base64": options.get("truncate_base64"),
+            "include_empty_directories": options.get("include_empty_directories"),
+            "stdout": options.get("stdout"),
+            "include_diffs": options.get("include_diffs"),
         },
         "ignore": {"custom_patterns": options.get("ignore", "").split(",") if options.get("ignore") else None},
         "include": options.get("include", "").split(",") if options.get("include") else None,
@@ -222,8 +228,7 @@ def _print_results(directory: str | Path, result: Any, config: RepomixConfig) ->
     # Copy to clipboard (if configured)
     if config.output.copy_to_clipboard:
         try:
-            pyperclip.copy(result.output_content)
-            logger.success("Copied to clipboard")
+            copy_to_clipboard_if_enabled(result.output_content, config)
         except Exception as error:
             logger.warn(f"Failed to copy to clipboard: {error}")
 

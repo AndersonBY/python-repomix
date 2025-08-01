@@ -84,6 +84,17 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--mcp", action="store_true", help="Run as MCP (Model Context Protocol) server")
     parser.add_argument("--stdin", action="store_true", help="Read file paths from standard input")
+    parser.add_argument(
+        "--parsable-style",
+        action="store_true",
+        help="By escaping and formatting, ensure the output is parsable as a document of its type",
+    )
+    parser.add_argument("--stdout", action="store_true", help="Output to stdout instead of writing to a file")
+    parser.add_argument("--remove-comments", action="store_true", help="Remove comments from source code")
+    parser.add_argument("--remove-empty-lines", action="store_true", help="Remove empty lines from source code")
+    parser.add_argument("--truncate-base64", action="store_true", help="Enable truncation of base64 data strings")
+    parser.add_argument("--include-empty-directories", action="store_true", help="Include empty directories in the output")
+    parser.add_argument("--include-diffs", action="store_true", help="Include git diffs in the output")
 
     return parser
 

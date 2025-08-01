@@ -153,6 +153,13 @@ When a remote URL is specified in the configuration, Repomix will process the re
 -   `--output-show-line-numbers`: Add line numbers to output code blocks.
 -   `--stdin`: Read file paths from standard input (one per line) instead of discovering files automatically.
 -   `--verbose`: Enable verbose logging for debugging.
+-   `--parsable-style`: By escaping and formatting, ensure the output is parsable as a document of its type.
+-   `--stdout`: Output to stdout instead of writing to a file.
+-   `--remove-comments`: Remove comments from source code.
+-   `--remove-empty-lines`: Remove empty lines from source code.
+-   `--truncate-base64`: Enable truncation of base64 data strings.
+-   `--include-empty-directories`: Include empty directories in the output.
+-   `--include-diffs`: Include git diffs in the output.
 
 ### 4.3 Security Check
 

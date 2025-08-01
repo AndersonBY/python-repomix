@@ -61,4 +61,4 @@ def run_init_action(cwd: str | Path, use_global: bool = False) -> None:
             json.dump(config_dict, f, indent=2)
         logger.success(f"Created {config_type.lower()} configuration file: {config_path}")
     except Exception as error:
-        raise RepomixError(f"Failed to create configuration file: {error}")
+        raise RepomixError(f"Failed to create configuration file: {error}") from error

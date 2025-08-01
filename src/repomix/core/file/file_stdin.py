@@ -150,4 +150,4 @@ async def read_file_paths_from_stdin(cwd: Path) -> StdinFileResult:
     except ValueError:
         raise
     except Exception as e:
-        raise ValueError(f"Failed to read file paths from stdin: {e}")
+        raise ValueError(f"Failed to read file paths from stdin: {e}") from e

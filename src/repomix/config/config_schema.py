@@ -20,7 +20,7 @@ class RepomixConfigOutput:
     """Output configuration"""
 
     file_path: str = "repomix-output.md"
-    _style: RepomixOutputStyle = RepomixOutputStyle.MARKDOWN
+    style: str = "markdown"  # Using string type for easier initialization, converted via property
     header_text: str = ""
     instruction_file_path: str = ""
     remove_comments: bool = False
@@ -32,6 +32,22 @@ class RepomixConfigOutput:
     calculate_tokens: bool = False
     show_file_stats: bool = False
     show_directory_structure: bool = True
+    parsable_style: bool = False
+    truncate_base64: bool = False
+    stdout: bool = False
+    include_diffs: bool = False
+
+    def __post_init__(self):
+        """Convert string style to enum after initialization"""
+        if isinstance(self.style, str):
+            try:
+                self._style = RepomixOutputStyle(self.style.lower())
+            except ValueError:
+                self._style = RepomixOutputStyle.MARKDOWN
+        elif isinstance(self.style, RepomixOutputStyle):
+            self._style = self.style
+        else:
+            self._style = RepomixOutputStyle.MARKDOWN
 
     def _process_style_value(self, value):
         """Process style value and set _style accordingly"""
@@ -41,17 +57,17 @@ class RepomixConfigOutput:
             try:
                 self._style = RepomixOutputStyle(value.lower())
             except ValueError:
-                raise ValueError(f"Invalid style value: {value}. Must be one of: {', '.join(s.value for s in RepomixOutputStyle)}")
+                raise ValueError(f"Invalid style value: {value}. Must be one of: {', '.join(s.value for s in RepomixOutputStyle)}") from None
         else:
             raise TypeError("Style must be either string or RepomixOutputStyle enum")
 
     @property
-    def style(self) -> RepomixOutputStyle:
-        """Get the output style"""
+    def style_enum(self) -> RepomixOutputStyle:
+        """Get the output style as enum"""
         return self._style
 
-    @style.setter
-    def style(self, value):
+    @style_enum.setter
+    def style_enum(self, value):
         """Set the output style, supports string or RepomixOutputStyle enum"""
         self._process_style_value(value)
 
@@ -106,14 +122,8 @@ class RepomixConfig:
         """Post-initialization processing to handle nested dictionaries"""
         # Handle output if it's a dictionary
         if isinstance(self.output, dict):
-            output_dict = self.output.copy()
-            # Handle style attribute specifically
-            style_value = output_dict.pop("style", None)
-            # Create output object with remaining parameters
-            self.output = RepomixConfigOutput(**output_dict)
-            # Set style if it was provided
-            if style_value is not None:
-                self.output.style = style_value
+            # Create output object with all parameters (including style)
+            self.output = RepomixConfigOutput(**self.output)
 
         # Handle security if it's a dictionary
         if isinstance(self.security, dict):

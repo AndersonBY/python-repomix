@@ -62,7 +62,7 @@ def generate_output(
     # Get output style processor
     style = get_output_style(config)
     if not style:
-        logger.warn(f"Unknown output style: {config.output.style}, using plain text style")
+        logger.warn(f"Unknown output style: {config.output.style_enum}, using plain text style")
         empty_config = RepomixConfig()
         style = get_output_style(empty_config)
         assert style is not None

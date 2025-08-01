@@ -320,7 +320,7 @@ def helper_function(x):
 class UtilityClass:
     def __init__(self, value):
         self.value = value
-    
+
     def process(self):
         return helper_function(self.value)
             ''')

@@ -155,6 +155,13 @@ repomix --init --global
 -   `--output-show-line-numbers`: 在输出代码块中添加行号。
 -   `--stdin`: 从标准输入读取文件路径（每行一个），而不是自动发现文件。
 -   `--verbose`: 启用详细日志记录，用于调试。
+-   `--parsable-style`: 通过转义和格式化，确保输出可以作为其类型的文档被解析。
+-   `--stdout`: 输出到标准输出而不是写入文件。
+-   `--remove-comments`: 从源代码中移除注释。
+-   `--remove-empty-lines`: 从源代码中移除空行。
+-   `--truncate-base64`: 启用 base64 数据字符串的截断。
+-   `--include-empty-directories`: 在输出中包含空目录。
+-   `--include-diffs`: 在输出中包含 git diff。
 
 
 ### 4.3 安全检查

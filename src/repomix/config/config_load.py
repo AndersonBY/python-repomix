@@ -100,10 +100,10 @@ def load_local_config(directory: str | Path, cwd: str | Path, config_path: Optio
     try:
         config_dict = json.loads(config_path_obj.read_text(encoding="utf-8"))
         return RepomixConfig(**config_dict)
-    except json.JSONDecodeError:
-        raise RepomixError(f"Invalid configuration file format: {config_path_obj}")
+    except json.JSONDecodeError as error:
+        raise RepomixError(f"Invalid configuration file format: {config_path_obj}") from error
     except Exception as error:
-        raise RepomixError(f"Failed to load configuration file: {error}")
+        raise RepomixError(f"Failed to load configuration file: {error}") from error
 
 
 def merge_configs(
@@ -134,11 +134,11 @@ def merge_configs(
     # Merge CLI options
     if cli_options:
         if cli_options.get("output", {}).get("file_path") is None:
-            if cli_options.get("output", {}).get("style") == RepomixOutputStyle.MARKDOWN:
+            if cli_options.get("output", {}).get("style") == "markdown":
                 cli_options["output"]["file_path"] = "repomix-output.md"
-            elif cli_options.get("output", {}).get("style") == RepomixOutputStyle.XML:
+            elif cli_options.get("output", {}).get("style") == "xml":
                 cli_options["output"]["file_path"] = "repomix-output.xml"
-            elif cli_options.get("output", {}).get("style") == RepomixOutputStyle.PLAIN:
+            elif cli_options.get("output", {}).get("style") == "plain":
                 cli_options["output"]["file_path"] = "repomix-output.txt"
         merge_config_dict(merged_config.__dict__, cli_options)
 
@@ -152,6 +152,8 @@ def merge_config_dict(target: Dict[str, Any], source: Dict[str, Any]) -> None:
         target: Target dictionary
         source: Source dictionary
     """
+    from .config_schema import RepomixConfigOutput
+
     for key, value in source.items():
         if value is not None:
             if isinstance(value, dict):
@@ -162,6 +164,9 @@ def merge_config_dict(target: Dict[str, Any], source: Dict[str, Any]) -> None:
                     # If target is an object, merge into its __dict__
                     elif hasattr(target[key], "__dict__"):
                         merge_config_dict(target[key].__dict__, value)
+                        # Special handling for RepomixConfigOutput to update _style when style changes
+                        if isinstance(target[key], RepomixConfigOutput) and "style" in value:
+                            target[key]._process_style_value(value["style"])
                     else:
                         target[key] = value
                 else:

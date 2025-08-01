@@ -8,7 +8,7 @@ query_javascript = """
 ; Import statements
 (import_statement) @definition.import
 
-; Export statements  
+; Export statements
 (export_statement) @definition.export
 
 ; Class definitions

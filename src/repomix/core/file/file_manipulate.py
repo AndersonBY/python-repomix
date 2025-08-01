@@ -54,7 +54,7 @@ class FileManipulator:
         Returns:
             Compressed content
         """
-        warnings.warn("Code compression not implemented for this file type", UserWarning)
+        warnings.warn("Code compression not implemented for this file type", UserWarning, stacklevel=2)
         return content
 
 
@@ -149,12 +149,14 @@ class PythonManipulator(FileManipulator):
             warnings.warn(
                 "Failed to parse Python code for compression, returning original content",
                 UserWarning,
+                stacklevel=2,
             )
             return content
         except Exception as e:
             warnings.warn(
                 f"Error during Python code compression: {e}, returning original content",
                 UserWarning,
+                stacklevel=2,
             )
             return content
 
@@ -176,7 +178,7 @@ class PythonManipulator(FileManipulator):
         Returns:
             Compressed AST node, or None if node should be removed
         """
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
             return self._compress_function_or_class(node, keep_signatures, keep_docstrings, keep_interfaces)
         elif isinstance(node, ast.Module):
             # Process module body
@@ -244,7 +246,7 @@ class PythonManipulator(FileManipulator):
             # For classes in interface mode, recursively process methods to keep their interfaces
             if isinstance(node, ast.ClassDef):
                 for stmt in body_to_process:
-                    if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if isinstance(stmt, ast.FunctionDef | ast.AsyncFunctionDef):
                         # Recursively process methods to keep their interfaces
                         compressed_method = self._compress_ast_node(stmt, keep_signatures, keep_docstrings, keep_interfaces)
                         if compressed_method is not None:
@@ -300,6 +302,56 @@ class TreeSitterManipulator(FileManipulator):
         super().__init__()
         self.file_path = file_path
 
+    def remove_comments(self, content: str) -> str:
+        """Remove comments by falling back to traditional manipulator
+
+        Args:
+            content: File content
+
+        Returns:
+            Content with comments removed
+        """
+        from pathlib import Path
+
+        ext = Path(self.file_path).suffix
+
+        # Try traditional manipulator for this file extension
+        traditional_manipulator = manipulators.get(ext)
+        if traditional_manipulator:
+            try:
+                return traditional_manipulator.remove_comments(content)
+            except Exception:
+                # If traditional manipulator fails, return original content
+                pass
+
+        # Final fallback: return original content
+        return content
+
+    def remove_empty_lines(self, content: str) -> str:
+        """Remove empty lines by falling back to traditional manipulator
+
+        Args:
+            content: File content
+
+        Returns:
+            Content with empty lines removed
+        """
+        from pathlib import Path
+
+        ext = Path(self.file_path).suffix
+
+        # Try traditional manipulator for this file extension
+        traditional_manipulator = manipulators.get(ext)
+        if traditional_manipulator:
+            try:
+                return traditional_manipulator.remove_empty_lines(content)
+            except Exception:
+                # If traditional manipulator fails, use base implementation
+                pass
+
+        # Fallback to base implementation
+        return super().remove_empty_lines(content)
+
     def compress_code(
         self,
         content: str,
@@ -331,7 +383,7 @@ class TreeSitterManipulator(FileManipulator):
                 # Tree-sitter parsing failed, use fallback
                 return self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)
         except Exception as e:
-            warnings.warn(f"Tree-sitter compression failed for {self.file_path}: {e}", UserWarning)
+            warnings.warn(f"Tree-sitter compression failed for {self.file_path}: {e}", UserWarning, stacklevel=2)
             return self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)
 
     def _fallback_compression(
@@ -365,6 +417,7 @@ class TreeSitterManipulator(FileManipulator):
                 warnings.warn(
                     f"Fallback compression failed for {self.file_path}: {e}",
                     UserWarning,
+                    stacklevel=2,
                 )
 
         # Final fallback: return original content

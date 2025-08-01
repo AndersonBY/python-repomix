@@ -47,4 +47,4 @@ def clone_repository(url: str, directory: str | Path, branch: Optional[str] = No
     try:
         exec_git_shallow_clone(formatted_url, directory, branch)
     except Exception as error:
-        raise RepomixError(f"Repository clone failed: {error}")
+        raise RepomixError(f"Repository clone failed: {error}") from error

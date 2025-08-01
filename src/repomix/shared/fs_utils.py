@@ -49,4 +49,4 @@ def copy_output_to_current_directory(source_dir: Path, target_dir: Path, output_
         logger.trace(f"Copying output file: {source_path} to {target_path}")
         target_path.write_bytes(source_path.read_bytes())
     except Exception as error:
-        raise RepomixError(f"Failed to copy output file: {error}")
+        raise RepomixError(f"Failed to copy output file: {error}") from error

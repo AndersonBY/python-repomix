@@ -35,7 +35,7 @@ query_go = """
     name: (type_identifier) @name.definition.interface
     type: (interface_type))) @definition.interface
 
-; Struct declarations  
+; Struct declarations
 (type_declaration
   (type_spec
     name: (type_identifier) @name.definition.struct

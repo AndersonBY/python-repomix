@@ -18,8 +18,7 @@ def is_git_installed() -> bool:
     try:
         subprocess.run(
             ["git", "--version"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             check=True,
         )
         return True
@@ -46,7 +45,7 @@ def exec_git_shallow_clone(repo_url: str, target_dir: str | Path, branch: Option
     cmd.extend([str(repo_url), str(target_dir)])
 
     try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, check=True, text=True)
         logger.debug(f"Git clone output: {result.stdout}")
     except subprocess.CalledProcessError as e:
         logger.error(f"Git clone failed: {e.stderr}")

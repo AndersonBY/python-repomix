@@ -1,7 +1,7 @@
 from pathlib import Path
 from fnmatch import fnmatch
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from typing import Dict, List
 import re
 import logging
 from functools import lru_cache
@@ -165,7 +165,7 @@ def _build_file_tree_super_optimized(
 @dataclass
 class RepoProcessorResult:
     config: RepomixConfig
-    file_tree: Dict[str, Union[str, List]]
+    file_tree: Dict[str, str | List]
     total_files: int
     total_chars: int
     total_tokens: int
@@ -325,7 +325,7 @@ class RepoProcessor:
                 cleanup_temp_directory(self.temp_dir)
 
     def write_output(self, output_content: str) -> None:
-        """Write output content to file
+        """Write output content to file or stdout
 
         Args:
             output_content: Output content
@@ -333,6 +333,10 @@ class RepoProcessor:
         if self.config is None:
             raise RepomixError("Configuration not loaded.")
 
-        output_path = Path(self.config.output.file_path)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(output_content, encoding="utf-8")
+        # If stdout is enabled, print to stdout instead of writing to file
+        if self.config.output.stdout:
+            print(output_content)
+        else:
+            output_path = Path(self.config.output.file_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(output_content, encoding="utf-8")

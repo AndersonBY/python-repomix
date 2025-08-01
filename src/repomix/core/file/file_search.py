@@ -208,7 +208,7 @@ def _scan_directory(
         gitignore_path = current_dir / ".gitignore"
         if gitignore_path.exists() and gitignore_path != (root_path / ".gitignore"):
             try:
-                with open(gitignore_path, "r", encoding="utf-8") as f:
+                with open(gitignore_path, encoding="utf-8") as f:
                     lines = f.readlines()
                     local_patterns = [line.strip() for line in lines if line.strip() and not line.startswith("#")]
                     if local_patterns:
@@ -486,7 +486,7 @@ def collect_gitignore_patterns(directory_path: Path, root_path: Path) -> List[st
 
         if gitignore_path.exists():
             try:
-                with open(gitignore_path, "r", encoding="utf-8") as f:
+                with open(gitignore_path, encoding="utf-8") as f:
                     lines = f.readlines()
                     dir_patterns = [line.strip() for line in lines if line.strip() and not line.startswith("#")]
                     patterns.extend(dir_patterns)

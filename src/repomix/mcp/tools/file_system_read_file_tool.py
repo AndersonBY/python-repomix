@@ -50,7 +50,7 @@ def register_file_system_read_file_tool(server: FastMCP) -> None:
 
             # Read file content
             try:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     content = f.read()
 
                 # Get file stats

@@ -57,7 +57,7 @@ def register_grep_repomix_output_tool(server: FastMCP) -> None:
 
             # Read file content
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     lines = f.readlines()
             except UnicodeDecodeError:
                 return build_mcp_tool_error_response({"error_message": f"Failed to decode file as UTF-8: {file_path}"})

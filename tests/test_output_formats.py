@@ -194,10 +194,10 @@ def helper_function(value):
 
 class DataProcessor:
     """Process various types of data."""
-    
+
     def __init__(self):
         self.processed = []
-    
+
     def add_item(self, item):
         """Add item to processing queue."""
         self.processed.append(helper_function(item))

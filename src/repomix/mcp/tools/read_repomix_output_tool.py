@@ -60,7 +60,7 @@ def register_read_repomix_output_tool(server: FastMCP) -> None:
 
             # Read file content
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     lines = f.readlines()
 
                 logger.log(f"   📊 Total lines in file: {len(lines)}")

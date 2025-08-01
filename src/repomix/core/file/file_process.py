@@ -8,6 +8,7 @@ from ...config.config_schema import RepomixConfig
 from ...shared.process_concurrency import get_process_concurrency
 from .file_manipulate import get_file_manipulator
 from .file_types import ProcessedFile, RawFile
+from .truncate_base64 import truncate_base64_content
 
 
 def _process_single_file(args: tuple[RawFile, RepomixConfig]) -> ProcessedFile:
@@ -58,6 +59,10 @@ def process_content(content: str, file_path: str, config: RepomixConfig) -> str:
     """
     processed_content = content
     manipulator = get_file_manipulator(file_path)
+
+    # Apply base64 truncation if enabled
+    if config.output.truncate_base64:
+        processed_content = truncate_base64_content(processed_content)
 
     # Apply compression if enabled
     if config.compression.enabled and manipulator:

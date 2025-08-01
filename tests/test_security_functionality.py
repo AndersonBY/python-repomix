@@ -132,7 +132,7 @@ def calculate_sum(a, b):
 class Calculator:
     def __init__(self):
         self.result = 0
-    
+
     def add(self, value):
         self.result += value
         return self.result
@@ -292,18 +292,18 @@ import requests
 def main():
     """Main application function."""
     print("Starting application...")
-    
+
     # Get API key from environment
     api_key = os.getenv("API_KEY")
     if not api_key:
         # Fallback - THIS IS BAD PRACTICE
         api_key = "sk-1234567890abcdefghijk"
-    
+
     response = requests.get(
         "https://api.example.com/data",
         headers={"Authorization": f"Bearer {api_key}"}
     )
-    
+
     return response.json()
 
 if __name__ == "__main__":
@@ -403,13 +403,13 @@ def main():
     """Main application entry point."""
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    
+
     logger.info("Application starting...")
-    
+
     # Safe environment variable usage
     database_url = os.getenv("DATABASE_URL", "sqlite:///default.db")
     logger.info(f"Using database: {database_url}")
-    
+
     return 0
 
 if __name__ == "__main__":
@@ -446,7 +446,7 @@ API_SETTINGS = {
 
 DATABASE_CONFIG = {
     "host": "localhost",
-    "user": "admin", 
+    "user": "admin",
     "password": "admin123",
     "database": "production"
 }
@@ -510,7 +510,7 @@ Replace `YOUR_API_KEY_HERE` with your actual API key.
 ## Environment Variables
 
 Set the following environment variables:
-- `API_KEY`: Your API key (e.g., "sk-...")  
+- `API_KEY`: Your API key (e.g., "sk-...")
 - `DATABASE_PASSWORD`: Your database password
 
 Never commit real credentials to version control!
@@ -523,17 +523,17 @@ import unittest
 from unittest.mock import patch
 
 class TestAuth(unittest.TestCase):
-    
+
     def test_api_key_validation(self):
         """Test API key validation."""
         # Test with mock API key
         mock_key = "sk-test-1234567890abcdef"
         self.assertTrue(validate_api_key(mock_key))
-        
+
         # Test with invalid key
         invalid_key = "invalid-key"
         self.assertFalse(validate_api_key(invalid_key))
-    
+
     @patch.dict(os.environ, {"API_KEY": "test-key"})
     def test_environment_api_key(self):
         """Test getting API key from environment."""

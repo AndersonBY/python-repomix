@@ -120,7 +120,7 @@ class TestRepoProcessorBranch:
                     assert Path(processor.config.output.file_path).exists()
 
                     # Verify output content contains expected elements
-                    with open(processor.config.output.file_path, "r", encoding="utf-8") as f:
+                    with open(processor.config.output.file_path, encoding="utf-8") as f:
                         content = f.read()
                         # The github-stats repository should contain Python files
                         assert "python" in content.lower() or ".py" in content

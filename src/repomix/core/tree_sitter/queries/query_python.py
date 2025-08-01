@@ -13,7 +13,7 @@ query_python = """
 (function_definition) @definition.function
 
 ; Module-level variable assignments (only simple ones)
-(module 
+(module
   (expression_statement
     (assignment
       left: (identifier))) @definition.variable)

@@ -27,5 +27,5 @@ def get_output_style(config: RepomixConfig) -> Optional[OutputStyle]:
     Returns:
         Output style instance, or None if the style type is unknown
     """
-    style_class = _style_map.get(config.output.style)
+    style_class = _style_map.get(config.output.style_enum)
     return style_class(config) if style_class else None

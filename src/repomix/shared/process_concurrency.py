@@ -6,9 +6,9 @@ import os
 import sys
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from typing import Union
 
-PoolExecutor = Union[ProcessPoolExecutor, ThreadPoolExecutor]
+
+PoolExecutor = ProcessPoolExecutor | ThreadPoolExecutor
 
 
 def _is_running_on_lambda() -> bool:

@@ -345,10 +345,10 @@ def calculate(x, y):
 
 class Helper:
     """Helper class."""
-    
+
     def __init__(self):
         self.value = 0
-    
+
     def process(self, data):
         """Process data."""
         return data.upper()
@@ -363,7 +363,7 @@ from src.main import main
 
 class TestMain(unittest.TestCase):
     """Test cases for main function."""
-    
+
     def test_main(self):
         """Test main function."""
         result = main()
@@ -432,12 +432,12 @@ from typing import List, Dict, Optional
 
 class DataProcessor:
     """Process data with various methods."""
-    
+
     def __init__(self, config: Dict):
         """Initialize processor."""
         self.config = config
         self.results = []
-    
+
     def process_data(self, data: List[str]) -> Optional[List[str]]:
         """Process input data."""
         try:
@@ -450,11 +450,11 @@ class DataProcessor:
         except Exception as e:
             print(f"Error: {e}")
             return None
-    
+
     def validate_item(self, item: str) -> bool:
         """Validate individual item."""
         return len(item) > 0 and item.isalnum()
-    
+
     def transform_item(self, item: str) -> str:
         """Transform individual item."""
         return item.upper().strip()
