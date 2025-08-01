@@ -41,6 +41,30 @@ repomix
 python -m repomix
 ```
 
+### Docker 使用
+
+你也可以在不本地安装的情况下使用 Docker 运行 Repomix：
+
+```bash
+# 构建 Docker 镜像
+docker build -t repomix .
+
+# 在当前目录运行 repomix
+docker run --rm -v "$(pwd)":/app repomix
+
+# 使用特定选项运行 repomix
+docker run --rm -v "$(pwd)":/app repomix --style markdown --output custom-output.md
+
+# 在不同目录运行 repomix
+docker run --rm -v "/path/to/your/project":/app repomix
+```
+
+**Docker 优势：**
+- **隔离环境**：无需在宿主机安装 Python 依赖即可运行 repomix
+- **一致性结果**：确保跨不同机器的环境一致性
+- **易于分发**：与团队共享确切的 repomix 版本和配置
+- **免装即用**：无需 pip install 即可立即使用 repomix
+
 就这样！Repomix 将会在你当前目录下生成一个 `repomix-output.md` 文件（默认），其中包含你整个仓库的 AI 友好格式。
 
 

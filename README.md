@@ -40,6 +40,30 @@ Alternatively, you can use:
 python -m repomix
 ```
 
+### Docker Usage
+
+You can also use Repomix with Docker without installing it locally:
+
+```bash
+# Build the Docker image
+docker build -t repomix .
+
+# Run repomix on the current directory
+docker run --rm -v "$(pwd)":/app repomix
+
+# Run repomix with specific options
+docker run --rm -v "$(pwd)":/app repomix --style markdown --output custom-output.md
+
+# Run repomix on a different directory
+docker run --rm -v "/path/to/your/project":/app repomix
+```
+
+**Docker Benefits:**
+- **Isolated Environment**: Run repomix without installing Python dependencies on your host system
+- **Consistent Results**: Ensures the same environment across different machines
+- **Easy Distribution**: Share the exact repomix version and configuration with your team
+- **No Installation Required**: Use repomix immediately without pip install
+
 That's it! Repomix will generate a `repomix-output.md` file (by default) in your current directory, containing your entire repository in an AI-friendly format.
 
 ## 📖 4. Usage
