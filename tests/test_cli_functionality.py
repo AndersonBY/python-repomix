@@ -176,6 +176,55 @@ class TestCLIParser:
 
         assert args.stdin is True
 
+    def test_parser_parsable_style_flag(self):
+        """Test parser with parsable-style flag"""
+        parser = create_parser()
+        args = parser.parse_args(["--parsable-style"])
+
+        assert args.parsable_style is True
+
+    def test_parser_stdout_flag(self):
+        """Test parser with stdout flag"""
+        parser = create_parser()
+        args = parser.parse_args(["--stdout"])
+
+        assert args.stdout is True
+
+    def test_parser_remove_comments_flag(self):
+        """Test parser with remove-comments flag"""
+        parser = create_parser()
+        args = parser.parse_args(["--remove-comments"])
+
+        assert args.remove_comments is True
+
+    def test_parser_remove_empty_lines_flag(self):
+        """Test parser with remove-empty-lines flag"""
+        parser = create_parser()
+        args = parser.parse_args(["--remove-empty-lines"])
+
+        assert args.remove_empty_lines is True
+
+    def test_parser_truncate_base64_flag(self):
+        """Test parser with truncate-base64 flag"""
+        parser = create_parser()
+        args = parser.parse_args(["--truncate-base64"])
+
+        assert args.truncate_base64 is True
+
+    def test_parser_include_empty_directories_flag(self):
+        """Test parser with include-empty-directories flag"""
+        parser = create_parser()
+        args = parser.parse_args(["--include-empty-directories"])
+
+        assert args.include_empty_directories is True
+
+    def test_parser_include_diffs_flag(self):
+        """Test parser with include-diffs flag"""
+        parser = create_parser()
+        args = parser.parse_args(["--include-diffs"])
+
+        assert args.include_diffs is True
+
     def test_parser_combined_options(self):
         """Test parser with multiple combined options"""
         parser = create_parser()
@@ -207,6 +256,34 @@ class TestCLIParser:
         assert args.ignore == "*.tmp"
         assert args.top_files_len == 10
         assert args.no_security_check is True
+
+    def test_parser_advanced_output_options_combined(self):
+        """Test parser with multiple advanced output options"""
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "test-project",
+                "--parsable-style",
+                "--stdout",
+                "--remove-comments",
+                "--remove-empty-lines",
+                "--truncate-base64",
+                "--include-empty-directories",
+                "--include-diffs",
+                "--style",
+                "markdown"
+            ]
+        )
+
+        assert args.directory == "test-project"
+        assert args.parsable_style is True
+        assert args.stdout is True
+        assert args.remove_comments is True
+        assert args.remove_empty_lines is True
+        assert args.truncate_base64 is True
+        assert args.include_empty_directories is True
+        assert args.include_diffs is True
+        assert args.style == "markdown"
 
 
 class TestCLIActions:
