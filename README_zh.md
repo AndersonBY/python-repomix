@@ -153,6 +153,7 @@ repomix --init --global
 -   `--copy`: 将生成的输出复制到系统剪贴板。
 -   `--top-files-len <number>`: 在摘要中显示的最大文件数量（按大小）。
 -   `--output-show-line-numbers`: 在输出代码块中添加行号。
+-   `--stdin`: 从标准输入读取文件路径（每行一个），而不是自动发现文件。
 -   `--verbose`: 启用详细日志记录，用于调试。
 
 

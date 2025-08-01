@@ -151,6 +151,7 @@ When a remote URL is specified in the configuration, Repomix will process the re
 -   `--copy`: Copy generated output to system clipboard.
 -   `--top-files-len <number>`: Max number of largest files to display in summary.
 -   `--output-show-line-numbers`: Add line numbers to output code blocks.
+-   `--stdin`: Read file paths from standard input (one per line) instead of discovering files automatically.
 -   `--verbose`: Enable verbose logging for debugging.
 
 ### 4.3 Security Check
