@@ -4,7 +4,11 @@ Test suite for configuration schema functionality
 
 import json
 import pytest
-from src.repomix.config.config_schema import RepomixConfig, RepomixConfigOutput, RepomixOutputStyle
+from src.repomix.config.config_schema import (
+    RepomixConfig,
+    RepomixConfigOutput,
+    RepomixOutputStyle,
+)
 
 
 class TestRepomixConfigOutput:
@@ -157,7 +161,10 @@ class TestRepomixConfig:
 
     def test_partial_config_initialization(self):
         """Test initialization with partial configuration"""
-        partial_config = {"output": {"style": "plain", "show_line_numbers": True}, "compression": {"enabled": True, "keep_signatures": False}}
+        partial_config = {
+            "output": {"style": "plain", "show_line_numbers": True},
+            "compression": {"enabled": True, "keep_signatures": False},
+        }
 
         config = RepomixConfig(**partial_config)
 
@@ -184,10 +191,23 @@ class TestRepomixConfig:
     def test_config_with_all_sections(self):
         """Test configuration with all sections specified"""
         full_config_dict = {
-            "output": {"file_path": "custom-output.xml", "style": "xml", "show_line_numbers": True, "calculate_tokens": True},
-            "security": {"enable_security_check": False, "exclude_suspicious_files": False},
+            "output": {
+                "file_path": "custom-output.xml",
+                "style": "xml",
+                "show_line_numbers": True,
+                "calculate_tokens": True,
+            },
+            "security": {
+                "enable_security_check": False,
+                "exclude_suspicious_files": False,
+            },
             "ignore": {"custom_patterns": ["*.tmp", "*.log"], "use_gitignore": False},
-            "compression": {"enabled": True, "keep_signatures": True, "keep_docstrings": False, "keep_interfaces": True},
+            "compression": {
+                "enabled": True,
+                "keep_signatures": True,
+                "keep_docstrings": False,
+                "keep_interfaces": True,
+            },
             "include": ["src/**", "tests/**"],
         }
 

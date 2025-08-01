@@ -67,9 +67,7 @@ def load_global_config() -> Optional[RepomixConfig]:
         return None
 
 
-def load_local_config(
-    directory: str | Path, cwd: str | Path, config_path: Optional[str] = None
-) -> Optional[RepomixConfig]:
+def load_local_config(directory: str | Path, cwd: str | Path, config_path: Optional[str] = None) -> Optional[RepomixConfig]:
     """Load local configuration
 
     Args:
@@ -109,7 +107,9 @@ def load_local_config(
 
 
 def merge_configs(
-    global_config: Optional[RepomixConfig], local_config: Optional[RepomixConfig], cli_options: Dict[str, Any]
+    global_config: Optional[RepomixConfig],
+    local_config: Optional[RepomixConfig],
+    cli_options: Dict[str, Any],
 ) -> RepomixConfig:
     """Merge configurations
 

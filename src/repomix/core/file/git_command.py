@@ -16,7 +16,12 @@ def is_git_installed() -> bool:
         True if Git is installed, False otherwise
     """
     try:
-        subprocess.run(["git", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        subprocess.run(
+            ["git", "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
         return True
     except Exception:
         return False

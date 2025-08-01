@@ -7,10 +7,10 @@ if TYPE_CHECKING:
     from ..core.repo_processor import RepoProcessorResult
 
 
-@dataclass 
+@dataclass
 class CliOptions:
     """CLI options for MCP tools."""
-    
+
     compress: bool = False
     include: Optional[str] = None
     ignore: Optional[str] = None
@@ -24,7 +24,7 @@ class CliOptions:
 @dataclass
 class CliResult:
     """Result from CLI execution."""
-    
+
     pack_result: "RepoProcessorResult"
 
 

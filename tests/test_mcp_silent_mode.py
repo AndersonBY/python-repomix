@@ -21,9 +21,10 @@ class TestMCPSilentMode:
     def setup_method(self):
         """Reset silent mode before each test"""
         set_mcp_silent_mode(True)  # Reset to default
-        
+
         # Reset logger state to ensure clean test environment
         from src.repomix.shared.logger import logger, LogLevel
+
         logger.set_verbose(False)
         logger.set_log_level(LogLevel.INFO)
 
@@ -121,7 +122,14 @@ class TestMCPSilentMode:
             stderr_capture = io.StringIO()
 
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
-                result = await server.call_tool("pack_codebase", {"directory": str(temp_path), "top_files_length": 3, "compress": False})
+                result = await server.call_tool(
+                    "pack_codebase",
+                    {
+                        "directory": str(temp_path),
+                        "top_files_length": 3,
+                        "compress": False,
+                    },
+                )
 
             stdout_output = stdout_capture.getvalue()
             _stderr_output = stderr_capture.getvalue()
@@ -159,7 +167,14 @@ class TestMCPSilentMode:
             stderr_capture = io.StringIO()
 
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
-                result = await server.call_tool("pack_codebase", {"directory": str(temp_path), "top_files_length": 3, "compress": False})
+                result = await server.call_tool(
+                    "pack_codebase",
+                    {
+                        "directory": str(temp_path),
+                        "top_files_length": 3,
+                        "compress": False,
+                    },
+                )
 
             stdout_output = stdout_capture.getvalue()
             stderr_output = stderr_capture.getvalue()
@@ -210,12 +225,20 @@ class TestMCPSilentMode:
                 result1 = await server.call_tool("pack_codebase", {"directory": str(temp_path), "compress": False})
 
                 # For second call, let's test file system tools which should also respect silent mode
-                result2 = await server.call_tool("file_system_read_directory", {"input_data": {"path": str(temp_path)}})
+                result2 = await server.call_tool(
+                    "file_system_read_directory",
+                    {"input_data": {"path": str(temp_path)}},
+                )
 
             stdout_output = stdout_capture.getvalue()
 
             # Count occurrences of debug messages - should be 0
-            debug_messages = ["🔨 MCP Tool Called:", "🏗️ Creating workspace...", "🔄 Processing repository...", "✅ Processing completed!"]
+            debug_messages = [
+                "🔨 MCP Tool Called:",
+                "🏗️ Creating workspace...",
+                "🔄 Processing repository...",
+                "✅ Processing completed!",
+            ]
 
             for debug_msg in debug_messages:
                 assert debug_msg not in stdout_output, f"Found debug message '{debug_msg}' in silent mode"
@@ -239,8 +262,14 @@ class TestMCPSilentMode:
             # Test each tool exists by calling with minimal parameters
             tools_to_test = [
                 ("pack_codebase", {"directory": str(temp_path)}),
-                ("file_system_read_directory", {"input_data": {"path": str(temp_path)}}),
-                ("file_system_read_file", {"input_data": {"path": str(temp_path / "test.txt")}}),
+                (
+                    "file_system_read_directory",
+                    {"input_data": {"path": str(temp_path)}},
+                ),
+                (
+                    "file_system_read_file",
+                    {"input_data": {"path": str(temp_path / "test.txt")}},
+                ),
             ]
 
             for tool_name, params in tools_to_test:
@@ -259,9 +288,10 @@ class TestMCPSilentModeIntegration:
     def setup_method(self):
         """Reset silent mode before each test"""
         set_mcp_silent_mode(True)
-        
+
         # Reset logger state to ensure clean test environment
         from src.repomix.shared.logger import logger, LogLevel
+
         logger.set_verbose(False)
         logger.set_log_level(LogLevel.INFO)
 
@@ -315,13 +345,26 @@ This is a test project for MCP silent mode testing.
             try:
                 with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
                     # Pack the codebase
-                    pack_result = await server.call_tool("pack_codebase", {"directory": str(temp_path), "compress": False, "top_files_length": 5})
+                    pack_result = await server.call_tool(
+                        "pack_codebase",
+                        {
+                            "directory": str(temp_path),
+                            "compress": False,
+                            "top_files_length": 5,
+                        },
+                    )
 
                     # Read directory structure
-                    dir_result = await server.call_tool("file_system_read_directory", {"input_data": {"path": str(temp_path)}})
+                    dir_result = await server.call_tool(
+                        "file_system_read_directory",
+                        {"input_data": {"path": str(temp_path)}},
+                    )
 
                     # Read a specific file
-                    file_result = await server.call_tool("file_system_read_file", {"input_data": {"path": str(temp_path / "main.py")}})
+                    file_result = await server.call_tool(
+                        "file_system_read_file",
+                        {"input_data": {"path": str(temp_path / "main.py")}},
+                    )
 
                 stdout_output = stdout_capture.getvalue()
 
@@ -408,15 +451,36 @@ async def run_all_tests():
         ("Basic silent mode state", basic_tests.test_default_silent_mode_state),
         ("Set silent mode false", basic_tests.test_set_silent_mode_false),
         ("Set silent mode true", basic_tests.test_set_silent_mode_true),
-        ("Default server creation (silent)", basic_tests.test_create_mcp_server_default_silent),
-        ("Explicit silent=True", basic_tests.test_create_mcp_server_explicit_silent_true),
-        ("Explicit silent=False", basic_tests.test_create_mcp_server_explicit_silent_false),
+        (
+            "Default server creation (silent)",
+            basic_tests.test_create_mcp_server_default_silent,
+        ),
+        (
+            "Explicit silent=True",
+            basic_tests.test_create_mcp_server_explicit_silent_true,
+        ),
+        (
+            "Explicit silent=False",
+            basic_tests.test_create_mcp_server_explicit_silent_false,
+        ),
         ("Pack codebase tool silent", basic_tests.test_pack_codebase_tool_silent_mode),
-        ("Pack codebase tool verbose", basic_tests.test_pack_codebase_tool_verbose_mode),
-        ("Silent state preservation", basic_tests.test_server_creation_preserves_silent_state),
-        ("Multiple tool calls silent", basic_tests.test_multiple_tool_calls_respect_silent_mode),
+        (
+            "Pack codebase tool verbose",
+            basic_tests.test_pack_codebase_tool_verbose_mode,
+        ),
+        (
+            "Silent state preservation",
+            basic_tests.test_server_creation_preserves_silent_state,
+        ),
+        (
+            "Multiple tool calls silent",
+            basic_tests.test_multiple_tool_calls_respect_silent_mode,
+        ),
         ("All tools registered", basic_tests.test_all_tools_registered_properly),
-        ("Realistic scenario silent", integration_tests.test_realistic_codebase_analysis_silent),
+        (
+            "Realistic scenario silent",
+            integration_tests.test_realistic_codebase_analysis_silent,
+        ),
     ]
 
     passed = 0

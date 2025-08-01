@@ -36,7 +36,10 @@ class TestConfigBranchIntegration:
 
     def test_repomix_config_from_dict_with_remote(self):
         """Test creating RepomixConfig from dictionary with remote settings"""
-        config_dict = {"remote": {"url": "jstrieb/github-stats", "branch": "dark-mode"}, "output": {"file_path": "test-output.md"}}
+        config_dict = {
+            "remote": {"url": "jstrieb/github-stats", "branch": "dark-mode"},
+            "output": {"file_path": "test-output.md"},
+        }
 
         config = RepomixConfig(**config_dict)  # type: ignore
 

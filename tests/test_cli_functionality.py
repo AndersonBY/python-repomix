@@ -225,9 +225,7 @@ class TestCLIActions:
     def test_init_action_local(self):
         """Test init action for local config"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch(
-                "src.repomix.cli.actions.init_action.RepomixConfig"
-            ) as mock_config:
+            with patch("src.repomix.cli.actions.init_action.RepomixConfig") as mock_config:
                 with patch("builtins.open", mock_open()) as mock_file:
                     with patch("json.dump") as mock_json_dump:
                         run_init_action(temp_dir, use_global=False)
@@ -279,9 +277,7 @@ class TestCLIActions:
 
         options = {"branch": "main", "output": "remote-output.md"}
 
-        with patch(
-            "src.repomix.cli.actions.remote_action.copy_output_to_current_directory"
-        ):
+        with patch("src.repomix.cli.actions.remote_action.copy_output_to_current_directory"):
             run_remote_action("user/repo", options)
 
             mock_git_installed.assert_called_once()
@@ -329,9 +325,7 @@ class TestCLIActions:
     @patch("src.repomix.cli.cli_run.run_init_action")
     def test_execute_action_init(self, mock_init):
         """Test execute_action with init flag"""
-        options = argparse.Namespace(
-            version=False, init=True, use_global=False, verbose=False
-        )
+        options = argparse.Namespace(version=False, init=True, use_global=False, verbose=False)
 
         execute_action(".", Path.cwd(), options)
 
@@ -340,9 +334,7 @@ class TestCLIActions:
     @patch("src.repomix.cli.cli_run.run_remote_action")
     def test_execute_action_remote(self, mock_remote):
         """Test execute_action with remote flag"""
-        options = argparse.Namespace(
-            version=False, init=False, mcp=False, remote="user/repo", verbose=False
-        )
+        options = argparse.Namespace(version=False, init=False, mcp=False, remote="user/repo", verbose=False)
 
         execute_action(".", Path.cwd(), options)
 
@@ -401,9 +393,7 @@ class TestRunCLIFunction:
     @patch("src.repomix.cli.cli_run.run_default_action")
     @patch("src.repomix.cli.cli_run.logger.set_verbose")
     @patch("src.repomix.cli.cli_run.logger.is_verbose")
-    async def test_run_cli_basic(
-        self, mock_is_verbose, mock_set_verbose, mock_run_default
-    ):
+    async def test_run_cli_basic(self, mock_is_verbose, mock_set_verbose, mock_run_default):
         """Test basic run_cli functionality"""
         mock_is_verbose.return_value = False
         mock_result = Mock()
@@ -437,9 +427,7 @@ class TestRunCLIFunction:
     @patch("src.repomix.cli.cli_run.run_default_action")
     @patch("src.repomix.cli.cli_run.logger.set_verbose")
     @patch("src.repomix.cli.cli_run.logger.is_verbose")
-    async def test_run_cli_with_options(
-        self, mock_is_verbose, mock_set_verbose, mock_run_default
-    ):
+    async def test_run_cli_with_options(self, mock_is_verbose, mock_set_verbose, mock_run_default):
         """Test run_cli with various options"""
         mock_is_verbose.return_value = True
         mock_result = Mock()
@@ -476,9 +464,7 @@ class TestRunCLIFunction:
     @patch("src.repomix.cli.cli_run.run_default_action")
     @patch("src.repomix.cli.cli_run.logger.set_verbose")
     @patch("src.repomix.cli.cli_run.logger.is_verbose")
-    async def test_run_cli_error_handling(
-        self, mock_is_verbose, mock_set_verbose, mock_run_default
-    ):
+    async def test_run_cli_error_handling(self, mock_is_verbose, mock_set_verbose, mock_run_default):
         """Test run_cli error handling"""
         mock_is_verbose.return_value = False
         mock_run_default.side_effect = Exception("Test error")
@@ -532,16 +518,12 @@ class TestStdinFunctionality:
     @patch("src.repomix.cli.actions.default_action.asyncio.run")
     @patch("src.repomix.cli.actions.default_action.RepoProcessor")
     @patch("src.repomix.cli.cli_run.run_default_action")
-    def test_execute_action_with_stdin(
-        self, mock_run_default, mock_repo_processor, mock_asyncio_run
-    ):
+    def test_execute_action_with_stdin(self, mock_run_default, mock_repo_processor, mock_asyncio_run):
         """Test execute_action with stdin flag"""
         from src.repomix.core.file.file_stdin import StdinFileResult
 
         # Setup mock stdin result
-        mock_stdin_result = StdinFileResult(
-            file_paths=["/path/to/file1.py", "/path/to/file2.py"], empty_dir_paths=[]
-        )
+        mock_stdin_result = StdinFileResult(file_paths=["/path/to/file1.py", "/path/to/file2.py"], empty_dir_paths=[])
         mock_asyncio_run.return_value = mock_stdin_result
 
         # Setup mock processor
@@ -558,9 +540,7 @@ class TestStdinFunctionality:
         )
         mock_repo_processor.return_value = mock_processor_instance
 
-        options = argparse.Namespace(
-            version=False, init=False, mcp=False, stdin=True, verbose=False, remote=None
-        )
+        options = argparse.Namespace(version=False, init=False, mcp=False, stdin=True, verbose=False, remote=None)
 
         # This should call run_default_action with stdin handling
         execute_action(".", Path.cwd(), options)
@@ -613,9 +593,7 @@ class TestCLIIntegration:
                 ]
             )
 
-            with patch(
-                "src.repomix.cli.cli_run.run_default_action"
-            ) as mock_run_default:
+            with patch("src.repomix.cli.cli_run.run_default_action") as mock_run_default:
                 mock_result = Mock()
                 mock_run_default.return_value = mock_result
 

@@ -2,6 +2,7 @@
 CLI Run Module - Handling Command Line Arguments and Executing Corresponding Actions
 """
 
+import asyncio
 import argparse
 from pathlib import Path
 from typing import List, Optional
@@ -18,9 +19,7 @@ from .types import CliOptions, CliResult
 
 def create_parser() -> argparse.ArgumentParser:
     """Create command line argument parser"""
-    parser = argparse.ArgumentParser(
-        description="Repomix - Code Repository Packaging Tool"
-    )
+    parser = argparse.ArgumentParser(description="Repomix - Code Repository Packaging Tool")
 
     # Positional arguments
     parser.add_argument(
@@ -31,12 +30,8 @@ def create_parser() -> argparse.ArgumentParser:
     )
 
     # Optional arguments
-    parser.add_argument(
-        "-v", "--version", action="store_true", help="Display version information"
-    )
-    parser.add_argument(
-        "-o", "--output", metavar="<file>", help="Specify output file name"
-    )
+    parser.add_argument("-v", "--version", action="store_true", help="Display version information")
+    parser.add_argument("-o", "--output", metavar="<file>", help="Specify output file name")
     parser.add_argument(
         "--include",
         metavar="<patterns>",
@@ -48,12 +43,8 @@ def create_parser() -> argparse.ArgumentParser:
         metavar="<patterns>",
         help="Additional ignore patterns (comma-separated)",
     )
-    parser.add_argument(
-        "-c", "--config", metavar="<path>", help="Custom configuration file path"
-    )
-    parser.add_argument(
-        "--copy", action="store_true", help="Copy generated output to system clipboard"
-    )
+    parser.add_argument("-c", "--config", metavar="<path>", help="Custom configuration file path")
+    parser.add_argument("--copy", action="store_true", help="Copy generated output to system clipboard")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument(
         "--top-files-len",
@@ -72,37 +63,27 @@ def create_parser() -> argparse.ArgumentParser:
         metavar="<type>",
         help="Specify output style (plain, xml, markdown)",
     )
-    parser.add_argument(
-        "--init", action="store_true", help="Initialize new repomix.config.json file"
-    )
+    parser.add_argument("--init", action="store_true", help="Initialize new repomix.config.json file")
     parser.add_argument(
         "--global",
         dest="use_global",
         action="store_true",
         help="Use global configuration (only for --init)",
     )
-    parser.add_argument(
-        "--remote", metavar="<url>", help="Process remote Git repository"
-    )
+    parser.add_argument("--remote", metavar="<url>", help="Process remote Git repository")
     parser.add_argument(
         "--branch",
         metavar="<name>",
         help="Specify branch name for remote repository (can be set in config file)",
     )
-    parser.add_argument(
-        "--no-security-check", action="store_true", help="Disable security check"
-    )
+    parser.add_argument("--no-security-check", action="store_true", help="Disable security check")
     parser.add_argument(
         "--compress",
         action="store_true",
         help="Enable tree-sitter based code compression",
     )
-    parser.add_argument(
-        "--mcp", action="store_true", help="Run as MCP (Model Context Protocol) server"
-    )
-    parser.add_argument(
-        "--stdin", action="store_true", help="Read file paths from standard input"
-    )
+    parser.add_argument("--mcp", action="store_true", help="Run as MCP (Model Context Protocol) server")
+    parser.add_argument("--stdin", action="store_true", help="Read file paths from standard input")
 
     return parser
 
@@ -118,9 +99,7 @@ def run() -> None:
         handle_error(e)
 
 
-async def run_cli(
-    directories: List[str], cwd: str, cli_options: CliOptions
-) -> Optional[CliResult]:
+async def run_cli(directories: List[str], cwd: str, cli_options: CliOptions) -> Optional[CliResult]:
     """Run CLI programmatically for MCP tools.
 
     Args:
@@ -131,6 +110,7 @@ async def run_cli(
     Returns:
         CliResult with pack_result
     """
+
     try:
         # Convert CliOptions to dict format expected by default_action
         options = {
@@ -155,8 +135,8 @@ async def run_cli(
             # Use the first directory (MCP typically processes one at a time)
             directory = directories[0] if directories else "."
 
-            # Run default action and get the result
-            result = run_default_action(directory, cwd, options)
+            # Run default action in a separate thread to avoid blocking the event loop
+            result = await asyncio.to_thread(run_default_action, directory, cwd, options)
 
             # Return the result
             return CliResult(pack_result=result.pack_result)
@@ -191,18 +171,9 @@ def execute_action(directory: str, cwd: Path, options: argparse.Namespace) -> No
         return
 
     if options.mcp:
-        import asyncio
         from ..mcp.mcp_server import run_mcp_server
 
-        # For MCP mode, redirect logs to stderr so they don't interfere with stdio protocol
-        import sys
-
-        logger.log = lambda message="": print(str(message), file=sys.stderr)
-        logger.warn = lambda message, error=None: print(f"⚠️ {message}", file=sys.stderr)
-        logger.error = lambda message: print(f"❌ {message}", file=sys.stderr)
-        logger.success = lambda message: print(f"✅ {message}", file=sys.stderr)
-
-        logger.log("Starting Repomix MCP Server...")
+        # MCP mode runs in complete silence to avoid interfering with stdio protocol
         asyncio.run(run_mcp_server())
         return
 

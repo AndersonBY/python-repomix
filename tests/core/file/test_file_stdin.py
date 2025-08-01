@@ -111,9 +111,7 @@ class TestIgnorePatterns:
 
     def test_should_ignore_venv_paths(self):
         """Should ignore paths containing .venv directory."""
-        assert should_ignore_path(
-            Path("/home/user/.venv/lib/python3.11/site-packages/module.py")
-        )
+        assert should_ignore_path(Path("/home/user/.venv/lib/python3.11/site-packages/module.py"))
         assert should_ignore_path(Path("/project/venv/bin/python"))
         assert should_ignore_path(Path("env/lib/site-packages/test.py"))
         assert not should_ignore_path(Path("/home/user/myproject/main.py"))
@@ -253,9 +251,7 @@ file2.py"""
     @pytest.mark.asyncio
     async def test_handles_paths_with_spaces(self, tmp_path, monkeypatch):
         """Should handle file paths with spaces correctly."""
-        stdin_content = (
-            '"file with spaces.py"\nregular_file.py\n"another file with spaces.py"'
-        )
+        stdin_content = '"file with spaces.py"\nregular_file.py\n"another file with spaces.py"'
         monkeypatch.setattr(sys, "stdin", StringIO(stdin_content))
 
         result = await read_file_paths_from_stdin(tmp_path)

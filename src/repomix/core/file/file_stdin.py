@@ -33,11 +33,7 @@ def filter_valid_lines(lines: list[str]) -> list[str]:
     Returns:
         List of valid file paths
     """
-    return [
-        line.strip()
-        for line in lines
-        if line.strip() and not line.strip().startswith("#")
-    ]
+    return [line.strip() for line in lines if line.strip() and not line.strip().startswith("#")]
 
 
 def should_ignore_path(file_path: Path) -> bool:
@@ -130,9 +126,7 @@ async def read_file_paths_from_stdin(cwd: Path) -> StdinFileResult:
     try:
         # Check if stdin is a TTY (interactive mode)
         if sys.stdin.isatty():
-            raise ValueError(
-                "No data provided via stdin. Please pipe file paths to repomix when using --stdin flag."
-            )
+            raise ValueError("No data provided via stdin. Please pipe file paths to repomix when using --stdin flag.")
 
         # Read all lines from stdin
         raw_lines = sys.stdin.read().splitlines()

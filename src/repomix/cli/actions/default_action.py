@@ -37,9 +37,7 @@ class DefaultActionRunnerResult:
     pack_result: Any  # Will be RepoProcessorResult but avoiding circular import
 
 
-def run_default_action(
-    directory: str | Path, cwd: str | Path, options: Dict[str, Any]
-) -> DefaultActionRunnerResult:
+def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str, Any]) -> DefaultActionRunnerResult:
     """Execute default action
 
     Args:
@@ -57,9 +55,7 @@ def run_default_action(
     if options.get("stdin"):
         # Validate directory arguments for stdin mode
         if directory != "." and directory != cwd:
-            raise RepomixError(
-                "When using --stdin, do not specify directory arguments. File paths will be read from stdin."
-            )
+            raise RepomixError("When using --stdin, do not specify directory arguments. File paths will be read from stdin.")
 
         return _handle_stdin_processing(cwd, options)
 
@@ -67,9 +63,7 @@ def run_default_action(
     return _handle_directory_processing(directory, cwd, options)
 
 
-def _handle_stdin_processing(
-    cwd: str | Path, options: Dict[str, Any]
-) -> DefaultActionRunnerResult:
+def _handle_stdin_processing(cwd: str | Path, options: Dict[str, Any]) -> DefaultActionRunnerResult:
     """Handle stdin processing workflow for file paths input.
 
     Args:
@@ -112,9 +106,7 @@ def _handle_stdin_processing(
     )
 
 
-def _handle_directory_processing(
-    directory: str | Path, cwd: str | Path, options: Dict[str, Any]
-) -> DefaultActionRunnerResult:
+def _handle_directory_processing(directory: str | Path, cwd: str | Path, options: Dict[str, Any]) -> DefaultActionRunnerResult:
     """Handle normal directory processing workflow.
 
     Args:
@@ -168,14 +160,8 @@ def _build_cli_options_override(options: Dict[str, Any]) -> Dict[str, Any]:
             "copy_to_clipboard": options.get("copy"),
             "top_files_length": options.get("top_files_len"),
         },
-        "ignore": {
-            "custom_patterns": options.get("ignore", "").split(",")
-            if options.get("ignore")
-            else None
-        },
-        "include": options.get("include", "").split(",")
-        if options.get("include")
-        else None,
+        "ignore": {"custom_patterns": options.get("ignore", "").split(",") if options.get("ignore") else None},
+        "include": options.get("include", "").split(",") if options.get("include") else None,
         "security": {},
         "compression": {"enabled": options.get("compress", False)},
         "remote": {
@@ -187,14 +173,10 @@ def _build_cli_options_override(options: Dict[str, Any]) -> Dict[str, Any]:
     if "no_security_check" in options and options.get("no_security_check"):
         cli_options_override["security"]["enable_security_check"] = False
     enable_security_check_override = None
-    if (
-        options.get("no_security_check") is True
-    ):  # Explicitly check for True set by argparse
+    if options.get("no_security_check") is True:  # Explicitly check for True set by argparse
         enable_security_check_override = False
     if enable_security_check_override is not None:
-        cli_options_override["security"]["enable_security_check"] = (
-            enable_security_check_override
-        )
+        cli_options_override["security"]["enable_security_check"] = enable_security_check_override
 
     final_cli_options = {}
     for key, value in cli_options_override.items():

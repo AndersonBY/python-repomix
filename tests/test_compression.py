@@ -6,7 +6,11 @@ import pytest
 import warnings
 from src.repomix.config.config_schema import RepomixConfig
 from src.repomix.core.file.file_process import process_content
-from src.repomix.core.file.file_manipulate import PythonManipulator, TreeSitterManipulator, get_file_manipulator
+from src.repomix.core.file.file_manipulate import (
+    PythonManipulator,
+    TreeSitterManipulator,
+    get_file_manipulator,
+)
 
 
 class TestPythonManipulator:
@@ -127,7 +131,12 @@ CONFIG = {
 
     def test_compression_disabled(self, manipulator, sample_python_code):
         """Test that compression can be disabled"""
-        result = manipulator.compress_code(sample_python_code, keep_signatures=True, keep_docstrings=True, keep_interfaces=False)
+        result = manipulator.compress_code(
+            sample_python_code,
+            keep_signatures=True,
+            keep_docstrings=True,
+            keep_interfaces=False,
+        )
 
         # When not in interface mode, should keep implementation
         assert "isinstance(a, int)" in result
@@ -136,7 +145,12 @@ CONFIG = {
 
     def test_interface_mode_functions(self, manipulator, sample_python_code):
         """Test interface mode preserves function signatures and docstrings"""
-        result = manipulator.compress_code(sample_python_code, keep_signatures=True, keep_docstrings=True, keep_interfaces=True)
+        result = manipulator.compress_code(
+            sample_python_code,
+            keep_signatures=True,
+            keep_docstrings=True,
+            keep_interfaces=True,
+        )
 
         # Should preserve function signature
         assert "def calculate_sum(a: int, b: int) -> int:" in result
@@ -153,7 +167,12 @@ CONFIG = {
 
     def test_interface_mode_classes(self, manipulator, sample_python_code):
         """Test interface mode preserves class and method signatures"""
-        result = manipulator.compress_code(sample_python_code, keep_signatures=True, keep_docstrings=True, keep_interfaces=True)
+        result = manipulator.compress_code(
+            sample_python_code,
+            keep_signatures=True,
+            keep_docstrings=True,
+            keep_interfaces=True,
+        )
 
         # Should preserve class signature and docstring
         assert "class DataProcessor:" in result
@@ -179,7 +198,12 @@ CONFIG = {
 
     def test_remove_signatures(self, manipulator, sample_python_code):
         """Test removing all function and class signatures"""
-        result = manipulator.compress_code(sample_python_code, keep_signatures=False, keep_docstrings=False, keep_interfaces=False)
+        result = manipulator.compress_code(
+            sample_python_code,
+            keep_signatures=False,
+            keep_docstrings=False,
+            keep_interfaces=False,
+        )
 
         # Should remove all functions and classes
         assert "def calculate_sum" not in result
@@ -191,7 +215,12 @@ CONFIG = {
 
     def test_keep_signatures_remove_docstrings(self, manipulator, sample_python_code):
         """Test keeping signatures but removing docstrings"""
-        result = manipulator.compress_code(sample_python_code, keep_signatures=True, keep_docstrings=False, keep_interfaces=False)
+        result = manipulator.compress_code(
+            sample_python_code,
+            keep_signatures=True,
+            keep_docstrings=False,
+            keep_interfaces=False,
+        )
 
         # Should preserve signatures
         assert "def calculate_sum(a: int, b: int) -> int:" in result
@@ -285,8 +314,16 @@ GLOBAL_VAR = "test"
 
         # Tree-sitter will extract key elements, not follow traditional interface mode
         # Should contain function and class definitions
-        assert any(keyword in result for keyword in ["def hello_world", "hello_world", "class Greeter", "Greeter"])
-        
+        assert any(
+            keyword in result
+            for keyword in [
+                "def hello_world",
+                "hello_world",
+                "class Greeter",
+                "Greeter",
+            ]
+        )
+
         # Should use tree-sitter separator
         assert "⋮----" in result
 
@@ -391,7 +428,7 @@ VERSION = "1.0.0"
     @pytest.fixture
     def sample_typescript_code(self):
         """Sample TypeScript code for tree-sitter testing"""
-        return '''
+        return """
 interface User {
     id: number;
     name: string;
@@ -422,25 +459,25 @@ class UserService {
 }
 
 export default UserService;
-'''
+"""
 
     def test_python_tree_sitter_compression(self, sample_python_code):
         """Test tree-sitter compression for Python files"""
         manipulator = TreeSitterManipulator("test.py")
         result = manipulator.compress_code(sample_python_code)
-        
+
         # Should extract key elements and compress
         assert result != sample_python_code  # Should be different from original
-        
+
         # Should contain function definitions
         assert "def calculate_area" in result or "calculate_area" in result
-        
-        # Should contain class definitions  
+
+        # Should contain class definitions
         assert "class Calculator" in result or "Calculator" in result
-        
+
         # Should contain imports
         assert "import" in result
-        
+
         # Should be separated by tree-sitter separator
         assert "⋮----" in result
 
@@ -448,7 +485,7 @@ export default UserService;
         """Test tree-sitter compression for TypeScript files"""
         manipulator = TreeSitterManipulator("test.ts")
         result = manipulator.compress_code(sample_typescript_code)
-        
+
         # TypeScript/JavaScript parsing might fail due to query issues
         # Test should handle both success and graceful fallback
         if result != sample_typescript_code:
@@ -462,9 +499,9 @@ export default UserService;
         """Test handling of unsupported file types"""
         manipulator = TreeSitterManipulator("test.unknown")
         original_code = "This is some unknown file content"
-        
+
         result = manipulator.compress_code(original_code)
-        
+
         # Should return original content unchanged
         assert result == original_code
 
@@ -472,9 +509,9 @@ export default UserService;
         """Test fallback for files with invalid syntax"""
         manipulator = TreeSitterManipulator("test.py")
         invalid_code = "def invalid_function(\n    # Missing closing parenthesis"
-        
+
         result = manipulator.compress_code(invalid_code)
-        
+
         # Should return original content and potentially issue warning
         assert result == invalid_code
 
@@ -482,7 +519,7 @@ export default UserService;
         """Test handling of empty files"""
         manipulator = TreeSitterManipulator("test.py")
         result = manipulator.compress_code("")
-        
+
         # Should return empty string
         assert result == ""
 
@@ -531,10 +568,10 @@ if __name__ == "__main__":
 
         # Should use tree-sitter compression
         assert result != sample_python_code.strip()
-        
+
         # Should contain compressed elements
         assert "⋮----" in result  # Tree-sitter separator
-        
+
         # Should contain key code elements
         assert any(keyword in result for keyword in ["import", "def", "class"])
 
@@ -552,10 +589,10 @@ if __name__ == "__main__":
         """Test tree-sitter with unsupported file type"""
         config = RepomixConfig()
         config.compression.enabled = True
-        
+
         unknown_code = "This is some unknown file content"
         result = process_content(unknown_code, "test.unknown", config)
-        
+
         # Should return original content since no manipulator exists
         assert result == unknown_code
 

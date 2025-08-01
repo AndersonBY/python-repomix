@@ -53,7 +53,7 @@ def _get_max_workers() -> int:
     """Get the suggested number of concurrent processes"""
     # Get the number of CPU cores
     try:
-        if sys.platform == 'linux':
+        if sys.platform == "linux":
             # Linux specific method
             cpu_count = len(os.sched_getaffinity(0))
         else:

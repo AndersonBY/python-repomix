@@ -54,8 +54,8 @@ class SecurityChecker:
         r"auth[_-]?token.*['\"][^'\"]{10,}['\"]",
         # Common API key patterns - more flexible
         r"['\"]sk[-_][0-9a-zA-Z_-]*[0-9a-zA-Z]['\"]",  # Stripe-like keys (sk- or sk_)
-        r"['\"]pk[-_][0-9a-zA-Z_-]*[0-9a-zA-Z]['\"]",  # Public keys  
-        r"['\"]ghp_[0-9a-zA-Z]{30,}['\"]",              # GitHub personal access tokens (more flexible length)
+        r"['\"]pk[-_][0-9a-zA-Z_-]*[0-9a-zA-Z]['\"]",  # Public keys
+        r"['\"]ghp_[0-9a-zA-Z]{30,}['\"]",  # GitHub personal access tokens (more flexible length)
         # AWS related
         r"AKIA[0-9A-Z]{16}",  # AWS access key ID
         r"aws[_-]?secret.*['\"][0-9a-zA-Z/+=]{32,}['\"]",
@@ -67,7 +67,7 @@ class SecurityChecker:
         r"-----BEGIN (?:RSA )?PRIVATE KEY-----",
         # Passwords - case insensitive
         r"password.*['\"][^'\"\s]{6,}['\"]",
-        r"passwd.*['\"][^'\"\s]{6,}['\"]", 
+        r"passwd.*['\"][^'\"\s]{6,}['\"]",
         r"pwd.*['\"][^'\"\s]{6,}['\"]",
         # Generic secret/token patterns - more flexible
         r"secret.*['\"][^'\"]{8,}['\"]",
@@ -76,12 +76,8 @@ class SecurityChecker:
 
     def __init__(self):
         """Initialize security checker"""
-        self.suspicious_file_patterns = [
-            re.compile(pattern, re.IGNORECASE) for pattern in self.SUSPICIOUS_FILE_PATTERNS
-        ]
-        self.suspicious_content_patterns = [
-            re.compile(pattern, re.IGNORECASE) for pattern in self.SUSPICIOUS_CONTENT_PATTERNS
-        ]
+        self.suspicious_file_patterns = [re.compile(pattern, re.IGNORECASE) for pattern in self.SUSPICIOUS_FILE_PATTERNS]
+        self.suspicious_content_patterns = [re.compile(pattern, re.IGNORECASE) for pattern in self.SUSPICIOUS_CONTENT_PATTERNS]
         self.checked_paths: Set[str] = set()
 
     def check_file(self, file_path: Path, content: str) -> List[str]:
@@ -148,9 +144,7 @@ class SecurityChecker:
             return results
 
 
-def check_files(
-    root_dir: str | Path, file_paths: List[str], file_contents: Dict[str, str]
-) -> List[SuspiciousFileResult]:
+def check_files(root_dir: str | Path, file_paths: List[str], file_contents: Dict[str, str]) -> List[SuspiciousFileResult]:
     """Check security of multiple files
 
     Args:

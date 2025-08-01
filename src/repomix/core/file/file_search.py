@@ -179,6 +179,7 @@ def _scan_directory(
     config: Optional[RepomixConfig] = None,
 ) -> None:
     """Recursively scan directory, pruning ignored directories early."""
+
     is_root = current_dir == root_path
     if is_root:
         logger.debug(f"Scanning root directory: {current_dir}")
@@ -264,6 +265,7 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
     Raises:
         PermissionError: When insufficient permissions to access the directory
     """
+
     # 1.  permissions
     permission_check = check_directory_permissions(root_dir)
     if not permission_check.has_permission:
@@ -298,6 +300,7 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
 
     # 3. Execute directory scan with integrated ignore logic
     logger.debug("Starting directory scan with integrated ignore logic...")
+
     _scan_directory(root_path, root_path, raw_all_files, raw_all_dirs, root_ignore_patterns, config)  # Pass config
     logger.debug(f"Scan found {len(raw_all_files)} potentially relevant files and {len(raw_all_dirs)} directories.")
 
@@ -363,15 +366,10 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
         full_path = root_path / file_path
         containing_dir = full_path.parent
 
-        # Get all .gitignore rules from the directory containing the file and its parent directories
-        current_ignore_patterns = root_ignore_patterns.copy()
-        if config.ignore.use_gitignore:
-            try:
-                local_patterns = collect_gitignore_patterns(containing_dir, root_path)
-                if local_patterns:
-                    current_ignore_patterns.extend(local_patterns)
-            except Exception as e:
-                logger.debug(f"Error collecting local ignore patterns for {file_path}: {e}")
+        # Skip re-collecting ignore patterns - they were already applied in _scan_directory
+        # This is a performance optimization for MCP mode
+        # TODO: Refactor to avoid duplicate pattern collection
+        current_ignore_patterns = root_ignore_patterns
 
         # Check if the file should be ignored
         current_dir = containing_dir
@@ -429,7 +427,7 @@ def search_files(root_dir: str | Path, config: RepomixConfig) -> FileSearchResul
             unique_final_files.append(file_path)
         else:
             logger.debug(f"Removing duplicate file from final result: {file_path}")
-    
+
     if len(unique_final_files) < len(final_files):
         logger.debug(f"Removed {len(final_files) - len(unique_final_files)} duplicate files from final result")
 

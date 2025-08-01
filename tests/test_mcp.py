@@ -31,7 +31,10 @@ async def test_pack_codebase_tool():
         try:
             print(f"Calling pack_codebase with directory: {temp_path}", flush=True)
 
-            result = await server.call_tool("pack_codebase", {"directory": str(temp_path), "top_files_length": 3, "compress": False})
+            result = await server.call_tool(
+                "pack_codebase",
+                {"directory": str(temp_path), "top_files_length": 3, "compress": False},
+            )
 
             print("Tool execution completed!", flush=True)
 

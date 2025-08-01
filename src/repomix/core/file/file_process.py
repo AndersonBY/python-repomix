@@ -20,7 +20,10 @@ def _process_single_file(args: tuple[RawFile, RepomixConfig]) -> ProcessedFile:
         Processed file object
     """
     raw_file, config = args
-    return ProcessedFile(path=raw_file.path, content=process_content(raw_file.content, raw_file.path, config))
+    return ProcessedFile(
+        path=raw_file.path,
+        content=process_content(raw_file.content, raw_file.path, config),
+    )
 
 
 def process_files(raw_files: List[RawFile], config: RepomixConfig) -> List[ProcessedFile]:

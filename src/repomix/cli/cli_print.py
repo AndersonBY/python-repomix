@@ -41,9 +41,7 @@ def print_summary(
     logger.log("────────────────")
     logger.log(f" Total Files: {total_files} files")
     logger.log(f" Total Characters: {total_characters} characters")
-    token_info = (
-        f"Total Tokens: {total_tokens} tokens" if config.output.calculate_tokens else "Token calculation: disabled"
-    )
+    token_info = f"Total Tokens: {total_tokens} tokens" if config.output.calculate_tokens else "Token calculation: disabled"
     logger.log(f" {token_info}")
     logger.log(f" Output to: {output_path}")
     logger.log(f" Security: {security_check_message}")

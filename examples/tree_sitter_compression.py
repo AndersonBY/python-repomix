@@ -33,14 +33,22 @@ def demonstrate_compression_comparison():
     normal_config.compression.enabled = False
     normal_config.output.show_line_numbers = False
     # Include multiple Python files to show better compression effect
-    normal_config.include = ["src/repomix/core/repo_processor.py", "src/repomix/core/file/file_process.py", "src/repomix/config/config_schema.py"]
+    normal_config.include = [
+        "src/repomix/core/repo_processor.py",
+        "src/repomix/core/file/file_process.py",
+        "src/repomix/config/config_schema.py",
+    ]
 
     compressed_config = RepomixConfig()
     compressed_config.output.file_path = "compressed_output.md"
     compressed_config.compression.enabled = True
     compressed_config.output.show_line_numbers = False
     # Same files for comparison
-    compressed_config.include = ["src/repomix/core/repo_processor.py", "src/repomix/core/file/file_process.py", "src/repomix/config/config_schema.py"]
+    compressed_config.include = [
+        "src/repomix/core/repo_processor.py",
+        "src/repomix/core/file/file_process.py",
+        "src/repomix/config/config_schema.py",
+    ]
 
     print("📄 Processing sample files:")
     print("   • src/repomix/core/repo_processor.py")

@@ -68,11 +68,7 @@ def build_file_tree_with_ignore(directory: str | Path, config: RepomixConfig) ->
             dir_exact_matches.add(pattern)
         elif pattern.endswith("/"):
             clean_pattern = pattern[:-1]
-            if (
-                "/" not in clean_pattern
-                and "*" not in clean_pattern
-                and "[" not in clean_pattern
-            ):
+            if "/" not in clean_pattern and "*" not in clean_pattern and "[" not in clean_pattern:
                 dir_exact_matches.add(clean_pattern)
             else:
                 dir_patterns.append(clean_pattern)
@@ -84,9 +80,7 @@ def build_file_tree_with_ignore(directory: str | Path, config: RepomixConfig) ->
     # Add common ignores to exact matches for super fast filtering
     dir_exact_matches.update(common_ignores)
 
-    return _build_file_tree_super_optimized(
-        Path(directory), dir_exact_matches, dir_patterns, file_patterns
-    )
+    return _build_file_tree_super_optimized(Path(directory), dir_exact_matches, dir_patterns, file_patterns)
 
 
 def _build_file_tree_super_optimized(
@@ -139,9 +133,7 @@ def _build_file_tree_super_optimized(
                     continue
 
                 # Recursively build subtree
-                subtree = _build_file_tree_super_optimized(
-                    path, dir_exact_matches, dir_patterns, file_patterns, base_dir
-                )
+                subtree = _build_file_tree_super_optimized(path, dir_exact_matches, dir_patterns, file_patterns, base_dir)
                 if subtree:
                     tree[path_name] = subtree
             else:
@@ -210,9 +202,7 @@ class RepoProcessor:
             else:
                 _directory = Path(self.directory)
 
-            self.config = load_config(
-                _directory, _directory, self.config_path, self.cli_options
-            )
+            self.config = load_config(_directory, _directory, self.config_path, self.cli_options)
 
     def set_predefined_file_paths(self, file_paths: List[str]) -> None:
         """Set predefined file paths for stdin mode.
@@ -234,9 +224,7 @@ class RepoProcessor:
         try:
             if self.repo_url:
                 self.temp_dir = create_temp_directory()
-                clone_repository(
-                    format_git_url(self.repo_url), self.temp_dir, self.branch
-                )
+                clone_repository(format_git_url(self.repo_url), self.temp_dir, self.branch)
                 self.directory = self.temp_dir
 
             if self.config is None:
@@ -265,9 +253,7 @@ class RepoProcessor:
                 raw_files = collect_files(search_result.file_paths, self.directory)
 
             if not raw_files:
-                raise RepomixError(
-                    "No files found. Please check the directory path and filter conditions."
-                )
+                raise RepomixError("No files found. Please check the directory path and filter conditions.")
 
             # Build the file tree, considering ignore patterns
             file_tree = build_file_tree_with_ignore(self.directory, self.config)
@@ -289,15 +275,11 @@ class RepoProcessor:
 
                     # Token calculation with error handling for better performance
                     try:
-                        token_count = len(
-                            gpt_4o_encoding.encode(processed_file.content)
-                        )
+                        token_count = len(gpt_4o_encoding.encode(processed_file.content))
                         file_token_counts[processed_file.path] = token_count
                         total_tokens += token_count
                     except Exception as e:
-                        logger.debug(
-                            f"Token calculation failed for {processed_file.path}: {e}"
-                        )
+                        logger.debug(f"Token calculation failed for {processed_file.path}: {e}")
                         file_token_counts[processed_file.path] = 0
             else:
                 # Only count characters if tokens not needed - much faster
@@ -311,17 +293,9 @@ class RepoProcessor:
             if self.config.security.enable_security_check:
                 file_contents = {file.path: file.content for file in raw_files}
                 file_paths = [file.path for file in raw_files]
-                suspicious_files_results = check_files(
-                    self.directory, file_paths, file_contents
-                )
-                suspicious_file_paths = {
-                    result.file_path for result in suspicious_files_results
-                }
-                processed_files = [
-                    file
-                    for file in processed_files
-                    if file.path not in suspicious_file_paths
-                ]
+                suspicious_files_results = check_files(self.directory, file_paths, file_contents)
+                suspicious_file_paths = {result.file_path for result in suspicious_files_results}
+                processed_files = [file for file in processed_files if file.path not in suspicious_file_paths]
 
             output_content = generate_output(
                 processed_files,

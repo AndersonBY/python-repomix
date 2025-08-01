@@ -121,11 +121,7 @@ class PlainStyle(OutputStyle):
 
     def generate_file_tree_section(self, file_tree: Dict) -> str:
         """Generates the file tree section in plain text style."""
-        return (
-            f"{PLAIN_LONG_SEPARATOR}\nRepository Structure:\n{PLAIN_LONG_SEPARATOR}\n"
-            + format_file_tree(file_tree)
-            + "\n"
-        )
+        return f"{PLAIN_LONG_SEPARATOR}\nRepository Structure:\n{PLAIN_LONG_SEPARATOR}\n" + format_file_tree(file_tree) + "\n"
 
     def _get_current_time(self) -> str:
         """Get formatted current time string

@@ -36,7 +36,13 @@ class FileManipulator:
         """
         return "\n".join(line for line in content.splitlines() if line.strip())
 
-    def compress_code(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+    def compress_code(
+        self,
+        content: str,
+        keep_signatures: bool = True,
+        keep_docstrings: bool = False,
+        keep_interfaces: bool = False,
+    ) -> str:
         """Compress code by removing unnecessary elements
 
         Args:
@@ -114,7 +120,13 @@ class PythonManipulator(FileManipulator):
         content = re.sub(r"#.*", "", content)
         return content
 
-    def compress_code(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+    def compress_code(
+        self,
+        content: str,
+        keep_signatures: bool = True,
+        keep_docstrings: bool = False,
+        keep_interfaces: bool = False,
+    ) -> str:
         """Compress Python code using AST
 
         Args:
@@ -134,13 +146,25 @@ class PythonManipulator(FileManipulator):
             else:
                 return ""
         except SyntaxError:
-            warnings.warn("Failed to parse Python code for compression, returning original content", UserWarning)
+            warnings.warn(
+                "Failed to parse Python code for compression, returning original content",
+                UserWarning,
+            )
             return content
         except Exception as e:
-            warnings.warn(f"Error during Python code compression: {e}, returning original content", UserWarning)
+            warnings.warn(
+                f"Error during Python code compression: {e}, returning original content",
+                UserWarning,
+            )
             return content
 
-    def _compress_ast_node(self, node: ast.AST, keep_signatures: bool, keep_docstrings: bool, keep_interfaces: bool) -> ast.AST | None:
+    def _compress_ast_node(
+        self,
+        node: ast.AST,
+        keep_signatures: bool,
+        keep_docstrings: bool,
+        keep_interfaces: bool,
+    ) -> ast.AST | None:
         """Recursively compress AST nodes
 
         Args:
@@ -183,7 +207,11 @@ class PythonManipulator(FileManipulator):
             return node
 
     def _compress_function_or_class(
-        self, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef, keep_signatures: bool, keep_docstrings: bool, keep_interfaces: bool
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
+        keep_signatures: bool,
+        keep_docstrings: bool,
+        keep_interfaces: bool,
     ) -> ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | None:
         """Compress function or class definition
 
@@ -262,31 +290,37 @@ class PythonManipulator(FileManipulator):
 
 class TreeSitterManipulator(FileManipulator):
     """Tree-sitter based file manipulator for code compression"""
-    
+
     def __init__(self, file_path: str):
         """Initialize with file path for language detection
-        
+
         Args:
             file_path: Path to the file being processed
         """
         super().__init__()
         self.file_path = file_path
-    
-    def compress_code(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+
+    def compress_code(
+        self,
+        content: str,
+        keep_signatures: bool = True,
+        keep_docstrings: bool = False,
+        keep_interfaces: bool = False,
+    ) -> str:
         """Compress code using tree-sitter parsing
-        
+
         Args:
             content: File content
             keep_signatures: Whether to keep function/class signatures (unused, always True for tree-sitter)
             keep_docstrings: Whether to keep docstrings (unused, tree-sitter handles this)
             keep_interfaces: Whether to keep only interface (unused, tree-sitter handles this)
-            
+
         Returns:
             Compressed content using tree-sitter, or fallback compression if parsing fails
         """
         if not can_parse_file(self.file_path):
             return self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)
-        
+
         try:
             compressed = parse_file(content, self.file_path)
             if compressed is not None:
@@ -299,30 +333,40 @@ class TreeSitterManipulator(FileManipulator):
         except Exception as e:
             warnings.warn(f"Tree-sitter compression failed for {self.file_path}: {e}", UserWarning)
             return self._fallback_compression(content, keep_signatures, keep_docstrings, keep_interfaces)
-    
-    def _fallback_compression(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+
+    def _fallback_compression(
+        self,
+        content: str,
+        keep_signatures: bool = True,
+        keep_docstrings: bool = False,
+        keep_interfaces: bool = False,
+    ) -> str:
         """Fallback to traditional compression based on file extension
-        
+
         Args:
             content: File content
             keep_signatures: Whether to keep function/class signatures
-            keep_docstrings: Whether to keep docstrings  
+            keep_docstrings: Whether to keep docstrings
             keep_interfaces: Whether to keep only interface
-            
+
         Returns:
             Compressed content using traditional methods
         """
         from pathlib import Path
+
         ext = Path(self.file_path).suffix
-        
+
         # Try traditional manipulator for this file extension
         traditional_manipulator = manipulators.get(ext)
         if traditional_manipulator:
             try:
                 return traditional_manipulator.compress_code(content, keep_signatures, keep_docstrings, keep_interfaces)
             except Exception as e:
-                warnings.warn(f"Fallback compression failed for {self.file_path}: {e}", UserWarning)
-        
+                warnings.warn(
+                    f"Fallback compression failed for {self.file_path}: {e}",
+                    UserWarning,
+                )
+
         # Final fallback: return original content
         return content
 
@@ -345,7 +389,13 @@ class CompositeManipulator(FileManipulator):
             content = manipulator.remove_comments(content)
         return content
 
-    def compress_code(self, content: str, keep_signatures: bool = True, keep_docstrings: bool = False, keep_interfaces: bool = False) -> str:
+    def compress_code(
+        self,
+        content: str,
+        keep_signatures: bool = True,
+        keep_docstrings: bool = False,
+        keep_interfaces: bool = False,
+    ) -> str:
         """Compress code using all manipulators"""
         for manipulator in self.manipulators:
             content = manipulator.compress_code(content, keep_signatures, keep_docstrings, keep_interfaces)
@@ -393,19 +443,19 @@ manipulators: Dict[str, FileManipulator] = {
 
 def get_file_manipulator(file_path: str | Path) -> FileManipulator | None:
     """Get the corresponding file manipulator based on file extension
-    
+
     Args:
         file_path: File path (string or Path object)
-        
+
     Returns:
         Corresponding file manipulator instance, or None if no matching manipulator
     """
     file_path_str = str(file_path)
-    
+
     # First try tree-sitter manipulator if file can be parsed
     if can_parse_file(file_path_str):
         return TreeSitterManipulator(file_path_str)
-    
+
     # Fallback to traditional manipulators
     ext = Path(file_path).suffix
     return manipulators.get(ext)

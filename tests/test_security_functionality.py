@@ -8,16 +8,16 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from src.repomix.core.security.security_check import (
-    SecurityChecker, 
-    SuspiciousFileResult, 
-    check_files
+    SecurityChecker,
+    SuspiciousFileResult,
+    check_files,
 )
 from src.repomix.config.config_schema import RepomixConfig
 
 
 class TestSecurityChecker:
     """Test cases for SecurityChecker class"""
-    
+
     def setup_method(self):
         """Set up test environment"""
         self.checker = SecurityChecker()
@@ -25,32 +25,32 @@ class TestSecurityChecker:
     def test_security_checker_initialization(self):
         """Test SecurityChecker initialization"""
         assert self.checker is not None
-        assert hasattr(self.checker, 'SUSPICIOUS_FILE_PATTERNS')
-        assert hasattr(self.checker, 'SUSPICIOUS_CONTENT_PATTERNS')
+        assert hasattr(self.checker, "SUSPICIOUS_FILE_PATTERNS")
+        assert hasattr(self.checker, "SUSPICIOUS_CONTENT_PATTERNS")
         assert len(self.checker.SUSPICIOUS_FILE_PATTERNS) > 0
         assert len(self.checker.SUSPICIOUS_CONTENT_PATTERNS) > 0
 
     def test_suspicious_file_patterns(self):
         """Test suspicious file name patterns"""
         patterns = self.checker.SUSPICIOUS_FILE_PATTERNS
-        
+
         # Should contain common suspicious patterns
-        env_pattern = any('.env' in pattern for pattern in patterns)
-        key_pattern = any('.key' in pattern for pattern in patterns)
-        pem_pattern = any('.pem' in pattern for pattern in patterns)
-        
+        env_pattern = any(".env" in pattern for pattern in patterns)
+        key_pattern = any(".key" in pattern for pattern in patterns)
+        pem_pattern = any(".pem" in pattern for pattern in patterns)
+
         assert env_pattern, "Should contain .env pattern"
-        assert key_pattern, "Should contain .key pattern" 
+        assert key_pattern, "Should contain .key pattern"
         assert pem_pattern, "Should contain .pem pattern"
 
     def test_suspicious_content_patterns(self):
         """Test suspicious content patterns"""
         patterns = self.checker.SUSPICIOUS_CONTENT_PATTERNS
-        
+
         # Should contain common suspicious content patterns
-        api_key_pattern = any('api' in pattern.lower() for pattern in patterns)
-        password_pattern = any('password' in pattern.lower() for pattern in patterns)
-        
+        api_key_pattern = any("api" in pattern.lower() for pattern in patterns)
+        password_pattern = any("password" in pattern.lower() for pattern in patterns)
+
         assert api_key_pattern, "Should contain API key pattern"
         assert password_pattern, "Should contain password pattern"
 
@@ -58,73 +58,67 @@ class TestSecurityChecker:
         """Test suspicious file name checking"""
         # Test suspicious file names using SecurityChecker
         checker = SecurityChecker()
-        
+
         suspicious_files = [
             ".env",
-            ".env.local", 
+            ".env.local",
             "private.key",
             "certificate.pem",
             "keystore.jks",
-            "database.kdbx"
+            "database.kdbx",
         ]
-        
+
         for filename in suspicious_files:
             # Check if any pattern matches
             is_suspicious = any(pattern.match(filename) for pattern in checker.suspicious_file_patterns)
             assert is_suspicious, f"{filename} should be suspicious"
-        
+
         # Test normal file names
-        normal_files = [
-            "main.py",
-            "README.md",
-            "package.json",
-            "style.css",
-            "app.js"
-        ]
-        
+        normal_files = ["main.py", "README.md", "package.json", "style.css", "app.js"]
+
         for filename in normal_files:
             is_suspicious = any(pattern.match(filename) for pattern in checker.suspicious_file_patterns)
             assert not is_suspicious, f"{filename} should not be suspicious"
 
     def test_check_file_content_with_api_keys(self):
         """Test file content checking with API keys"""
-        suspicious_content = '''
+        suspicious_content = """
 API_KEY = "sk-1234567890abcdefghijklmnopqrstuvwxyz"
 OPENAI_API_KEY = "sk-proj-abcdefghijklmnopqrstuvwxyz1234567890"
 STRIPE_SECRET_KEY = "sk_test_1234567890abcdefghijklmnop"
-        '''
-        
+        """
+
         checker = SecurityChecker()
         messages = checker.check_file(Path("config.py"), suspicious_content)
-        
+
         assert len(messages) > 0
         assert any("api" in msg.lower() for msg in messages)
 
     def test_check_file_content_with_passwords(self):
         """Test file content checking with passwords"""
-        suspicious_content = '''
+        suspicious_content = """
 PASSWORD = "supersecret123"
 DATABASE_PASSWORD = "mypassword456"
 pwd = "admin123"
-        '''
-        
+        """
+
         checker = SecurityChecker()
         messages = checker.check_file(Path("secrets.py"), suspicious_content)
-        
+
         assert len(messages) > 0
         assert any("password" in msg.lower() for msg in messages)
 
     def test_check_file_content_with_tokens(self):
         """Test file content checking with tokens"""
-        suspicious_content = '''
+        suspicious_content = """
 GITHUB_TOKEN = "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
 ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 BEARER_TOKEN = "Bearer abc123def456ghi789"
-        '''
-        
+        """
+
         checker = SecurityChecker()
         messages = checker.check_file(Path("auth.py"), suspicious_content)
-        
+
         assert len(messages) > 0
         assert any("token" in msg.lower() for msg in messages)
 
@@ -143,24 +137,24 @@ class Calculator:
         self.result += value
         return self.result
         '''
-        
+
         checker = SecurityChecker()
         messages = checker.check_file(Path("calculator.py"), safe_content)
-        
+
         assert len(messages) == 0
 
     def test_check_file_content_with_comments(self):
         """Test file content checking with suspicious content in comments"""
-        content_with_comments = '''
+        content_with_comments = """
 # TODO: Replace with actual API key
 # API_KEY = "sk-1234567890abcdefghijklmnop"
 def main():
     print("Hello, World!")
-        '''
-        
+        """
+
         checker = SecurityChecker()
         messages = checker.check_file(Path("todo.py"), content_with_comments)
-        
+
         # Should still detect suspicious patterns even in comments
         assert len(messages) > 0
 
@@ -175,10 +169,10 @@ def get_api_key():
     """Get API key from environment."""
     return os.getenv("API_KEY", "default-key")
         '''
-        
+
         checker = SecurityChecker()
         _messages = checker.check_file(Path("docs.py"), false_positive_content)
-        
+
         # This might trigger false positives, but that's often acceptable
         # for security scanning - better safe than sorry
         # The test mainly ensures the function doesn't crash
@@ -186,14 +180,14 @@ def get_api_key():
 
 class TestSuspiciousFileResult:
     """Test cases for SuspiciousFileResult dataclass"""
-    
+
     def test_suspicious_file_result_creation(self):
         """Test SuspiciousFileResult creation"""
         result = SuspiciousFileResult(
             file_path="/path/to/suspicious.env",
-            messages=["Contains API key", "Contains password"]
+            messages=["Contains API key", "Contains password"],
         )
-        
+
         assert result.file_path == "/path/to/suspicious.env"
         assert len(result.messages) == 2
         assert "Contains API key" in result.messages
@@ -201,43 +195,40 @@ class TestSuspiciousFileResult:
 
     def test_suspicious_file_result_empty_messages(self):
         """Test SuspiciousFileResult with empty messages"""
-        result = SuspiciousFileResult(
-            file_path="/path/to/file.py",
-            messages=[]
-        )
-        
+        result = SuspiciousFileResult(file_path="/path/to/file.py", messages=[])
+
         assert result.file_path == "/path/to/file.py"
         assert len(result.messages) == 0
 
 
 class TestCheckFiles:
     """Test cases for check_files function"""
-    
+
     def test_check_files_basic(self):
         """Test basic file checking"""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # Create safe file
             safe_file = temp_path / "safe.py"
             safe_file.write_text("def hello(): return 'world'")
-            
+
             # Create suspicious file
             suspicious_file = temp_path / "config.py"
             suspicious_file.write_text('API_KEY = "sk-1234567890abcdef"')
-            
+
             files = ["safe.py", "config.py"]
             file_contents = {
                 "safe.py": "def hello(): return 'world'",
-                "config.py": 'API_KEY = "sk-1234567890abcdef"'
+                "config.py": 'API_KEY = "sk-1234567890abcdef"',
             }
-            
+
             results = check_files(temp_dir, files, file_contents)
-            
+
             assert isinstance(results, list)
             # Should find at least one suspicious file
             assert len(results) >= 1
-            
+
             # Find the suspicious result
             suspicious_results = [r for r in results if "config.py" in r.file_path]
             assert len(suspicious_results) > 0
@@ -247,18 +238,16 @@ class TestCheckFiles:
         """Test file checking always runs (no security disable option in check_files)"""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # Create suspicious file
             suspicious_file = temp_path / ".env"
             suspicious_file.write_text('SECRET_KEY = "supersecret123"')
-            
+
             files = [".env"]
-            file_contents = {
-                ".env": 'SECRET_KEY = "supersecret123"'
-            }
-            
+            file_contents = {".env": 'SECRET_KEY = "supersecret123"'}
+
             results = check_files(temp_dir, files, file_contents)
-            
+
             # Should return results since check_files always checks
             assert len(results) >= 1
 
@@ -266,24 +255,24 @@ class TestCheckFiles:
         """Test file checking with suspicious filenames"""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # Create files with suspicious names but safe content
             env_file = temp_path / ".env"
             env_file.write_text("# Environment variables")
-            
+
             key_file = temp_path / "private.key"
             key_file.write_text("# This is not actually a key")
-            
+
             file_paths = [".env", "private.key"]
             file_contents = {
                 ".env": "# Environment variables",
-                "private.key": "# This is not actually a key"
+                "private.key": "# This is not actually a key",
             }
-            
+
             results = check_files(temp_dir, file_paths, file_contents)
-            
+
             assert len(results) >= 2
-            
+
             # Should detect both files as suspicious based on filename
             file_paths = [r.file_path for r in results]
             assert any(".env" in path for path in file_paths)
@@ -293,7 +282,7 @@ class TestCheckFiles:
         """Test file checking with mixed safe and suspicious content"""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # Create file with mixed content
             mixed_file = temp_path / "app.py"
             mixed_file.write_text('''
@@ -320,17 +309,15 @@ def main():
 if __name__ == "__main__":
     main()
             ''')
-            
+
             # Read the file content
             file_content = mixed_file.read_text()
-            
+
             file_paths = ["app.py"]
-            file_contents = {
-                "app.py": file_content
-            }
-            
+            file_contents = {"app.py": file_content}
+
             results = check_files(temp_dir, file_paths, file_contents)
-            
+
             # Should detect the hardcoded API key
             assert len(results) >= 1
             suspicious_result = results[0]
@@ -341,76 +328,72 @@ if __name__ == "__main__":
         """Test file checking with empty file list"""
         config = RepomixConfig()
         config.security.enable_security_check = True
-        
+
         results = check_files("/tmp", [], {})
-        
+
         assert results == []
 
     def test_check_files_unreadable_files(self):
         """Test file checking with unreadable files"""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # Create file
             test_file = temp_path / "test.py"
             test_file.write_text("print('test')")
-            
+
             file_paths = ["test.py"]
-            file_contents = {
-                "test.py": "print('test')"
-            }
-            
+            file_contents = {"test.py": "print('test')"}
+
             # Test that check_files works normally with valid files
             results = check_files(temp_dir, file_paths, file_contents)
-            
+
             # Should handle the files without errors
             assert isinstance(results, list)
 
-    @patch('src.repomix.core.security.security_check.SecretsCollection')
+    @patch("src.repomix.core.security.security_check.SecretsCollection")
     def test_check_files_with_detect_secrets(self, mock_secrets_collection):
         """Test file checking with detect-secrets integration"""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # Create file with potential secrets
             secrets_file = temp_path / "secrets.py"
-            secrets_content = '''
+            secrets_content = """
 POSTGRES_PASSWORD = "mypassword123"
 JWT_SECRET = "jwt-secret-key-12345"
-            '''
+            """
             secrets_file.write_text(secrets_content)
-            
+
             # Mock detect-secrets to return iterable with mock secrets
             mock_collection = Mock()
             mock_secrets_collection.return_value = mock_collection
-            
+
             # Mock secret objects that would be returned
             mock_secret_1 = (None, Mock(type="password"))
             mock_secret_2 = (None, Mock(type="api_key"))
             mock_collection.__iter__ = Mock(return_value=iter([mock_secret_1, mock_secret_2]))
             mock_collection.scan_file.return_value = None
-            
+
             file_paths = ["secrets.py"]
-            file_contents = {
-                "secrets.py": secrets_content
-            }
-            
+            file_contents = {"secrets.py": secrets_content}
+
             results = check_files(temp_dir, file_paths, file_contents)
-            
+
             # Should integrate with detect-secrets
             assert len(results) >= 1
 
 
 class TestSecurityIntegration:
     """Integration tests for security functionality"""
-    
+
     def test_realistic_security_scan(self):
         """Test realistic security scanning scenario"""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # Create realistic project structure with security issues
-            
+
             # Safe files
             (temp_path / "main.py").write_text('''
 import os
@@ -432,7 +415,7 @@ def main():
 if __name__ == "__main__":
     main()
             ''')
-            
+
             (temp_path / "utils.py").write_text('''
 """Utility functions."""
 
@@ -446,15 +429,15 @@ def validate_input(user_input):
         return False
     return True
             ''')
-            
+
             # Suspicious files
-            (temp_path / ".env").write_text('''
+            (temp_path / ".env").write_text("""
 DATABASE_URL=postgresql://user:secret123@localhost/mydb
 API_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz
 SECRET_KEY=supersecretkey123
-            ''')
-            
-            (temp_path / "config.py").write_text('''
+            """)
+
+            (temp_path / "config.py").write_text("""
 # Configuration file - DO NOT COMMIT
 API_SETTINGS = {
     "key": "sk-proj-abcdefghijklmnopqrstuvwxyz123456",
@@ -467,40 +450,40 @@ DATABASE_CONFIG = {
     "password": "admin123",
     "database": "production"
 }
-            ''')
-            
-            (temp_path / "private.key").write_text('''
+            """)
+
+            (temp_path / "private.key").write_text("""
 -----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7...
 -----END PRIVATE KEY-----
-            ''')
-            
+            """)
+
             # Test comprehensive security scan
             file_paths = []
             file_contents = {}
-            
+
             for file_path in temp_path.glob("*"):
                 if file_path.is_file():
                     relative_path = file_path.name
                     file_paths.append(relative_path)
                     file_contents[relative_path] = file_path.read_text()
-            
+
             results = check_files(temp_dir, file_paths, file_contents)
-            
+
             # Should detect multiple security issues
             assert len(results) >= 3  # At least .env, config.py, and private.key
-            
+
             # Verify specific detections
             file_paths = [r.file_path for r in results]
             assert any(".env" in path for path in file_paths)
-            assert any("config.py" in path for path in file_paths) 
+            assert any("config.py" in path for path in file_paths)
             assert any("private.key" in path for path in file_paths)
-            
+
             # Verify messages are meaningful
             all_messages = []
             for result in results:
                 all_messages.extend(result.messages)
-            
+
             assert len(all_messages) > 0
             assert any("suspicious" in msg.lower() or "secret" in msg.lower() for msg in all_messages)
             assert any("key" in msg.lower() or "password" in msg.lower() for msg in all_messages)
@@ -509,9 +492,9 @@ MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7...
         """Test security scanning with potential false positives"""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # Create files that might trigger false positives
-            (temp_path / "documentation.md").write_text('''
+            (temp_path / "documentation.md").write_text("""
 # API Documentation
 
 ## Authentication
@@ -531,8 +514,8 @@ Set the following environment variables:
 - `DATABASE_PASSWORD`: Your database password
 
 Never commit real credentials to version control!
-            ''')
-            
+            """)
+
             (temp_path / "test_auth.py").write_text('''
 """Tests for authentication module."""
 
@@ -557,21 +540,21 @@ class TestAuth(unittest.TestCase):
         key = get_api_key()
         self.assertEqual(key, "test-key")
             ''')
-            
+
             file_paths = []
             file_contents = {}
-            
+
             for file_path in temp_path.glob("*"):
                 if file_path.is_file():
                     relative_path = file_path.name
                     file_paths.append(relative_path)
                     file_contents[relative_path] = file_path.read_text()
-            
+
             results = check_files(temp_dir, file_paths, file_contents)
-            
+
             # May have some false positives, but should still work
             assert isinstance(results, list)
-            
+
             # Verify the function doesn't crash with documentation/test files
             for result in results:
                 assert isinstance(result, SuspiciousFileResult)
@@ -582,7 +565,7 @@ class TestAuth(unittest.TestCase):
         """Test security scanning performance with larger files"""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
+
             # Create a larger file with repeated content
             large_content = []
             for i in range(1000):
@@ -592,31 +575,30 @@ def function_{i}():
     data = "safe_data_{i}"
     return process_data(data)
                 ''')
-            
+
             # Add one suspicious line
             large_content.append('API_KEY = "sk-1234567890abcdef"')
-            
+
             large_file = temp_path / "large_module.py"
-            large_file.write_text('\n'.join(large_content))
-            
+            large_file.write_text("\n".join(large_content))
+
             # This should complete in reasonable time
             import time
+
             start_time = time.time()
-            
-            large_content_str = '\n'.join(large_content)
+
+            large_content_str = "\n".join(large_content)
             file_paths = ["large_module.py"]
-            file_contents = {
-                "large_module.py": large_content_str
-            }
-            
+            file_contents = {"large_module.py": large_content_str}
+
             results = check_files(temp_dir, file_paths, file_contents)
-            
+
             end_time = time.time()
             scan_time = end_time - start_time
-            
+
             # Should complete within reasonable time (adjust threshold as needed)
             assert scan_time < 10.0, f"Security scan took too long: {scan_time} seconds"
-            
+
             # Should still detect the suspicious content
             assert len(results) >= 1
             assert any("api" in msg.lower() for result in results for msg in result.messages)

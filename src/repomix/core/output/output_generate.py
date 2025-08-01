@@ -13,20 +13,20 @@ from ...config.config_schema import RepomixConfig
 
 def build_filtered_file_tree(processed_files: List[ProcessedFile]) -> Dict:
     """Build a file tree containing only the files that are actually included in the output.
-    
+
     Args:
         processed_files: List of files that will be included in the output
-        
+
     Returns:
         Dictionary representing the filtered file tree
     """
     tree = {}
-    
+
     for processed_file in processed_files:
         # Split the path into parts
         path_parts = Path(processed_file.path).parts
         current_level = tree
-        
+
         # Navigate/create the directory structure
         for i, part in enumerate(path_parts):
             if i == len(path_parts) - 1:
@@ -37,7 +37,7 @@ def build_filtered_file_tree(processed_files: List[ProcessedFile]) -> Dict:
                 if part not in current_level:
                     current_level[part] = {}
                 current_level = current_level[part]
-    
+
     return tree
 
 

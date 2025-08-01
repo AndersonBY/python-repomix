@@ -78,11 +78,7 @@ class OutputStyle(ABC):
     def summary_notes(self) -> str:
         """Get summary notes"""
         remove_comments_tip = "\n- Code comments have been removed." if self.config.output.remove_comments else ""
-        show_line_numbers_tip = (
-            "\n- Line numbers have been added to the beginning of each line."
-            if self.config.output.show_line_numbers
-            else ""
-        )
+        show_line_numbers_tip = "\n- Line numbers have been added to the beginning of each line." if self.config.output.show_line_numbers else ""
         return SUMMARY_NOTES.format(
             remove_comments_tip=remove_comments_tip,
             show_line_numbers_tip=show_line_numbers_tip,

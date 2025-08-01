@@ -9,7 +9,10 @@ class Spinner:
         self.timer = None
 
     def spin(self):
-        print(f"\r{self.spinner_chars[self.index % len(self.spinner_chars)]} {self.message}", end="")
+        print(
+            f"\r{self.spinner_chars[self.index % len(self.spinner_chars)]} {self.message}",
+            end="",
+        )
         self.index += 1
         self.timer = threading.Timer(0.1, self.spin)
         self.timer.start()

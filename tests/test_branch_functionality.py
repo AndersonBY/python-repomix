@@ -41,7 +41,16 @@ class TestRepoProcessorBranch:
 
     def test_various_branch_formats(self):
         """Test various branch name formats"""
-        test_branches = ["main", "master", "develop", "feature/new-feature", "release/v1.0.0", "hotfix/urgent-fix", "dark-mode", None]
+        test_branches = [
+            "main",
+            "master",
+            "develop",
+            "feature/new-feature",
+            "release/v1.0.0",
+            "hotfix/urgent-fix",
+            "dark-mode",
+            None,
+        ]
 
         for branch in test_branches:
             processor = RepoProcessor(repo_url="jstrieb/github-stats", branch=branch)
@@ -90,7 +99,11 @@ class TestRepoProcessorBranch:
         with tempfile.TemporaryDirectory() as temp_dir:
             try:
                 # Create processor with real GitHub repository and specific branch
-                processor = RepoProcessor(repo_url="jstrieb/github-stats", branch="dark-mode", config=RepomixConfig())
+                processor = RepoProcessor(
+                    repo_url="jstrieb/github-stats",
+                    branch="dark-mode",
+                    config=RepomixConfig(),
+                )
 
                 # Set output to temp directory to avoid polluting project
                 if processor.config:
@@ -151,7 +164,11 @@ class TestRepoProcessorBranch:
         with tempfile.TemporaryDirectory() as temp_dir:
             try:
                 # Create processor with invalid branch
-                processor = RepoProcessor(repo_url="jstrieb/github-stats", branch="non-existent-branch-12345", config=RepomixConfig())
+                processor = RepoProcessor(
+                    repo_url="jstrieb/github-stats",
+                    branch="non-existent-branch-12345",
+                    config=RepomixConfig(),
+                )
                 if processor.config is None:
                     raise RepomixError("Configuration not loaded.")
 
