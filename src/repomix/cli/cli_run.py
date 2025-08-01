@@ -18,38 +18,91 @@ from .types import CliOptions, CliResult
 
 def create_parser() -> argparse.ArgumentParser:
     """Create command line argument parser"""
-    parser = argparse.ArgumentParser(description="Repomix - Code Repository Packaging Tool")
+    parser = argparse.ArgumentParser(
+        description="Repomix - Code Repository Packaging Tool"
+    )
 
     # Positional arguments
-    parser.add_argument("directory", nargs="?", default=".", help="Target directory, defaults to current directory")
+    parser.add_argument(
+        "directory",
+        nargs="?",
+        default=".",
+        help="Target directory, defaults to current directory",
+    )
 
     # Optional arguments
-    parser.add_argument("-v", "--version", action="store_true", help="Display version information")
-    parser.add_argument("-o", "--output", metavar="<file>", help="Specify output file name")
-    parser.add_argument("--include", metavar="<patterns>", help="List of include patterns (comma-separated)")
-    parser.add_argument("-i", "--ignore", metavar="<patterns>", help="Additional ignore patterns (comma-separated)")
-    parser.add_argument("-c", "--config", metavar="<path>", help="Custom configuration file path")
-    parser.add_argument("--copy", action="store_true", help="Copy generated output to system clipboard")
+    parser.add_argument(
+        "-v", "--version", action="store_true", help="Display version information"
+    )
+    parser.add_argument(
+        "-o", "--output", metavar="<file>", help="Specify output file name"
+    )
+    parser.add_argument(
+        "--include",
+        metavar="<patterns>",
+        help="List of include patterns (comma-separated)",
+    )
+    parser.add_argument(
+        "-i",
+        "--ignore",
+        metavar="<patterns>",
+        help="Additional ignore patterns (comma-separated)",
+    )
+    parser.add_argument(
+        "-c", "--config", metavar="<path>", help="Custom configuration file path"
+    )
+    parser.add_argument(
+        "--copy", action="store_true", help="Copy generated output to system clipboard"
+    )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
-    parser.add_argument("--top-files-len", type=int, metavar="<number>", help="Specify maximum number of files to display")
-    parser.add_argument("--output-show-line-numbers", action="store_true", help="Add line numbers to output")
+    parser.add_argument(
+        "--top-files-len",
+        type=int,
+        metavar="<number>",
+        help="Specify maximum number of files to display",
+    )
+    parser.add_argument(
+        "--output-show-line-numbers",
+        action="store_true",
+        help="Add line numbers to output",
+    )
     parser.add_argument(
         "--style",
         choices=["plain", "xml", "markdown"],
         metavar="<type>",
         help="Specify output style (plain, xml, markdown)",
     )
-    parser.add_argument("--init", action="store_true", help="Initialize new repomix.config.json file")
-    parser.add_argument("--global", dest="use_global", action="store_true", help="Use global configuration (only for --init)")
-    parser.add_argument("--remote", metavar="<url>", help="Process remote Git repository")
+    parser.add_argument(
+        "--init", action="store_true", help="Initialize new repomix.config.json file"
+    )
+    parser.add_argument(
+        "--global",
+        dest="use_global",
+        action="store_true",
+        help="Use global configuration (only for --init)",
+    )
+    parser.add_argument(
+        "--remote", metavar="<url>", help="Process remote Git repository"
+    )
     parser.add_argument(
         "--branch",
         metavar="<name>",
         help="Specify branch name for remote repository (can be set in config file)",
     )
-    parser.add_argument("--no-security-check", action="store_true", help="Disable security check")
-    parser.add_argument("--compress", action="store_true", help="Enable tree-sitter based code compression")
-    parser.add_argument("--mcp", action="store_true", help="Run as MCP (Model Context Protocol) server")
+    parser.add_argument(
+        "--no-security-check", action="store_true", help="Disable security check"
+    )
+    parser.add_argument(
+        "--compress",
+        action="store_true",
+        help="Enable tree-sitter based code compression",
+    )
+    parser.add_argument(
+        "--mcp", action="store_true", help="Run as MCP (Model Context Protocol) server"
+    )
+    parser.add_argument(
+        "--stdin", action="store_true", help="Read file paths from standard input"
+    )
 
     return parser
 
@@ -66,17 +119,15 @@ def run() -> None:
 
 
 async def run_cli(
-    directories: List[str], 
-    cwd: str, 
-    cli_options: CliOptions
+    directories: List[str], cwd: str, cli_options: CliOptions
 ) -> Optional[CliResult]:
     """Run CLI programmatically for MCP tools.
-    
+
     Args:
         directories: List of directories to process (usually just one)
-        cwd: Current working directory 
+        cwd: Current working directory
         cli_options: CLI options object
-        
+
     Returns:
         CliResult with pack_result
     """
@@ -95,25 +146,25 @@ async def run_cli(
             "branch": None,
             "compress": cli_options.compress,
         }
-        
+
         # Set quiet mode if requested
         original_verbose = logger.is_verbose()
         logger.set_verbose(not cli_options.quiet)
-        
+
         try:
             # Use the first directory (MCP typically processes one at a time)
             directory = directories[0] if directories else "."
-            
+
             # Run default action and get the result
             result = run_default_action(directory, cwd, options)
-            
+
             # Return the result
             return CliResult(pack_result=result.pack_result)
-            
+
         finally:
             # Restore original verbose setting
             logger.set_verbose(original_verbose)
-            
+
     except Exception as e:
         logger.error(f"Error in run_cli: {e}")
         return None
@@ -142,14 +193,15 @@ def execute_action(directory: str, cwd: Path, options: argparse.Namespace) -> No
     if options.mcp:
         import asyncio
         from ..mcp.mcp_server import run_mcp_server
-        
+
         # For MCP mode, redirect logs to stderr so they don't interfere with stdio protocol
         import sys
+
         logger.log = lambda message="": print(str(message), file=sys.stderr)
-        logger.warn = lambda message, error=None: print(f"⚠️ {message}", file=sys.stderr) 
+        logger.warn = lambda message, error=None: print(f"⚠️ {message}", file=sys.stderr)
         logger.error = lambda message: print(f"❌ {message}", file=sys.stderr)
         logger.success = lambda message: print(f"✅ {message}", file=sys.stderr)
-        
+
         logger.log("Starting Repomix MCP Server...")
         asyncio.run(run_mcp_server())
         return
