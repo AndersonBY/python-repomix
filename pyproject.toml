@@ -26,6 +26,26 @@ build-backend = "pdm.backend"
 [tool.pdm]
 distribution = true
 
+[tool.pdm.scripts]
+# Release management
+release = "python scripts/release-wizard.py"
+collect-commits = "python scripts/collect-commits.py"
+quick-release = "python scripts/release.py"
+
+# Development shortcuts  
+test = "python -m pytest"
+lint = "ruff check ."
+lint-fix = "ruff check --fix ."
+typecheck = "pyright"
+format = "ruff format ."
+
+# Quality checks (run all)
+check = [
+    "test",
+    "lint", 
+    "typecheck"
+]
+
 
 [project.scripts]
 repomix = "repomix.cli:run"
