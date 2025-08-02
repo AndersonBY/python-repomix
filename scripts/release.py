@@ -129,6 +129,7 @@ def main():
     parser.add_argument("bump_type", choices=["patch", "minor", "major"], help="Type of version bump")
     parser.add_argument("--version", help="Specific version to set (overrides bump_type)")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be done without making changes")
+    parser.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompt")
 
     args = parser.parse_args()
 
@@ -152,10 +153,11 @@ def main():
 
     if not args.dry_run:
         # Confirm release
-        response = input(f"Release version {new_version}? (y/N): ")
-        if response.lower() != "y":
-            print("Release cancelled")
-            sys.exit(0)
+        if not args.yes:
+            response = input(f"Release version {new_version}? (y/N): ")
+            if response.lower() != "y":
+                print("Release cancelled")
+                sys.exit(0)
 
         # Update version files
         update_version(new_version)

@@ -553,9 +553,9 @@ def create_release(version_spec: str) -> bool:
 
     # 运行发布脚本
     if version_spec in ["patch", "minor", "major"]:
-        cmd = ["python", "scripts/release.py", version_spec]
+        cmd = ["python", "scripts/release.py", version_spec, "--yes"]
     else:
-        cmd = ["python", "scripts/release.py", "patch", "--version", version_spec]
+        cmd = ["python", "scripts/release.py", "patch", "--version", version_spec, "--yes"]
 
     print_info("正在创建发布...")
     success, output = run_command(cmd)
