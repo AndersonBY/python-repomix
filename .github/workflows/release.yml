@@ -53,45 +53,46 @@ jobs:
         # Try to extract changelog from CHANGELOG.md first
         if [ -f "CHANGELOG.md" ]; then
           # Look for the version section in CHANGELOG.md
-          python3 - "$VERSION" << 'EOF' > release_notes.md
-import re
-import sys
-
-def extract_version_changelog(version):
-    try:
-        with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
-            content = f.read()
+          VERSION=$VERSION python3 << 'EOF' > release_notes.md
+        import re
+        import sys
+        import os
         
-        # Look for version section (matches [X.X.X] or [Unreleased])
-        version_pattern = rf'\[{re.escape(version)}\].*?(?=\n## |\n\[|$)'
-        match = re.search(version_pattern, content, re.DOTALL | re.MULTILINE)
+        def extract_version_changelog(version):
+            try:
+                with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Look for version section (matches [X.X.X] or [Unreleased])
+                version_pattern = rf'\[{re.escape(version)}\].*?(?=\n## |\n\[|$)'
+                match = re.search(version_pattern, content, re.DOTALL | re.MULTILINE)
+                
+                if match:
+                    # Extract the content and clean it up
+                    section = match.group(0)
+                    # Remove the version header line
+                    lines = section.split('\n')[1:]
+                    # Remove empty lines at the start
+                    while lines and not lines[0].strip():
+                        lines.pop(0)
+                    changelog_content = '\n'.join(lines).strip()
+                    
+                    if changelog_content:
+                        print(changelog_content)
+                        return True
+                
+                return False
+            except Exception as e:
+                print(f"Error reading CHANGELOG.md: {e}", file=sys.stderr)
+                return False
         
-        if match:
-            # Extract the content and clean it up
-            section = match.group(0)
-            # Remove the version header line
-            lines = section.split('\n')[1:]
-            # Remove empty lines at the start
-            while lines and not lines[0].strip():
-                lines.pop(0)
-            changelog_content = '\n'.join(lines).strip()
-            
-            if changelog_content:
-                print(changelog_content)
-                return True
-        
-        return False
-    except Exception as e:
-        print(f"Error reading CHANGELOG.md: {e}", file=sys.stderr)
-        return False
-
-# Try to get version-specific changelog
-version = sys.argv[1] if len(sys.argv) > 1 else "0.0.0"
-if not extract_version_changelog(version):
-    # If no specific version found, check for [Unreleased]
-    if not extract_version_changelog("Unreleased"):
-        print("## What's Changed\n\nSee CHANGELOG.md for detailed changes.")
-EOF
+        # Try to get version-specific changelog
+        version = os.environ.get('VERSION', '0.0.0')
+        if not extract_version_changelog(version):
+            # If no specific version found, check for [Unreleased]
+            if not extract_version_changelog("Unreleased"):
+                print("## What's Changed\n\nSee CHANGELOG.md for detailed changes.")
+        EOF
         fi
         
         # If CHANGELOG.md doesn't exist or doesn't have version info, generate from git
