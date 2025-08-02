@@ -75,7 +75,7 @@ class TestOutputGeneration:
     def test_generate_output_xml_style(self):
         """Test output generation with XML style"""
         config = RepomixConfig()
-        config.output._style = RepomixOutputStyle.XML
+        config.output.style_enum = RepomixOutputStyle.XML
 
         output = generate_output(
             self.processed_files,
@@ -243,7 +243,7 @@ Run with: `python app.py`
 
             for style in styles:
                 config = RepomixConfig()
-                config.output._style = style
+                config.output.style_enum = style
 
                 output = generate_output(
                     processed_files,

@@ -217,9 +217,7 @@ VGhpcyBpcyBhIHZlcnkgbG9uZyBiYXNlNjQgc3RyaW5nIHRoYXQgc2hvdWxkIGJlIHRydW5jYXRlZCBi
 
         # The XML style might not be fully implemented yet, so we check that
         # the style is set correctly and processing completes
-        self.assertIn("Repository Files", result)
-        # If XML is not fully implemented, it might fall back to markdown
-        self.assertTrue("Repository Files" in result or "<repository>" in result)
+        self.assertTrue("Repository Files" in result or "<repository_files>" in result)
 
     def test_parsable_style_markdown(self):
         """Test --parsable-style with Markdown output."""

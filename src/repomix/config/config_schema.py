@@ -39,32 +39,47 @@ class RepomixConfigOutput:
 
     def __post_init__(self):
         """Convert string style to enum after initialization"""
+        # Store the original style value
+        self._original_style = self.style
+
         if isinstance(self.style, str):
             try:
-                self._style = RepomixOutputStyle(self.style.lower())
+                self._style_enum = RepomixOutputStyle(self.style.lower())
             except ValueError:
-                self._style = RepomixOutputStyle.MARKDOWN
+                self._style_enum = RepomixOutputStyle.MARKDOWN
         elif isinstance(self.style, RepomixOutputStyle):
-            self._style = self.style
+            self._style_enum = self.style
         else:
-            self._style = RepomixOutputStyle.MARKDOWN
+            self._style_enum = RepomixOutputStyle.MARKDOWN
 
     def _process_style_value(self, value):
         """Process style value and set _style accordingly"""
         if isinstance(value, RepomixOutputStyle):
-            self._style = value
+            self._style_enum = value
+            # Update the style field to match the enum value
+            object.__setattr__(self, 'style', value.value)
         elif isinstance(value, str):
             try:
-                self._style = RepomixOutputStyle(value.lower())
+                self._style_enum = RepomixOutputStyle(value.lower())
+                # Update the style field to match the enum value
+                object.__setattr__(self, 'style', value.lower())
             except ValueError:
                 raise ValueError(f"Invalid style value: {value}. Must be one of: {', '.join(s.value for s in RepomixOutputStyle)}") from None
         else:
             raise TypeError("Style must be either string or RepomixOutputStyle enum")
 
+    def __setattr__(self, name, value):
+        """Override setattr to validate style when it's set after initialization"""
+        if name == 'style' and hasattr(self, '_style_enum'):
+            # Only validate if we're setting style after initialization
+            self._process_style_value(value)
+        else:
+            super().__setattr__(name, value)
+
     @property
     def style_enum(self) -> RepomixOutputStyle:
         """Get the output style as enum"""
-        return self._style
+        return self._style_enum if hasattr(self, '_style_enum') else RepomixOutputStyle.MARKDOWN
 
     @style_enum.setter
     def style_enum(self, value):

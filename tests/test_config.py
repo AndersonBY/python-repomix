@@ -18,11 +18,10 @@ class TestRepomixConfigOutput:
         """Test setting style through property"""
         test_output = RepomixConfigOutput()
 
-        # The current implementation doesn't have a style setter, only style_enum setter
-        # Setting style_enum should work
+        # Setting style_enum should work and update the style field
         test_output.style_enum = "xml"
 
-        assert test_output.style == "markdown"  # style field remains as set during initialization
+        assert test_output.style == "xml"  # style field updated to match enum
         assert test_output.style_enum == RepomixOutputStyle.XML
 
     def test_style_property_with_enum(self):
@@ -32,7 +31,7 @@ class TestRepomixConfigOutput:
         # Set the style using enum via style_enum property
         test_output.style_enum = RepomixOutputStyle.PLAIN
 
-        assert test_output.style == "markdown"  # style field unchanged
+        assert test_output.style == "plain"  # style field updated to match enum
         assert test_output.style_enum == RepomixOutputStyle.PLAIN
 
     def test_invalid_style_value(self):
@@ -46,7 +45,7 @@ class TestRepomixConfigOutput:
         """Test setting style with invalid type"""
         # Test invalid style during initialization
         # Current implementation defaults to MARKDOWN for invalid types
-        test_output = RepomixConfigOutput(style=123)
+        test_output = RepomixConfigOutput(style=123)  # type: ignore[arg-type]
         assert test_output.style_enum == RepomixOutputStyle.MARKDOWN
 
     def test_default_values(self):
@@ -88,8 +87,8 @@ class TestRepomixConfig:
 
         # Verify the config structure
         assert isinstance(full_config.output, RepomixConfigOutput)
-        assert full_config.output.style == RepomixOutputStyle.XML
-        assert full_config.output._style == RepomixOutputStyle.XML
+        assert full_config.output.style == "xml"
+        assert full_config.output.style_enum == RepomixOutputStyle.XML
         assert full_config.output.calculate_tokens is True
         assert full_config.include == ["*"]
 
@@ -120,8 +119,8 @@ class TestRepomixConfig:
 
         # Verify loaded configuration
         assert isinstance(loaded_config.output, RepomixConfigOutput)
-        assert loaded_config.output.style == RepomixOutputStyle.XML
-        assert loaded_config.output._style == RepomixOutputStyle.XML
+        assert loaded_config.output.style == "xml"
+        assert loaded_config.output.style_enum == RepomixOutputStyle.XML
         assert loaded_config.output.calculate_tokens is True
         assert loaded_config.output.file_path == "instructor-repo.xml"
         assert loaded_config.include == ["*"]
@@ -286,7 +285,7 @@ class TestAdvancedOutputOptions:
             }
         }
 
-        config = RepomixConfig(**config_dict)
+        config = RepomixConfig(**config_dict)  # type: ignore[arg-type]
 
         assert config.output.parsable_style is True
         assert config.output.stdout is True
