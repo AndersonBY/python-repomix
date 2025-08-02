@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2025-01-02
+
 ### Added
 - 🚀 **Release Management System**: Interactive release wizard with automated changelog generation and multi-step validation
 - 🏗️ **Enhanced CI/CD Pipeline**: Comprehensive GitHub Actions workflows with multi-Python version testing (3.10, 3.11, 3.12)
