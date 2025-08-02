@@ -123,6 +123,21 @@ def wait_for_user(message: str = "按 Enter 继续..."):
     input(f"⏸️  {message}")
 
 
+def cleanup_test_files():
+    """清理测试生成的临时文件"""
+    import os
+
+    temp_files = ["repomix-output.md", "repomix-output.txt", "repomix-output.xml"]
+
+    for file_name in temp_files:
+        if os.path.exists(file_name):
+            try:
+                os.remove(file_name)
+                print_info(f"清理临时文件: {file_name}")
+            except Exception as e:
+                print_warning(f"无法删除临时文件 {file_name}: {e}")
+
+
 def check_prerequisites() -> bool:
     """检查前置条件"""
     print_step(1, 8, "检查环境")
@@ -458,6 +473,9 @@ def run_tests() -> bool:
 
     if all_passed:
         print_success("所有检查都通过了!")
+
+    # 清理测试生成的临时文件
+    cleanup_test_files()
 
     return True
 
