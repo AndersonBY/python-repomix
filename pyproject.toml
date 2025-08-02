@@ -1,6 +1,6 @@
 [project]
 name = "repomix"
-version = "0.3.0"
+version = "0.3.1"
 description = "A tool for analyzing and summarizing code repositories"
 authors = [{ name = "Anderson", email = "andersonby@163.com" }]
 dependencies = [
