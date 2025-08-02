@@ -53,7 +53,7 @@ jobs:
         # Try to extract changelog from CHANGELOG.md first
         if [ -f "CHANGELOG.md" ]; then
           # Look for the version section in CHANGELOG.md
-          python3 << 'EOF' "$VERSION" > release_notes.md
+          python3 - "$VERSION" << 'EOF' > release_notes.md
 import re
 import sys
 
