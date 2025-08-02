@@ -120,7 +120,7 @@ def run_command(cmd: List[str], cwd: Optional[str] = None) -> Tuple[bool, str]:
 
 def wait_for_user(message: str = "按 Enter 继续..."):
     """等待用户输入"""
-    input(f"{Colors.OKCYAN}⏸️  {message}{Colors.ENDC}")
+    input(f"⏸️  {message}")
 
 
 def check_prerequisites() -> bool:
