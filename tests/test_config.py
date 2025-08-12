@@ -9,6 +9,7 @@ from src.repomix.config.config_schema import (
     RepomixConfigOutput,
     RepomixOutputStyle,
 )
+from src.repomix.config.config_load import migrate_config_format
 
 
 class TestRepomixConfigOutput:
@@ -281,7 +282,7 @@ class TestAdvancedOutputOptions:
                 "truncate_base64": True,
                 "include_empty_directories": True,
                 "include_diffs": True,
-                "style": "xml"
+                "style": "xml",
             }
         }
 
@@ -309,12 +310,13 @@ class TestAdvancedOutputOptions:
                 "truncate_base64": True,
                 "include_empty_directories": False,
                 "include_diffs": True,
-                "copy_to_clipboard": True
+                "copy_to_clipboard": True,
             }
         }
 
         # Convert to JSON and back to simulate config file loading
         import json
+
         json_str = json.dumps(original_config)
         loaded_dict = json.loads(json_str)
         config = RepomixConfig(**loaded_dict)
@@ -330,6 +332,80 @@ class TestAdvancedOutputOptions:
         assert config.output.include_empty_directories is False
         assert config.output.include_diffs is True
         assert config.output.copy_to_clipboard is True
+
+
+class TestConfigMigration:
+    """Test cases for configuration migration functionality"""
+
+    def test_style_migration_from_underscore_style(self):
+        """Test that _style is properly migrated to style"""
+        old_config = {
+            "output": {"file_path": "repomix-output.md", "_style": "markdown", "header_text": "", "remove_comments": False},
+            "security": {"enable_security_check": True},
+        }
+
+        migrated = migrate_config_format(old_config)
+
+        # Check that _style was converted to style
+        assert "_style" not in migrated["output"]
+        assert migrated["output"]["style"] == "markdown"
+
+        # Verify we can create RepomixConfig with migrated data
+        config_obj = RepomixConfig(**migrated)
+        assert config_obj.output.style == "markdown"
+        assert config_obj.output.style_enum == RepomixOutputStyle.MARKDOWN
+
+    def test_style_migration_with_both_style_and_underscore_style(self):
+        """Test that _style is removed when both _style and style are present"""
+        config_with_both = {"output": {"_style": "xml", "style": "markdown"}}
+
+        migrated = migrate_config_format(config_with_both)
+        assert "_style" not in migrated["output"]
+        assert migrated["output"]["style"] == "markdown"
+
+    def test_migration_preserves_new_format(self):
+        """Test that new config format without _style is unchanged"""
+        new_config = {"output": {"style": "xml", "file_path": "output.xml"}}
+
+        migrated = migrate_config_format(new_config)
+        assert migrated["output"]["style"] == "xml"
+        assert "_style" not in migrated["output"]
+
+    def test_migration_with_real_user_config(self):
+        """Test with the actual problematic config from user"""
+        user_config = {
+            "output": {
+                "file_path": "repomix-output.md",
+                "_style": "markdown",
+                "header_text": "",
+                "instruction_file_path": "",
+                "remove_comments": False,
+                "remove_empty_lines": False,
+                "top_files_length": 5,
+                "show_line_numbers": False,
+                "copy_to_clipboard": False,
+                "include_empty_directories": False,
+                "calculate_tokens": False,
+                "show_file_stats": False,
+                "show_directory_structure": True,
+            },
+            "security": {"enable_security_check": True, "exclude_suspicious_files": True},
+            "ignore": {"custom_patterns": [], "use_gitignore": True, "use_default_ignore": True},
+            "include": [],
+        }
+
+        migrated = migrate_config_format(user_config)
+
+        # Verify migration
+        assert "_style" not in migrated["output"]
+        assert migrated["output"]["style"] == "markdown"
+
+        # Test that we can create RepomixConfig with migrated data
+        config_obj = RepomixConfig(**migrated)
+        assert config_obj.output.style == "markdown"
+        assert config_obj.output.style_enum == RepomixOutputStyle.MARKDOWN
+        assert config_obj.output.top_files_length == 5
+        assert config_obj.security.enable_security_check is True
 
 
 if __name__ == "__main__":

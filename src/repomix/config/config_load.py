@@ -13,6 +13,41 @@ from .config_schema import RepomixConfig, RepomixOutputStyle
 from .global_directory import get_global_directory
 
 
+def migrate_config_format(config_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Migrate old configuration format to new format
+
+    This function handles backward compatibility by:
+    - Converting '_style' to 'style' in output configuration
+    - Any other future migrations can be added here
+
+    Args:
+        config_dict: Configuration dictionary
+
+    Returns:
+        Migrated configuration dictionary
+    """
+    # Make a deep copy to avoid modifying the original
+    import copy
+
+    migrated_config = copy.deepcopy(config_dict)
+
+    # Handle output._style -> output.style migration
+    if "output" in migrated_config and isinstance(migrated_config["output"], dict):
+        output_config = migrated_config["output"]
+
+        # If we have _style but no style, migrate it
+        if "_style" in output_config and "style" not in output_config:
+            output_config["style"] = output_config["_style"]
+            del output_config["_style"]
+            logger.info("Migrated configuration: '_style' -> 'style'")
+        # If we have both, remove the old _style
+        elif "_style" in output_config and "style" in output_config:
+            del output_config["_style"]
+            logger.info("Removed deprecated '_style' parameter (using 'style' instead)")
+
+    return migrated_config
+
+
 def load_config(
     directory: str | Path,
     cwd: str | Path,
@@ -61,6 +96,19 @@ def load_global_config() -> Optional[RepomixConfig]:
 
     try:
         config_dict = json.loads(global_config_path.read_text(encoding="utf-8"))
+
+        # Migrate old configuration format
+        config_dict = migrate_config_format(config_dict)
+
+        # Try to update the global config file if migration was needed
+        try:
+            updated_content = json.dumps(config_dict, indent=2, ensure_ascii=False)
+            if updated_content != global_config_path.read_text(encoding="utf-8"):
+                global_config_path.write_text(updated_content, encoding="utf-8")
+                logger.info("Updated global configuration file to new format")
+        except Exception as e:
+            logger.warn(f"Failed to update global configuration file: {e}")
+
         return RepomixConfig(**config_dict)
     except Exception as error:
         logger.warn(f"Failed to load global configuration: {error}")
@@ -99,6 +147,10 @@ def load_local_config(directory: str | Path, cwd: str | Path, config_path: Optio
 
     try:
         config_dict = json.loads(config_path_obj.read_text(encoding="utf-8"))
+
+        # Migrate old configuration format
+        config_dict = migrate_config_format(config_dict)
+
         return RepomixConfig(**config_dict)
     except json.JSONDecodeError as error:
         raise RepomixError(f"Invalid configuration file format: {config_path_obj}") from error
