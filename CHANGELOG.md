@@ -7,13 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2025-08-12
+
 ### Added
 - 🔄 **Configuration Migration**: Automatic backward compatibility handling for output style configuration changes
 - 🚀 **Release Automation**: Automated changelog management that moves unreleased content to version sections during releases
 
 ### Changed
 - 🧹 **Code Quality**: Improved code readability and maintainability in release management scripts
-
 ## [0.3.1] - 2025-01-02
 
 ### Added
