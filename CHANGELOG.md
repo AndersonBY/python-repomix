@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - 🧹 **Code Quality**: Improved code readability and maintainability in release management scripts
+
 ## [0.3.1] - 2025-01-02
 
 ### Added

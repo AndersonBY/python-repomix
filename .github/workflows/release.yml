@@ -64,18 +64,12 @@ jobs:
                     content = f.read()
                 
                 # Look for version section (matches [X.X.X] or [Unreleased])
-                version_pattern = rf'\[{re.escape(version)}\].*?(?=\n## |\n\[|$)'
-                match = re.search(version_pattern, content, re.DOTALL | re.MULTILINE)
+                pattern = rf'## \[{re.escape(version)}\][^\n]*\n(.*?)(?=\n## |\Z)'
+                match = re.search(pattern, content, re.DOTALL)
                 
                 if match:
-                    # Extract the content and clean it up
-                    section = match.group(0)
-                    # Remove the version header line
-                    lines = section.split('\n')[1:]
-                    # Remove empty lines at the start
-                    while lines and not lines[0].strip():
-                        lines.pop(0)
-                    changelog_content = '\n'.join(lines).strip()
+                    # Extract the content directly from capture group
+                    changelog_content = match.group(1).strip()
                     
                     if changelog_content:
                         print(changelog_content)
