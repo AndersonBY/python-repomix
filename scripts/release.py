@@ -58,42 +58,41 @@ def update_changelog(new_version: str) -> None:
     if not changelog_path.exists():
         print("Warning: CHANGELOG.md not found, skipping changelog update")
         return
-    
+
     content = changelog_path.read_text(encoding="utf-8")
-    
+
     # Check if version already exists
     if f"## [{new_version}]" in content:
         print(f"Version {new_version} already exists in CHANGELOG.md")
         return
-    
+
     # Find Unreleased section
     import re
-    from datetime import datetime
-    
+
     unreleased_match = re.search(r"(## \[Unreleased\])(.*?)(?=\n## \[|$)", content, re.DOTALL)
-    
+
     if not unreleased_match:
         print("Warning: [Unreleased] section not found in CHANGELOG.md")
         return
-    
+
     unreleased_content = unreleased_match.group(2).strip()
-    
+
     if not unreleased_content:
         print("Warning: [Unreleased] section is empty")
         return
-    
+
     # Get today's date
     today = datetime.now().strftime("%Y-%m-%d")
-    
+
     # Create new version section
     new_section = f"\n\n## [{new_version}] - {today}\n\n{unreleased_content}"
-    
+
     # Replace content: keep Unreleased header but empty its content
     new_content = content.replace(
         unreleased_match.group(0),
         f"## [Unreleased]{new_section}"
     )
-    
+
     changelog_path.write_text(new_content, encoding="utf-8")
     print(f"Updated CHANGELOG.md: moved Unreleased content to [{new_version}]")
 
@@ -209,7 +208,7 @@ def main():
 
         # Update version files
         update_version(new_version)
-        
+
         # Update CHANGELOG
         update_changelog(new_version)
     else:
