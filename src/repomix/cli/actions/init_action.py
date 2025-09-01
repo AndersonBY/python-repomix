@@ -41,10 +41,11 @@ def run_init_action(cwd: str | Path, use_global: bool = False) -> None:
     config = RepomixConfig()
 
     # Convert configuration to serializable dictionary
-    output_dict = config.output.__dict__.copy()
-    # Convert _style to style for better readability in config file
-    if "_style" in output_dict:
-        output_dict["style"] = output_dict.pop("_style").value
+    # Get only public fields, excluding internal fields that start with underscore
+    output_dict = {k: v for k, v in config.output.__dict__.items() if not k.startswith('_')}
+    # Ensure style is exported as string value
+    if hasattr(config.output, 'style_enum'):
+        output_dict["style"] = config.output.style_enum.value
 
     config_dict = {
         "remote": config.remote.__dict__,
