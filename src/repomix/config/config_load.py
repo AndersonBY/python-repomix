@@ -18,6 +18,7 @@ def migrate_config_format(config_dict: Dict[str, Any]) -> Dict[str, Any]:
 
     This function handles backward compatibility by:
     - Converting '_style' to 'style' in output configuration
+    - Removing deprecated internal fields like '_original_style' and '_style_enum'
     - Any other future migrations can be added here
 
     Args:
@@ -44,6 +45,13 @@ def migrate_config_format(config_dict: Dict[str, Any]) -> Dict[str, Any]:
         elif "_style" in output_config and "style" in output_config:
             del output_config["_style"]
             logger.info("Removed deprecated '_style' parameter (using 'style' instead)")
+
+        # Remove deprecated internal fields that should not be saved to configuration
+        deprecated_fields = ["_original_style", "_style_enum"]
+        for field in deprecated_fields:
+            if field in output_config:
+                del output_config[field]
+                logger.info(f"Removed deprecated internal field '{field}' from configuration")
 
     return migrated_config
 
