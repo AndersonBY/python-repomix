@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2025-09-01
+
+### Changed
+- 🧹 **Configuration Migration**: Streamlined configuration migration by removing deprecated internal fields, improving startup performance and reducing memory footprint
+- 📝 **Changelog Management**: Enhanced changelog formatting with improved version section extraction for better release automation
+
 ## [0.3.2] - 2025-08-12
 
 ### Added
