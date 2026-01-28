@@ -23,7 +23,36 @@ Repomix 是一个强大的工具，可以将你的整个仓库打包成一个单
 
 ## 🚀 3. 快速开始
 
-你可以使用 pip 安装 Repomix：
+### 使用 uvx 快速运行（推荐）
+
+使用 Repomix 最简单的方式是通过 [uvx](https://docs.astral.sh/uv/) - 无需安装：
+
+```bash
+uvx repomix
+```
+
+就这么简单！这将把你当前目录打包成一个 AI 友好的文件。
+
+**更多示例：**
+```bash
+# 使用 JSON 输出打包
+uvx repomix --style json
+
+# 打包远程仓库
+uvx repomix --remote https://github.com/username/repo
+
+# 使用特定模式打包
+uvx repomix --include "src/**/*.py" --ignore "tests/**"
+
+# 使用特定版本
+uvx repomix@0.4.1
+```
+
+你也可以使用 [pipx](https://pipx.pypa.io/)：`pipx run repomix`
+
+### 使用 pip 安装
+
+如果需要频繁使用，可以全局安装 Repomix：
 
 ```bash
 pip install repomix
@@ -33,12 +62,6 @@ pip install repomix
 
 ```bash
 repomix
-```
-
-或者，你也可以使用:
-
-```bash
-python -m repomix
 ```
 
 ### Docker 使用

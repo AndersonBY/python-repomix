@@ -22,22 +22,45 @@ The original [Repomix](https://github.com/yamadashy/repomix) is written in JavaS
 
 ## 🚀 3. Quick Start
 
-You can install Repomix using pip:
+### Quick Run with uvx (Recommended)
+
+The easiest way to use Repomix is with [uvx](https://docs.astral.sh/uv/) - no installation required:
+
+```bash
+uvx repomix
+```
+
+That's it! This will pack your current directory into an AI-friendly file.
+
+**More examples:**
+```bash
+# Pack with JSON output
+uvx repomix --style json
+
+# Pack a remote repository
+uvx repomix --remote https://github.com/username/repo
+
+# Pack with specific patterns
+uvx repomix --include "src/**/*.py" --ignore "tests/**"
+
+# Use a specific version
+uvx repomix@0.4.1
+```
+
+You can also use [pipx](https://pipx.pypa.io/): `pipx run repomix`
+
+### Install with pip
+
+For frequent usage, you can install Repomix globally:
 
 ```bash
 pip install repomix
 ```
 
-Then run in any project directory (using the installed script is preferred):
+Then run in any project directory:
 
 ```bash
 repomix
-```
-
-Alternatively, you can use:
-
-```bash
-python -m repomix
 ```
 
 ### Docker Usage
