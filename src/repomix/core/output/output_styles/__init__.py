@@ -7,6 +7,7 @@ from typing import Dict, Optional, Type
 from .xml_style import XmlStyle
 from .plain_style import PlainStyle
 from .markdown_style import MarkdownStyle
+from .json_style import JsonStyle
 from ..output_style_decorate import OutputStyle
 from ....config.config_schema import RepomixConfig, RepomixOutputStyle
 
@@ -15,6 +16,7 @@ _style_map: Dict[RepomixOutputStyle, Type[OutputStyle]] = {
     RepomixOutputStyle.PLAIN: PlainStyle,
     RepomixOutputStyle.MARKDOWN: MarkdownStyle,
     RepomixOutputStyle.XML: XmlStyle,
+    RepomixOutputStyle.JSON: JsonStyle,
 }
 
 

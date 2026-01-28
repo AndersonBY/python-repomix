@@ -7,8 +7,9 @@ from pathlib import Path
 
 from ...shared.logger import logger
 from .output_styles import get_output_style
+from .output_styles.json_style import JsonStyle
 from ...core.file.file_types import ProcessedFile
-from ...config.config_schema import RepomixConfig
+from ...config.config_schema import RepomixConfig, RepomixOutputStyle
 
 
 def build_filtered_file_tree(processed_files: List[ProcessedFile]) -> Dict:
@@ -59,7 +60,25 @@ def generate_output(
     Returns:
         Generated output content
     """
-    # Get output style processor
+    # Calculate statistics
+    total_chars = sum(file_char_counts.values())
+    total_tokens = sum(file_token_counts.values()) if config.output.calculate_tokens else 0
+    filtered_tree = build_filtered_file_tree(processed_files)
+
+    # Handle JSON output style specially
+    if config.output.style_enum == RepomixOutputStyle.JSON:
+        json_style = JsonStyle(config)
+        return json_style.generate_json_output(
+            files=processed_files,
+            file_char_counts=file_char_counts,
+            file_token_counts=file_token_counts,
+            file_tree=filtered_tree,
+            total_files=len(processed_files),
+            total_chars=total_chars,
+            total_tokens=total_tokens,
+        )
+
+    # Get output style processor for other styles
     style = get_output_style(config)
     if not style:
         logger.warn(f"Unknown output style: {config.output.style_enum}, using plain text style")
@@ -72,16 +91,12 @@ def generate_output(
 
     # Add file tree if configured to do so - use filtered tree showing only included files
     if config.output.show_directory_structure:
-        filtered_tree = build_filtered_file_tree(processed_files)
         output += style.generate_file_tree_section(filtered_tree)
 
     # Add files section
     output += style.generate_files_section(processed_files, file_char_counts, file_token_counts)
 
     # Add statistics
-    total_chars = sum(file_char_counts.values())
-    total_tokens = sum(file_token_counts.values()) if config.output.calculate_tokens else 0
-
     output += style.generate_statistics(len(processed_files), total_chars, total_tokens)
 
     output += style.generate_footer()

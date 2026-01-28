@@ -2,6 +2,7 @@
 Test suite for output format functionality
 """
 
+import json
 import tempfile
 import pytest
 from pathlib import Path
@@ -96,6 +97,83 @@ class TestOutputGeneration:
             ET.fromstring(output)
         except ET.ParseError:
             pytest.fail("Generated XML output is not valid XML")
+
+    def test_generate_output_json_style(self):
+        """Test output generation with JSON style"""
+        config = RepomixConfig()
+        config.output.style_enum = RepomixOutputStyle.JSON
+
+        output = generate_output(
+            self.processed_files,
+            config,
+            self.file_char_counts,
+            self.file_token_counts,
+            self.file_tree,
+        )
+
+        assert output is not None
+        assert len(output) > 0
+
+        # Verify it's valid JSON by parsing it
+        try:
+            parsed = json.loads(output)
+        except json.JSONDecodeError:
+            pytest.fail("Generated JSON output is not valid JSON")
+
+        # Verify JSON structure
+        assert "fileSummary" in parsed
+        assert "files" in parsed
+        assert "statistics" in parsed
+
+        # Verify file contents are included
+        assert "src/main.py" in parsed["files"]
+        assert "src/utils.py" in parsed["files"]
+        assert "README.md" in parsed["files"]
+
+        # Verify file content
+        assert "def main():" in parsed["files"]["src/main.py"]["content"]
+
+        # Verify statistics
+        assert parsed["statistics"]["totalFiles"] == 3
+        assert parsed["statistics"]["totalCharacters"] == 100  # 45 + 25 + 30
+
+    def test_generate_output_json_with_directory_structure(self):
+        """Test JSON output includes directory structure when enabled"""
+        config = RepomixConfig()
+        config.output.style_enum = RepomixOutputStyle.JSON
+        config.output.show_directory_structure = True
+
+        output = generate_output(
+            self.processed_files,
+            config,
+            self.file_char_counts,
+            self.file_token_counts,
+            self.file_tree,
+        )
+
+        parsed = json.loads(output)
+        assert "directoryStructure" in parsed
+        assert "src/" in parsed["directoryStructure"] or "main.py" in parsed["directoryStructure"]
+
+    def test_generate_output_json_with_file_stats(self):
+        """Test JSON output includes file stats when enabled"""
+        config = RepomixConfig()
+        config.output.style_enum = RepomixOutputStyle.JSON
+        config.output.show_file_stats = True
+
+        output = generate_output(
+            self.processed_files,
+            config,
+            self.file_char_counts,
+            self.file_token_counts,
+            self.file_tree,
+        )
+
+        parsed = json.loads(output)
+        # When show_file_stats is enabled, each file should have charCount and tokenCount
+        assert "charCount" in parsed["files"]["src/main.py"]
+        assert "tokenCount" in parsed["files"]["src/main.py"]
+        assert parsed["files"]["src/main.py"]["charCount"] == 45
 
     def test_generate_output_basic_functionality(self):
         """Test basic output generation functionality"""
@@ -239,6 +317,7 @@ Run with: `python app.py`
                 RepomixOutputStyle.PLAIN,
                 RepomixOutputStyle.MARKDOWN,
                 RepomixOutputStyle.XML,
+                RepomixOutputStyle.JSON,
             ]
 
             for style in styles:
@@ -273,6 +352,15 @@ Run with: `python app.py`
                 elif style == RepomixOutputStyle.MARKDOWN:
                     assert "```" in output  # Code blocks
                     assert "#" in output  # Headers
+
+                elif style == RepomixOutputStyle.JSON:
+                    # Verify valid JSON
+                    try:
+                        parsed = json.loads(output)
+                        assert "files" in parsed
+                        assert "statistics" in parsed
+                    except json.JSONDecodeError:
+                        pytest.fail(f"Invalid JSON generated for {style}")
 
                 # Plain style doesn't have specific formatting requirements
 
