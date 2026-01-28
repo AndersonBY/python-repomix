@@ -28,17 +28,11 @@ class GenerateSkillInput(BaseModel):
     )
     include_patterns: Optional[str] = Field(
         default=None,
-        description=(
-            "Specify files to include using fast-glob patterns. Multiple patterns can be "
-            'comma-separated (e.g., "**/*.{js,ts}", "src/**,docs/**").'
-        ),
+        description=('Specify files to include using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "**/*.{js,ts}", "src/**,docs/**").'),
     )
     ignore_patterns: Optional[str] = Field(
         default=None,
-        description=(
-            "Specify additional files to exclude using fast-glob patterns. Multiple patterns can be "
-            'comma-separated (e.g., "test/**,*.spec.js").'
-        ),
+        description=('Specify additional files to exclude using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "test/**,*.spec.js").'),
     )
 
 
@@ -136,7 +130,7 @@ def register_generate_skill_tool(server: FastMCP) -> None:
 
             # List generated files
             generated_files = []
-            for root, dirs, files in os.walk(skill_output_dir):
+            for root, _dirs, files in os.walk(skill_output_dir):
                 for file in files:
                     rel_path = os.path.relpath(os.path.join(root, file), skill_output_dir)
                     generated_files.append(rel_path)
@@ -146,6 +140,9 @@ def register_generate_skill_tool(server: FastMCP) -> None:
                 logger.log(f"   📊 Files processed: {result.pack_result.total_files}")
                 logger.log(f"   📝 Generated files: {len(generated_files)}")
 
+            # Calculate total lines from file char counts (approximate)
+            total_lines = sum(result.pack_result.file_char_counts.values()) // 40 if result.pack_result.file_char_counts else 0
+
             # Build response
             response = {
                 "description": f"Successfully generated skill '{actual_skill_name}' from {directory}",
@@ -153,11 +150,7 @@ def register_generate_skill_tool(server: FastMCP) -> None:
                 "output_directory": skill_output_dir,
                 "files_generated": generated_files,
                 "total_files": result.pack_result.total_files,
-                "total_lines": sum(
-                    content.count("\n") + 1
-                    for content in [f.content for f in result.pack_result.processed_files]
-                    if content
-                ) if hasattr(result.pack_result, "processed_files") else 0,
+                "total_lines": total_lines,
             }
 
             if not is_mcp_silent_mode():
@@ -169,4 +162,3 @@ def register_generate_skill_tool(server: FastMCP) -> None:
             if not is_mcp_silent_mode():
                 logger.error(f"   ❌ Error in generate_skill tool: {error}")
             return build_mcp_tool_error_response(convert_error_to_json(error))
-

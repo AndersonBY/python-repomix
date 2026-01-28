@@ -78,6 +78,9 @@ reportOptionalIterable = true
 reportOptionalContextManager = true
 reportOptionalOperand = true
 reportTypedDictNotRequiredAccess = false
+# Disable reportArgumentType for tests that intentionally pass dicts to dataclass constructors
+# to test __post_init__ conversion behavior
+reportArgumentType = "warning"
 
 [tool.ruff]
 line-length = 160
