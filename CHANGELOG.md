@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 🎨 **JSON Output Format**: New `--style json` option for machine-readable structured output, perfect for integration with other tools and scripts
+- 📊 **Git Log Integration**: Include recent commit history in output with `--include-logs` option
+- 🔀 **Git Sort by Changes**: Sort files by change frequency with `--sort-by-changes` option, showing most frequently modified files first
+- 📂 **Output Split**: Split large outputs into multiple files with configurable size limits using `split_output` configuration
+- 🌳 **Token Count Tree**: Visualize token distribution across directories with `token_count_tree` option
+- 📁 **Full Directory Structure**: Show complete directory tree including ignored files with `include_full_directory_structure` option
+- 🔧 **Skill Generation**: Generate Claude Agent Skills from codebase with new skill generation module
+- 🤖 **MCP generate_skill Tool**: New MCP tool for generating Claude Agent Skills directly from AI assistants
+- 🌐 **Extended Tree-sitter Support**: Added support for 9 additional languages (Rust, Java, C, C++, C#, Ruby, PHP, Swift, CSS) - now supporting 13 languages total
+
+### Changed
+- 📝 **Configuration Schema**: Updated with new options for git integration, output splitting, and token tree visualization
+- 📚 **Documentation**: Comprehensive updates to README files with new feature documentation
+- 🧪 **Examples**: Added 5 new example files demonstrating JSON output, Git integration, output splitting, token tree, and full directory structure
+
+### Fixed
+- 🐛 **Test Fixes**: Fixed path comparison issues in test_file_stdin.py and output file path handling in test_core_functionality.py
+
 ## [0.3.4] - 2025-09-01
 
 ### Fixed
