@@ -169,6 +169,21 @@ class OutputStyle(ABC):
         """Generates the file tree section."""
         pass
 
+    def generate_git_diff_section(
+        self, work_tree_diff: str, staged_diff: str
+    ) -> str:
+        """Generate git diff section
+
+        Args:
+            work_tree_diff: Unstaged changes diff
+            staged_diff: Staged changes diff
+
+        Returns:
+            Git diff section content
+        """
+        # Default implementation - can be overridden by subclasses
+        return ""
+
 
 def format_file_size(size: float | int) -> str:
     """Format file size

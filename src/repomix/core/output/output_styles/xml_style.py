@@ -163,6 +163,29 @@ class XmlStyle(OutputStyle):
         xml_str = ET.tostring(tree_elem, encoding="unicode")
         return self._pretty_print(xml_str)
 
+    def generate_git_diff_section(
+        self, work_tree_diff: str, staged_diff: str
+    ) -> str:
+        """Generate git diff section in XML format
+
+        Args:
+            work_tree_diff: Unstaged changes diff
+            staged_diff: Staged changes diff
+
+        Returns:
+            XML formatted git diff section
+        """
+        git_diffs_elem = ET.Element("git_diffs")
+
+        work_tree_elem = ET.SubElement(git_diffs_elem, "git_diff_work_tree")
+        work_tree_elem.text = work_tree_diff if work_tree_diff else ""
+
+        staged_elem = ET.SubElement(git_diffs_elem, "git_diff_staged")
+        staged_elem.text = staged_diff if staged_diff else ""
+
+        xml_str = ET.tostring(git_diffs_elem, encoding="unicode")
+        return self._pretty_print(xml_str)
+
     def _pretty_print(self, xml_str: str) -> str:
         """Pretty print XML output
 

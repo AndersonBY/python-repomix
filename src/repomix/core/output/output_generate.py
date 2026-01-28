@@ -2,7 +2,7 @@
 Output Generation Module - Responsible for Generating Final Output Content
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 
 from ...shared.logger import logger
@@ -21,7 +21,7 @@ def build_filtered_file_tree(processed_files: List[ProcessedFile]) -> Dict:
     Returns:
         Dictionary representing the filtered file tree
     """
-    tree = {}
+    tree: Dict[str, Any] = {}
 
     for processed_file in processed_files:
         # Split the path into parts
@@ -48,6 +48,7 @@ def generate_output(
     file_char_counts: Dict[str, int],
     file_token_counts: Dict[str, int],
     file_tree: Dict,
+    git_diff_result: Optional[Any] = None,
 ) -> str:
     """Generate output content
 
@@ -57,6 +58,7 @@ def generate_output(
         file_char_counts: File character count statistics
         file_token_counts: File token count statistics
         file_tree: Complete file tree (may contain files not in processed_files)
+        git_diff_result: Git diff result (optional)
     Returns:
         Generated output content
     """
@@ -76,6 +78,7 @@ def generate_output(
             total_files=len(processed_files),
             total_chars=total_chars,
             total_tokens=total_tokens,
+            git_diff_result=git_diff_result,
         )
 
     # Get output style processor for other styles
@@ -95,6 +98,13 @@ def generate_output(
 
     # Add files section
     output += style.generate_files_section(processed_files, file_char_counts, file_token_counts)
+
+    # Add git diff section if enabled
+    if config.output.git.include_diffs and git_diff_result:
+        output += style.generate_git_diff_section(
+            work_tree_diff=git_diff_result.work_tree_diff_content,
+            staged_diff=git_diff_result.staged_diff_content,
+        )
 
     # Add statistics
     output += style.generate_statistics(len(processed_files), total_chars, total_tokens)

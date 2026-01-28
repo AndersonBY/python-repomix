@@ -55,6 +55,7 @@ class JsonStyle(OutputStyle):
         total_files: int,
         total_chars: int,
         total_tokens: int,
+        git_diff_result: Any = None,
     ) -> str:
         """Generate complete JSON output
 
@@ -66,6 +67,7 @@ class JsonStyle(OutputStyle):
             total_files: Total number of files
             total_chars: Total character count
             total_tokens: Total token count
+            git_diff_result: Git diff result (optional)
 
         Returns:
             JSON formatted output string
@@ -100,6 +102,13 @@ class JsonStyle(OutputStyle):
                 file_entry["tokenCount"] = file_token_counts.get(file.path, 0)
 
             json_document["files"][file.path] = file_entry
+
+        # Add git diffs if available
+        if git_diff_result and self.config.output.git.include_diffs:
+            json_document["gitDiffs"] = {
+                "workTree": git_diff_result.work_tree_diff_content,
+                "staged": git_diff_result.staged_diff_content,
+            }
 
         # Add statistics
         json_document["statistics"] = {

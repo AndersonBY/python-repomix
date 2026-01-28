@@ -143,6 +143,32 @@ class MarkdownStyle(OutputStyle):
         """Generates the file tree section in Markdown style."""
         return "\n# Repository Structure\n\n```\n" + format_file_tree(file_tree) + "```\n\n"
 
+    def generate_git_diff_section(
+        self, work_tree_diff: str, staged_diff: str
+    ) -> str:
+        """Generate git diff section in Markdown format
+
+        Args:
+            work_tree_diff: Unstaged changes diff
+            staged_diff: Staged changes diff
+
+        Returns:
+            Markdown formatted git diff section
+        """
+        output = "\n# Git Diffs\n\n"
+
+        output += "## Git Diffs Working Tree\n\n"
+        output += "```diff\n"
+        output += work_tree_diff if work_tree_diff else "(no changes)"
+        output += "\n```\n\n"
+
+        output += "## Git Diffs Staged\n\n"
+        output += "```diff\n"
+        output += staged_diff if staged_diff else "(no changes)"
+        output += "\n```\n\n"
+
+        return output
+
     def _get_language_by_extension(self, ext: str) -> str:
         """Get language identifier by file extension
 
