@@ -200,6 +200,8 @@ def merge_configs(
                 cli_options["output"]["file_path"] = "repomix-output.xml"
             elif cli_options.get("output", {}).get("style") == "plain":
                 cli_options["output"]["file_path"] = "repomix-output.txt"
+            elif cli_options.get("output", {}).get("style") == "json":
+                cli_options["output"]["file_path"] = "repomix-output.json"
         merge_config_dict(merged_config.__dict__, cli_options)
 
     return merged_config
@@ -252,6 +254,8 @@ def process_config(config: RepomixConfig, directory: str | Path) -> None:
             ext = ".md"
         elif config.output.style == RepomixOutputStyle.XML:
             ext = ".xml"
+        elif config.output.style == RepomixOutputStyle.JSON:
+            ext = ".json"
         else:
             ext = ".txt"
         config.output.file_path = f"repomix-output{ext}"

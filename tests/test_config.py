@@ -408,5 +408,174 @@ class TestConfigMigration:
         assert config_obj.security.enable_security_check is True
 
 
+class TestNewConfigOptions:
+    """Test cases for new configuration options added from TypeScript version"""
+
+    def test_json_output_style(self):
+        """Test JSON output style option"""
+        config = RepomixConfig(output={"style": "json"})
+        assert config.output.style == "json"
+        assert config.output.style_enum == RepomixOutputStyle.JSON
+
+    def test_git_config_defaults(self):
+        """Test git configuration defaults"""
+        from src.repomix.config.config_schema import RepomixConfigGit
+
+        config = RepomixConfig()
+        assert isinstance(config.output.git, RepomixConfigGit)
+        assert config.output.git.sort_by_changes is True
+        assert config.output.git.sort_by_changes_max_commits == 100
+        assert config.output.git.include_diffs is False
+        assert config.output.git.include_logs is False
+        assert config.output.git.include_logs_count == 50
+
+    def test_git_config_from_dict(self):
+        """Test git configuration from dictionary"""
+        config_dict = {
+            "output": {
+                "git": {
+                    "sort_by_changes": False,
+                    "sort_by_changes_max_commits": 50,
+                    "include_diffs": True,
+                    "include_logs": True,
+                    "include_logs_count": 100,
+                }
+            }
+        }
+        config = RepomixConfig(**config_dict)
+        assert config.output.git.sort_by_changes is False
+        assert config.output.git.sort_by_changes_max_commits == 50
+        assert config.output.git.include_diffs is True
+        assert config.output.git.include_logs is True
+        assert config.output.git.include_logs_count == 100
+
+    def test_input_config_defaults(self):
+        """Test input configuration defaults"""
+        from src.repomix.config.config_schema import RepomixConfigInput
+
+        config = RepomixConfig()
+        assert isinstance(config.input, RepomixConfigInput)
+        assert config.input.max_file_size == 50 * 1024 * 1024  # 50MB
+
+    def test_input_config_from_dict(self):
+        """Test input configuration from dictionary"""
+        config_dict = {"input": {"max_file_size": 10 * 1024 * 1024}}  # 10MB
+        config = RepomixConfig(**config_dict)
+        assert config.input.max_file_size == 10 * 1024 * 1024
+
+    def test_output_new_options_defaults(self):
+        """Test new output options defaults"""
+        config = RepomixConfig()
+        assert config.output.include_full_directory_structure is False
+        assert config.output.split_output is None
+        assert config.output.token_count_tree is False
+        assert config.output.compress is False
+
+    def test_output_new_options_configuration(self):
+        """Test configuring new output options"""
+        config_dict = {
+            "output": {
+                "include_full_directory_structure": True,
+                "split_output": 1024 * 1024,  # 1MB
+                "token_count_tree": True,
+                "compress": True,
+            }
+        }
+        config = RepomixConfig(**config_dict)
+        assert config.output.include_full_directory_structure is True
+        assert config.output.split_output == 1024 * 1024
+        assert config.output.token_count_tree is True
+        assert config.output.compress is True
+
+    def test_token_count_tree_variants(self):
+        """Test token_count_tree with different value types"""
+        # Boolean
+        config1 = RepomixConfig(output={"token_count_tree": True})
+        assert config1.output.token_count_tree is True
+
+        # Integer (depth limit)
+        config2 = RepomixConfig(output={"token_count_tree": 3})
+        assert config2.output.token_count_tree == 3
+
+        # String (custom format)
+        config3 = RepomixConfig(output={"token_count_tree": "detailed"})
+        assert config3.output.token_count_tree == "detailed"
+
+    def test_skill_generate_defaults(self):
+        """Test skill_generate configuration defaults"""
+        config = RepomixConfig()
+        assert config.skill_generate is False
+
+    def test_skill_generate_with_bool(self):
+        """Test skill_generate with boolean value"""
+        config = RepomixConfig(skill_generate=True)
+        assert config.skill_generate is True
+
+    def test_skill_generate_with_string(self):
+        """Test skill_generate with string value (skill name)"""
+        config = RepomixConfig(skill_generate="my-skill")
+        assert config.skill_generate == "my-skill"
+
+    def test_legacy_include_diffs_migration(self):
+        """Test that legacy include_diffs is migrated to git.include_diffs"""
+        config_dict = {"output": {"include_diffs": True}}
+        config = RepomixConfig(**config_dict)
+        # Legacy field should migrate to git.include_diffs
+        assert config.output.git.include_diffs is True
+
+    def test_all_style_options_including_json(self):
+        """Test all available style options including JSON"""
+        styles = ["plain", "xml", "markdown", "json"]
+
+        for style_str in styles:
+            config = RepomixConfig(output={"style": style_str})
+            expected_enum = RepomixOutputStyle(style_str.lower())
+            assert config.output.style_enum == expected_enum
+            assert config.output.style == style_str
+
+    def test_complete_new_config(self):
+        """Test complete configuration with all new options"""
+        complete_config = {
+            "input": {"max_file_size": 25 * 1024 * 1024},
+            "output": {
+                "style": "json",
+                "include_full_directory_structure": True,
+                "split_output": 2 * 1024 * 1024,
+                "token_count_tree": 5,
+                "compress": True,
+                "git": {
+                    "sort_by_changes": True,
+                    "sort_by_changes_max_commits": 200,
+                    "include_diffs": True,
+                    "include_logs": True,
+                    "include_logs_count": 25,
+                },
+            },
+            "skill_generate": "test-skill",
+        }
+
+        config = RepomixConfig(**complete_config)
+
+        # Verify input
+        assert config.input.max_file_size == 25 * 1024 * 1024
+
+        # Verify output
+        assert config.output.style == "json"
+        assert config.output.include_full_directory_structure is True
+        assert config.output.split_output == 2 * 1024 * 1024
+        assert config.output.token_count_tree == 5
+        assert config.output.compress is True
+
+        # Verify git
+        assert config.output.git.sort_by_changes is True
+        assert config.output.git.sort_by_changes_max_commits == 200
+        assert config.output.git.include_diffs is True
+        assert config.output.git.include_logs is True
+        assert config.output.git.include_logs_count == 25
+
+        # Verify skill_generate
+        assert config.skill_generate == "test-skill"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
