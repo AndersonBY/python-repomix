@@ -170,6 +170,8 @@ class RepomixConfig:
     include: List[str] = field(default_factory=list)
     # Skill generation configuration (string for skill name, or bool to enable/disable)
     skill_generate: Union[str, bool] = False
+    # Current working directory (set at runtime)
+    cwd: str = "."
 
     def __post_init__(self):
         """Post-initialization processing to handle nested dictionaries"""
