@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-01-28
+
 ### Added
 - 🎨 **JSON Output Format**: New `--style json` option for machine-readable structured output, perfect for integration with other tools and scripts
 - 📊 **Git Log Integration**: Include recent commit history in output with `--include-logs` option
@@ -25,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - 🐛 **Test Fixes**: Fixed path comparison issues in test_file_stdin.py and output file path handling in test_core_functionality.py
-
 ## [0.3.4] - 2025-09-01
 
 ### Fixed
