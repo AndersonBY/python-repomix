@@ -59,9 +59,9 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--style",
-        choices=["plain", "xml", "markdown"],
+        choices=["plain", "xml", "markdown", "json"],
         metavar="<type>",
-        help="Specify output style (plain, xml, markdown)",
+        help="Specify output style (plain, xml, markdown, json)",
     )
     parser.add_argument("--init", action="store_true", help="Initialize new repomix.config.json file")
     parser.add_argument(
