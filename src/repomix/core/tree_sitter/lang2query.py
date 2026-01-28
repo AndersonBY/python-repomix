@@ -15,6 +15,8 @@ lang2query: Dict[str, str] = {
     "rust": "query_rust",
     "ruby": "query_ruby",
     "php": "query_php",
+    "swift": "query_swift",
+    "css": "query_css",
 }
 
 
