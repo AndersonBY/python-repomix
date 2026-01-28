@@ -16,6 +16,7 @@ from .tools.file_system_read_file_tool import register_file_system_read_file_too
 from .tools.file_system_read_directory_tool import (
     register_file_system_read_directory_tool,
 )
+from .tools.generate_skill_tool import register_generate_skill_tool
 
 # MCP Server Instructions
 MCP_SERVER_INSTRUCTIONS: str = (
@@ -74,8 +75,12 @@ def create_mcp_server(silent: bool = True) -> FastMCP:
     if not silent:
         logger.log("  ✅ file_system_read_directory")
 
+    register_generate_skill_tool(server)
     if not silent:
-        logger.log("🎯 Repomix MCP Server configured with 6 tools")
+        logger.log("  ✅ generate_skill")
+
+    if not silent:
+        logger.log("🎯 Repomix MCP Server configured with 7 tools")
 
     logger.trace("Repomix MCP Server created and configured")
     return server

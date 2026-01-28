@@ -101,7 +101,8 @@ class TestMCPSilentMode:
         assert "✅ grep_repomix_output" in combined_output
         assert "✅ file_system_read_file" in combined_output
         assert "✅ file_system_read_directory" in combined_output
-        assert "🎯 Repomix MCP Server configured with 6 tools" in combined_output
+        assert "✅ generate_skill" in combined_output
+        assert "🎯 Repomix MCP Server configured with 7 tools" in combined_output
         assert is_mcp_silent_mode() is False
 
     @pytest.mark.asyncio

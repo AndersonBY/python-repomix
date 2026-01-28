@@ -7,6 +7,7 @@ from .read_repomix_output_tool import register_read_repomix_output_tool
 from .grep_repomix_output_tool import register_grep_repomix_output_tool
 from .file_system_read_file_tool import register_file_system_read_file_tool
 from .file_system_read_directory_tool import register_file_system_read_directory_tool
+from .generate_skill_tool import register_generate_skill_tool
 
 __all__ = [
     "register_pack_codebase_tool",
@@ -15,4 +16,5 @@ __all__ = [
     "register_grep_repomix_output_tool",
     "register_file_system_read_file_tool",
     "register_file_system_read_directory_tool",
+    "register_generate_skill_tool",
 ]
