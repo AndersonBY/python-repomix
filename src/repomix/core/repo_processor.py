@@ -1,7 +1,7 @@
 from pathlib import Path
 from fnmatch import fnmatch
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Any
 import re
 import logging
 from functools import lru_cache
@@ -28,6 +28,50 @@ def cached_fnmatch(filename: str, pattern: str) -> bool:
         return fnmatch(filename, pattern)
     except (re.error, OverflowError, RecursionError):
         return False
+
+
+def build_full_file_tree(directory: str | Path) -> Dict:
+    """Build a complete file tree without any filtering.
+
+    This function builds a full directory tree including all files and directories,
+    regardless of ignore patterns. Used when include_full_directory_structure is enabled.
+
+    Args:
+        directory: Root directory to scan
+
+    Returns:
+        Dictionary representing the complete file tree
+    """
+    return _build_full_tree_recursive(Path(directory))
+
+
+def _build_full_tree_recursive(directory: Path, base_dir: Path | None = None) -> Dict:
+    """Recursively build full file tree without filtering."""
+    tree: Dict[str, Any] = {}
+    if base_dir is None:
+        base_dir = directory
+
+    try:
+        entries = sorted(directory.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower()))
+    except (OSError, PermissionError):
+        return tree
+
+    for path in entries:
+        try:
+            path_name = path.name
+            is_dir = path.is_dir()
+
+            if is_dir:
+                # Recursively build subtree for all directories
+                subtree = _build_full_tree_recursive(path, base_dir)
+                tree[path_name] = subtree if subtree else {}
+            else:
+                tree[path_name] = ""
+        except Exception as e:
+            logger.debug(f"Error processing path '{path}': {e}")
+            continue
+
+    return tree
 
 
 def build_file_tree_with_ignore(directory: str | Path, config: RepomixConfig) -> Dict:
@@ -255,8 +299,13 @@ class RepoProcessor:
             if not raw_files:
                 raise RepomixError("No files found. Please check the directory path and filter conditions.")
 
-            # Build the file tree, considering ignore patterns
-            file_tree = build_file_tree_with_ignore(self.directory, self.config)
+            # Build the file tree based on configuration
+            if self.config.output.include_full_directory_structure:
+                # Build full directory tree without filtering
+                file_tree = build_full_file_tree(self.directory)
+            else:
+                # Build filtered file tree, respecting ignore patterns
+                file_tree = build_file_tree_with_ignore(self.directory, self.config)
 
             processed_files = process_files(raw_files, self.config)
 

@@ -58,7 +58,7 @@ def generate_output(
         config: Configuration object
         file_char_counts: File character count statistics
         file_token_counts: File token count statistics
-        file_tree: Complete file tree (may contain files not in processed_files)
+        file_tree: File tree (full or filtered based on config)
         git_diff_result: Git diff result (optional)
         git_log_result: Git log result (optional)
     Returns:
@@ -67,7 +67,14 @@ def generate_output(
     # Calculate statistics
     total_chars = sum(file_char_counts.values())
     total_tokens = sum(file_token_counts.values()) if config.output.calculate_tokens else 0
-    filtered_tree = build_filtered_file_tree(processed_files)
+
+    # Determine which file tree to use for display
+    if config.output.include_full_directory_structure:
+        # Use the full file tree passed in (already built without filtering)
+        display_tree = file_tree
+    else:
+        # Build filtered tree showing only included files
+        display_tree = build_filtered_file_tree(processed_files)
 
     # Handle JSON output style specially
     if config.output.style_enum == RepomixOutputStyle.JSON:
@@ -76,7 +83,7 @@ def generate_output(
             files=processed_files,
             file_char_counts=file_char_counts,
             file_token_counts=file_token_counts,
-            file_tree=filtered_tree,
+            file_tree=display_tree,
             total_files=len(processed_files),
             total_chars=total_chars,
             total_tokens=total_tokens,
@@ -95,9 +102,9 @@ def generate_output(
     # Generate output content
     output = style.generate_header()
 
-    # Add file tree if configured to do so - use filtered tree showing only included files
+    # Add file tree if configured to do so
     if config.output.show_directory_structure:
-        output += style.generate_file_tree_section(filtered_tree)
+        output += style.generate_file_tree_section(display_tree)
 
     # Add files section
     output += style.generate_files_section(processed_files, file_char_counts, file_token_counts)
