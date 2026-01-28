@@ -3,7 +3,7 @@ XML Output Style Module - Implements XML Format Output
 """
 
 from xml.dom import minidom
-from typing import Dict, List
+from typing import Dict, List, Any
 import xml.etree.ElementTree as ET
 
 from ..output_style_decorate import OutputStyle
@@ -184,6 +184,35 @@ class XmlStyle(OutputStyle):
         staged_elem.text = staged_diff if staged_diff else ""
 
         xml_str = ET.tostring(git_diffs_elem, encoding="unicode")
+        return self._pretty_print(xml_str)
+
+    def generate_git_log_section(self, commits: List[Any]) -> str:
+        """Generate git log section in XML format
+
+        Args:
+            commits: List of GitLogCommit objects
+
+        Returns:
+            XML formatted git log section
+        """
+        if not commits:
+            return ""
+
+        git_logs_elem = ET.Element("git_logs")
+
+        for commit in commits:
+            commit_elem = ET.SubElement(git_logs_elem, "git_log_commit")
+
+            date_elem = ET.SubElement(commit_elem, "date")
+            date_elem.text = commit.date
+
+            message_elem = ET.SubElement(commit_elem, "message")
+            message_elem.text = commit.message
+
+            files_elem = ET.SubElement(commit_elem, "files")
+            files_elem.text = "\n".join(commit.files)
+
+        xml_str = ET.tostring(git_logs_elem, encoding="unicode")
         return self._pretty_print(xml_str)
 
     def _pretty_print(self, xml_str: str) -> str:

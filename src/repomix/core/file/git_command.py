@@ -105,6 +105,9 @@ def exec_git_log(
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return result.stdout or ""
     except subprocess.CalledProcessError as e:
+        # Handle empty repository case (no commits yet)
+        if "does not have any commits yet" in (e.stderr or ""):
+            return ""
         logger.trace(f"Failed to execute git log: {e.stderr}")
         raise
 

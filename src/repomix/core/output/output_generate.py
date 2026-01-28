@@ -49,6 +49,7 @@ def generate_output(
     file_token_counts: Dict[str, int],
     file_tree: Dict,
     git_diff_result: Optional[Any] = None,
+    git_log_result: Optional[Any] = None,
 ) -> str:
     """Generate output content
 
@@ -59,6 +60,7 @@ def generate_output(
         file_token_counts: File token count statistics
         file_tree: Complete file tree (may contain files not in processed_files)
         git_diff_result: Git diff result (optional)
+        git_log_result: Git log result (optional)
     Returns:
         Generated output content
     """
@@ -79,6 +81,7 @@ def generate_output(
             total_chars=total_chars,
             total_tokens=total_tokens,
             git_diff_result=git_diff_result,
+            git_log_result=git_log_result,
         )
 
     # Get output style processor for other styles
@@ -105,6 +108,10 @@ def generate_output(
             work_tree_diff=git_diff_result.work_tree_diff_content,
             staged_diff=git_diff_result.staged_diff_content,
         )
+
+    # Add git log section if enabled
+    if config.output.git.include_logs and git_log_result:
+        output += style.generate_git_log_section(commits=git_log_result.commits)
 
     # Add statistics
     output += style.generate_statistics(len(processed_files), total_chars, total_tokens)

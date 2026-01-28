@@ -2,7 +2,7 @@
 Plain Text Output Style Module - Implements Plain Text Format Output
 """
 
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from ._utils import format_file_tree
 from ..output_style_decorate import OutputStyle
@@ -150,6 +150,33 @@ class PlainStyle(OutputStyle):
         output += f"{PLAIN_SHORT_SEPARATOR}\n"
         output += staged_diff if staged_diff else "(no changes)"
         output += "\n"
+
+        return output
+
+    def generate_git_log_section(self, commits: List[Any]) -> str:
+        """Generate git log section in plain text format
+
+        Args:
+            commits: List of GitLogCommit objects
+
+        Returns:
+            Plain text formatted git log section
+        """
+        if not commits:
+            return ""
+
+        output = f"\n{PLAIN_LONG_SEPARATOR}\n"
+        output += "Git Logs\n"
+        output += f"{PLAIN_LONG_SEPARATOR}\n"
+
+        for commit in commits:
+            output += f"{PLAIN_SHORT_SEPARATOR}\n"
+            output += f"Date: {commit.date}\n"
+            output += f"Message: {commit.message}\n"
+            output += "Files:\n"
+            for file in commit.files:
+                output += f"  - {file}\n"
+            output += f"{PLAIN_SHORT_SEPARATOR}\n\n"
 
         return output
 

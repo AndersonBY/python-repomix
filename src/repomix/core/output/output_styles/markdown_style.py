@@ -3,7 +3,7 @@ Markdown Output Style Module - Implements Markdown Format Output
 """
 
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from ._utils import format_file_tree
 from ...file.file_types import ProcessedFile
@@ -166,6 +166,30 @@ class MarkdownStyle(OutputStyle):
         output += "```diff\n"
         output += staged_diff if staged_diff else "(no changes)"
         output += "\n```\n\n"
+
+        return output
+
+    def generate_git_log_section(self, commits: List[Any]) -> str:
+        """Generate git log section in Markdown format
+
+        Args:
+            commits: List of GitLogCommit objects
+
+        Returns:
+            Markdown formatted git log section
+        """
+        if not commits:
+            return ""
+
+        output = "\n# Git Logs\n\n"
+
+        for commit in commits:
+            output += f"## Commit: {commit.date}\n"
+            output += f"**Message:** {commit.message}\n\n"
+            output += "**Files:**\n"
+            for file in commit.files:
+                output += f"- {file}\n"
+            output += "\n"
 
         return output
 

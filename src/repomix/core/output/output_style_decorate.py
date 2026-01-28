@@ -3,7 +3,7 @@ Output Style Decorator Module - Defines Base Class and Interface for Output Styl
 """
 
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Any
 from abc import ABC, abstractmethod
 
 from ...config.config_schema import RepomixConfig
@@ -180,6 +180,18 @@ class OutputStyle(ABC):
 
         Returns:
             Git diff section content
+        """
+        # Default implementation - can be overridden by subclasses
+        return ""
+
+    def generate_git_log_section(self, commits: List[Any]) -> str:
+        """Generate git log section
+
+        Args:
+            commits: List of GitLogCommit objects
+
+        Returns:
+            Git log section content
         """
         # Default implementation - can be overridden by subclasses
         return ""

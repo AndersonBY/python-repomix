@@ -56,6 +56,7 @@ class JsonStyle(OutputStyle):
         total_chars: int,
         total_tokens: int,
         git_diff_result: Any = None,
+        git_log_result: Any = None,
     ) -> str:
         """Generate complete JSON output
 
@@ -68,6 +69,7 @@ class JsonStyle(OutputStyle):
             total_chars: Total character count
             total_tokens: Total token count
             git_diff_result: Git diff result (optional)
+            git_log_result: Git log result (optional)
 
         Returns:
             JSON formatted output string
@@ -109,6 +111,17 @@ class JsonStyle(OutputStyle):
                 "workTree": git_diff_result.work_tree_diff_content,
                 "staged": git_diff_result.staged_diff_content,
             }
+
+        # Add git logs if available
+        if git_log_result and self.config.output.git.include_logs:
+            json_document["gitLogs"] = [
+                {
+                    "date": commit.date,
+                    "message": commit.message,
+                    "files": commit.files,
+                }
+                for commit in git_log_result.commits
+            ]
 
         # Add statistics
         json_document["statistics"] = {
