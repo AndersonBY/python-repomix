@@ -10,7 +10,6 @@ from src.repomix.core.output.output_split import (
     build_split_output_file_path,
     get_utf8_byte_length,
     generate_split_output_parts,
-    OutputSplitGroup,
 )
 from src.repomix.core.output.output_generate import generate_output
 from src.repomix.config.config_schema import RepomixConfig

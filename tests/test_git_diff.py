@@ -6,12 +6,10 @@ import json
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 from src.repomix.core.file.git_command import (
     is_git_repository,
     exec_git_diff,
-    exec_git_log_filenames,
 )
 from src.repomix.core.file.git_diff_handle import (
     GitDiffResult,

@@ -271,7 +271,7 @@ class TestCLIParser:
                 "--include-empty-directories",
                 "--include-diffs",
                 "--style",
-                "markdown"
+                "markdown",
             ]
         )
 

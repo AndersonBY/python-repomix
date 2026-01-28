@@ -143,9 +143,7 @@ class MarkdownStyle(OutputStyle):
         """Generates the file tree section in Markdown style."""
         return "\n# Repository Structure\n\n```\n" + format_file_tree(file_tree) + "```\n\n"
 
-    def generate_git_diff_section(
-        self, work_tree_diff: str, staged_diff: str
-    ) -> str:
+    def generate_git_diff_section(self, work_tree_diff: str, staged_diff: str) -> str:
         """Generate git diff section in Markdown format
 
         Args:

@@ -3,9 +3,6 @@ Test suite for Full Directory Structure functionality
 """
 
 import pytest
-from pathlib import Path
-import tempfile
-import shutil
 
 from src.repomix.core.repo_processor import (
     build_full_file_tree,

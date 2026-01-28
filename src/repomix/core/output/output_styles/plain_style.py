@@ -123,9 +123,7 @@ class PlainStyle(OutputStyle):
         """Generates the file tree section in plain text style."""
         return f"{PLAIN_LONG_SEPARATOR}\nRepository Structure:\n{PLAIN_LONG_SEPARATOR}\n" + format_file_tree(file_tree) + "\n"
 
-    def generate_git_diff_section(
-        self, work_tree_diff: str, staged_diff: str
-    ) -> str:
+    def generate_git_diff_section(self, work_tree_diff: str, staged_diff: str) -> str:
         """Generate git diff section in plain text format
 
         Args:

@@ -3,7 +3,6 @@ Test suite for MCP tools
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.repomix.mcp.mcp_server import create_mcp_server
 

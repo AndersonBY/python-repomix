@@ -48,17 +48,19 @@ def get_commits_since_tag(tag: Optional[str] = None, max_count: Optional[int] = 
         return []
 
     commits = []
-    for line in output.split('\n'):
+    for line in output.split("\n"):
         if line.strip():
-            parts = line.split('|', 4)
+            parts = line.split("|", 4)
             if len(parts) == 5:
-                commits.append({
-                    'hash': parts[0][:8],  # Short hash
-                    'author': parts[1],
-                    'email': parts[2],
-                    'date': parts[3],
-                    'message': parts[4]
-                })
+                commits.append(
+                    {
+                        "hash": parts[0][:8],  # Short hash
+                        "author": parts[1],
+                        "email": parts[2],
+                        "date": parts[3],
+                        "message": parts[4],
+                    }
+                )
 
     return commits
 
@@ -68,42 +70,42 @@ def categorize_commit(message: str) -> str:
     message_lower = message.lower()
 
     # Conventional commit prefixes
-    if message_lower.startswith(('feat:', 'feature:')):
-        return 'Added'
-    elif message_lower.startswith('fix:'):
-        return 'Fixed'
-    elif message_lower.startswith(('docs:', 'doc:')):
-        return 'Documentation'
-    elif message_lower.startswith(('style:', 'fmt:', 'format:')):
-        return 'Style'
-    elif message_lower.startswith(('refactor:', 'refact:')):
-        return 'Changed'
-    elif message_lower.startswith(('test:', 'tests:')):
-        return 'Tests'
-    elif message_lower.startswith(('chore:', 'build:', 'ci:')):
-        return 'Maintenance'
-    elif message_lower.startswith('perf:'):
-        return 'Performance'
-    elif message_lower.startswith(('security:', 'sec:')):
-        return 'Security'
-    elif message_lower.startswith(('break:', 'breaking:')):
-        return 'Breaking Changes'
-    elif message_lower.startswith('revert:'):
-        return 'Reverted'
+    if message_lower.startswith(("feat:", "feature:")):
+        return "Added"
+    elif message_lower.startswith("fix:"):
+        return "Fixed"
+    elif message_lower.startswith(("docs:", "doc:")):
+        return "Documentation"
+    elif message_lower.startswith(("style:", "fmt:", "format:")):
+        return "Style"
+    elif message_lower.startswith(("refactor:", "refact:")):
+        return "Changed"
+    elif message_lower.startswith(("test:", "tests:")):
+        return "Tests"
+    elif message_lower.startswith(("chore:", "build:", "ci:")):
+        return "Maintenance"
+    elif message_lower.startswith("perf:"):
+        return "Performance"
+    elif message_lower.startswith(("security:", "sec:")):
+        return "Security"
+    elif message_lower.startswith(("break:", "breaking:")):
+        return "Breaking Changes"
+    elif message_lower.startswith("revert:"):
+        return "Reverted"
 
     # Keyword-based categorization
-    elif any(word in message_lower for word in ['add', 'new', 'create', 'implement', 'introduce']):
-        return 'Added'
-    elif any(word in message_lower for word in ['fix', 'bug', 'resolve', 'correct', 'patch']):
-        return 'Fixed'
-    elif any(word in message_lower for word in ['update', 'change', 'modify', 'improve', 'enhance']):
-        return 'Changed'
-    elif any(word in message_lower for word in ['remove', 'delete', 'drop']):
-        return 'Removed'
-    elif any(word in message_lower for word in ['deprecate']):
-        return 'Deprecated'
+    elif any(word in message_lower for word in ["add", "new", "create", "implement", "introduce"]):
+        return "Added"
+    elif any(word in message_lower for word in ["fix", "bug", "resolve", "correct", "patch"]):
+        return "Fixed"
+    elif any(word in message_lower for word in ["update", "change", "modify", "improve", "enhance"]):
+        return "Changed"
+    elif any(word in message_lower for word in ["remove", "delete", "drop"]):
+        return "Removed"
+    elif any(word in message_lower for word in ["deprecate"]):
+        return "Deprecated"
     else:
-        return 'Other'
+        return "Other"
 
 
 def generate_commit_summary(commits: List[dict], latest_tag: Optional[str], max_count: Optional[int] = None) -> str:
@@ -117,11 +119,11 @@ def generate_commit_summary(commits: List[dict], latest_tag: Optional[str], max_
     contributors = set()
 
     for commit in commits:
-        category = categorize_commit(commit['message'])
+        category = categorize_commit(commit["message"])
         if category not in categorized:
             categorized[category] = []
         categorized[category].append(commit)
-        contributors.add(commit['author'])
+        contributors.add(commit["author"])
 
     # Generate markdown
     md_content = []
@@ -171,9 +173,20 @@ def generate_commit_summary(commits: List[dict], latest_tag: Optional[str], max_
 
     # Define category order
     category_order = [
-        'Breaking Changes', 'Added', 'Changed', 'Fixed', 'Security',
-        'Performance', 'Deprecated', 'Removed', 'Documentation',
-        'Tests', 'Style', 'Maintenance', 'Reverted', 'Other'
+        "Breaking Changes",
+        "Added",
+        "Changed",
+        "Fixed",
+        "Security",
+        "Performance",
+        "Deprecated",
+        "Removed",
+        "Documentation",
+        "Tests",
+        "Style",
+        "Maintenance",
+        "Reverted",
+        "Other",
     ]
 
     for category in category_order:
@@ -219,32 +232,11 @@ def generate_commit_summary(commits: List[dict], latest_tag: Optional[str], max_
 
 def main():
     parser = argparse.ArgumentParser(description="Collect git commits for changelog generation")
-    parser.add_argument(
-        "--since-tag",
-        help="Collect commits since this specific tag (default: latest tag)"
-    )
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Collect all commits (ignore tags)"
-    )
-    parser.add_argument(
-        "--count",
-        "-n",
-        type=int,
-        help="Limit to the last N commits (can be combined with --since-tag)"
-    )
-    parser.add_argument(
-        "--output",
-        "-o",
-        default="commits-for-changelog.md",
-        help="Output file name (default: commits-for-changelog.md)"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be collected without writing file"
-    )
+    parser.add_argument("--since-tag", help="Collect commits since this specific tag (default: latest tag)")
+    parser.add_argument("--all", action="store_true", help="Collect all commits (ignore tags)")
+    parser.add_argument("--count", "-n", type=int, help="Limit to the last N commits (can be combined with --since-tag)")
+    parser.add_argument("--output", "-o", default="commits-for-changelog.md", help="Output file name (default: commits-for-changelog.md)")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would be collected without writing file")
 
     args = parser.parse_args()
 
@@ -293,14 +285,14 @@ def main():
     summary = generate_commit_summary(commits, tag, args.count)
 
     if args.dry_run:
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("DRY RUN - Would write to:", args.output)
-        print("="*50)
+        print("=" * 50)
         print(summary[:1000] + "..." if len(summary) > 1000 else summary)
     else:
         # Write to file
         output_path = Path(args.output)
-        output_path.write_text(summary, encoding='utf-8')
+        output_path.write_text(summary, encoding="utf-8")
         print(f"✅ Commits summary written to: {output_path}")
         print("📝 Next step: Use Claude Code to convert this into CHANGELOG.md entries")
         print(f"💡 Command: claude code '{output_path}' 'Help me convert these commits into CHANGELOG.md format'")

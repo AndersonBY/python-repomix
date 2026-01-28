@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 from ...shared.logger import logger
 from ...config.config_schema import RepomixConfig
 from ..file.file_types import ProcessedFile
-from ..file.git_command import exec_git_log_filenames, is_git_installed, is_git_repository
+from ..file.git_command import exec_git_log_filenames, is_git_installed
 
 
 # Cache for git file change counts to avoid repeated git operations
@@ -78,9 +78,7 @@ def _check_git_availability(cwd: str) -> bool:
     return True
 
 
-def _get_file_change_counts(
-    cwd: str, max_commits: Optional[int]
-) -> Optional[Dict[str, int]]:
+def _get_file_change_counts(cwd: str, max_commits: Optional[int]) -> Optional[Dict[str, int]]:
     """Get file change counts from cache or git log.
     Returns None if git is not available or the command fails.
 
@@ -117,9 +115,7 @@ def _get_file_change_counts(
         return None
 
 
-def _sort_files_by_change_counts(
-    files: List[ProcessedFile], file_change_counts: Dict[str, int]
-) -> List[ProcessedFile]:
+def _sort_files_by_change_counts(files: List[ProcessedFile], file_change_counts: Dict[str, int]) -> List[ProcessedFile]:
     """Sort files by change count (files with more changes go to the bottom)
 
     Args:
@@ -150,9 +146,7 @@ def sort_output_files(
         return files
 
     cwd = config.cwd or "."
-    file_change_counts = _get_file_change_counts(
-        cwd, config.output.git.sort_by_changes_max_commits
-    )
+    file_change_counts = _get_file_change_counts(cwd, config.output.git.sort_by_changes_max_commits)
 
     if not file_change_counts:
         return files

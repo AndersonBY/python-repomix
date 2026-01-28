@@ -97,7 +97,7 @@ class XmlStyle(OutputStyle):
         # Apply parsable style formatting if enabled
         if self.config.output.parsable_style:
             # For parsable XML, ensure content is properly CDATA wrapped if it contains special characters
-            if any(char in content for char in ['<', '>', '&']):
+            if any(char in content for char in ["<", ">", "&"]):
                 # Use CDATA section for content with XML special characters
                 content_elem.text = f"<![CDATA[{content}]]>"
             else:
@@ -163,9 +163,7 @@ class XmlStyle(OutputStyle):
         xml_str = ET.tostring(tree_elem, encoding="unicode")
         return self._pretty_print(xml_str)
 
-    def generate_git_diff_section(
-        self, work_tree_diff: str, staged_diff: str
-    ) -> str:
+    def generate_git_diff_section(self, work_tree_diff: str, staged_diff: str) -> str:
         """Generate git diff section in XML format
 
         Args:

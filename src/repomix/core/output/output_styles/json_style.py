@@ -30,15 +30,11 @@ class JsonStyle(OutputStyle):
         """Generate JSON format files section - not used directly"""
         return ""
 
-    def generate_file_section(
-        self, file_path: str, content: str, char_count: int, token_count: int
-    ) -> str:
+    def generate_file_section(self, file_path: str, content: str, char_count: int, token_count: int) -> str:
         """Generate JSON format file section - not used directly"""
         return ""
 
-    def generate_statistics(
-        self, total_files: int, total_chars: int, total_tokens: int
-    ) -> str:
+    def generate_statistics(self, total_files: int, total_chars: int, total_tokens: int) -> str:
         """Generate JSON format statistics - not used directly"""
         return ""
 

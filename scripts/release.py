@@ -88,10 +88,7 @@ def update_changelog(new_version: str) -> None:
     new_section = f"\n\n## [{new_version}] - {today}\n\n{unreleased_content}"
 
     # Replace content: keep Unreleased header but empty its content
-    new_content = content.replace(
-        unreleased_match.group(0),
-        f"## [Unreleased]{new_section}"
-    )
+    new_content = content.replace(unreleased_match.group(0), f"## [Unreleased]{new_section}")
 
     changelog_path.write_text(new_content, encoding="utf-8")
     print(f"Updated CHANGELOG.md: moved Unreleased content to [{new_version}]")

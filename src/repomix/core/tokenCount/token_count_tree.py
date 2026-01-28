@@ -2,10 +2,9 @@
 Token Count Tree Module - Builds and displays token count tree structure
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional, Union
+from dataclasses import dataclass
+from typing import Dict, List
 
-from ...shared.logger import logger
 from ...config.config_schema import RepomixConfig
 from ..file.file_types import ProcessedFile
 
@@ -32,7 +31,7 @@ class TreeNode:
     def __init__(self):
         self.files: List[FileTokenInfo] = []
         self.token_sum: int = 0
-        self.children: Dict[str, "TreeNode"] = {}
+        self.children: Dict[str, TreeNode] = {}
 
 
 def build_token_count_tree(files_with_tokens: List[FileWithTokens]) -> TreeNode:
@@ -114,11 +113,7 @@ def format_token_count_tree(
     lines: List[str] = []
 
     # Get directories filtered by minimum token count
-    entries = [
-        (name, child)
-        for name, child in node.children.items()
-        if child.token_sum >= min_token_count
-    ]
+    entries = [(name, child) for name, child in node.children.items() if child.token_sum >= min_token_count]
 
     # Get files filtered by minimum token count
     files = [f for f in node.files if f.tokens >= min_token_count]
@@ -155,9 +150,7 @@ def format_token_count_tree(
         else:
             child_prefix = prefix + ("    " if is_last_entry else "│   ")
 
-        child_output = format_token_count_tree(
-            child_node, min_token_count, child_prefix, False
-        )
+        child_output = format_token_count_tree(child_node, min_token_count, child_prefix, False)
         if child_output:
             lines.append(child_output)
 

@@ -3,7 +3,7 @@ Configuration Module - Defines Repomix Configuration Schema and Default Values
 """
 
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional
 from dataclasses import dataclass, field
 
 
@@ -57,7 +57,7 @@ class RepomixConfigOutput:
     # New configuration items from TypeScript version
     include_full_directory_structure: bool = False
     split_output: Optional[int] = None  # Max bytes per output file for splitting
-    token_count_tree: Union[bool, int, str] = False  # Token count tree display
+    token_count_tree: bool | int | str = False  # Token count tree display
     compress: bool = False  # Enable code compression
     # Git configuration (nested)
     git: RepomixConfigGit = field(default_factory=RepomixConfigGit)
@@ -92,12 +92,12 @@ class RepomixConfigOutput:
         if isinstance(value, RepomixOutputStyle):
             self._style_enum = value
             # Update the style field to match the enum value
-            object.__setattr__(self, 'style', value.value)
+            object.__setattr__(self, "style", value.value)
         elif isinstance(value, str):
             try:
                 self._style_enum = RepomixOutputStyle(value.lower())
                 # Update the style field to match the enum value
-                object.__setattr__(self, 'style', value.lower())
+                object.__setattr__(self, "style", value.lower())
             except ValueError:
                 raise ValueError(f"Invalid style value: {value}. Must be one of: {', '.join(s.value for s in RepomixOutputStyle)}") from None
         else:
@@ -105,7 +105,7 @@ class RepomixConfigOutput:
 
     def __setattr__(self, name, value):
         """Override setattr to validate style when it's set after initialization"""
-        if name == 'style' and hasattr(self, '_style_enum'):
+        if name == "style" and hasattr(self, "_style_enum"):
             # Only validate if we're setting style after initialization
             self._process_style_value(value)
         else:
@@ -114,7 +114,7 @@ class RepomixConfigOutput:
     @property
     def style_enum(self) -> RepomixOutputStyle:
         """Get the output style as enum"""
-        return self._style_enum if hasattr(self, '_style_enum') else RepomixOutputStyle.MARKDOWN
+        return self._style_enum if hasattr(self, "_style_enum") else RepomixOutputStyle.MARKDOWN
 
     @style_enum.setter
     def style_enum(self, value):
@@ -169,7 +169,7 @@ class RepomixConfig:
     remote: RepomixConfigRemote = field(default_factory=RepomixConfigRemote)
     include: List[str] = field(default_factory=list)
     # Skill generation configuration (string for skill name, or bool to enable/disable)
-    skill_generate: Union[str, bool] = False
+    skill_generate: str | bool = False
     # Current working directory (set at runtime)
     cwd: str = "."
 

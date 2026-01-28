@@ -46,9 +46,7 @@ def get_root_entry(relative_file_path: str) -> str:
     return parts[0] if parts else normalized
 
 
-def build_output_split_groups(
-    processed_files: List[ProcessedFile], all_file_paths: List[str]
-) -> List[OutputSplitGroup]:
+def build_output_split_groups(processed_files: List[ProcessedFile], all_file_paths: List[str]) -> List[OutputSplitGroup]:
     """Build groups of files by their root entry
 
     Args:
@@ -71,9 +69,7 @@ def build_output_split_groups(
     for processed_file in processed_files:
         root_entry = get_root_entry(processed_file.path)
         if root_entry not in groups_by_root:
-            groups_by_root[root_entry] = OutputSplitGroup(
-                root_entry=root_entry, all_file_paths=[processed_file.path]
-            )
+            groups_by_root[root_entry] = OutputSplitGroup(root_entry=root_entry, all_file_paths=[processed_file.path])
         groups_by_root[root_entry].processed_files.append(processed_file)
 
     # Sort by root entry and return
@@ -176,9 +172,7 @@ def generate_split_output_parts(
             progress_callback(message)
         logger.trace(message)
 
-    def render_groups(
-        groups_to_render: List[OutputSplitGroup], part_index: int
-    ) -> str:
+    def render_groups(groups_to_render: List[OutputSplitGroup], part_index: int) -> str:
         """Render a list of groups into output content"""
         chunk_processed_files = []
         for g in groups_to_render:
@@ -222,17 +216,14 @@ def generate_split_output_parts(
 
         if not current_groups:
             raise ValueError(
-                f"Cannot split output: root entry '{group.root_entry}' exceeds max size. "
-                f"Part size {next_bytes:,} bytes > limit {max_bytes_per_part:,} bytes."
+                f"Cannot split output: root entry '{group.root_entry}' exceeds max size. Part size {next_bytes:,} bytes > limit {max_bytes_per_part:,} bytes."
             )
 
         # Finalize current part and start a new one
         parts.append(
             OutputSplitPart(
                 index=part_index,
-                file_path=build_split_output_file_path(
-                    base_config.output.file_path, part_index
-                ),
+                file_path=build_split_output_file_path(base_config.output.file_path, part_index),
                 content=current_content,
                 byte_length=current_bytes,
                 groups=current_groups,
@@ -261,9 +252,7 @@ def generate_split_output_parts(
         parts.append(
             OutputSplitPart(
                 index=final_index,
-                file_path=build_split_output_file_path(
-                    base_config.output.file_path, final_index
-                ),
+                file_path=build_split_output_file_path(base_config.output.file_path, final_index),
                 content=current_content,
                 byte_length=current_bytes,
                 groups=current_groups,

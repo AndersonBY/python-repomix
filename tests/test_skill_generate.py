@@ -5,7 +5,6 @@ Test suite for Skill Generation functionality
 import pytest
 
 from src.repomix.core.skill.skill_generate import (
-    SkillReferences,
     SkillRenderContext,
     validate_skill_name,
     generate_default_skill_name,

@@ -2,13 +2,11 @@
 Skill Generation Module - Generates Claude Agent Skills from codebase
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional
 from pathlib import Path
 import re
 
-from ...shared.logger import logger
-from ...config.config_schema import RepomixConfig
 from ..file.file_types import ProcessedFile
 
 
@@ -232,17 +230,20 @@ def generate_skill_md(context: SkillRenderContext) -> str:
     if context.source_url:
         source_info = f" from [{context.project_name}]({context.source_url})"
 
-    return template.format(
-        skill_name=context.skill_name,
-        skill_description=context.skill_description,
-        project_name=context.project_name,
-        total_files=context.total_files,
-        total_lines=context.total_lines,
-        total_tokens=context.total_tokens,
-        tech_stack_row=tech_stack_row,
-        tech_stack_tip=tech_stack_tip,
-        source_info=source_info,
-    ).strip() + "\n"
+    return (
+        template.format(
+            skill_name=context.skill_name,
+            skill_description=context.skill_description,
+            project_name=context.project_name,
+            total_files=context.total_files,
+            total_lines=context.total_lines,
+            total_tokens=context.total_tokens,
+            tech_stack_row=tech_stack_row,
+            tech_stack_tip=tech_stack_tip,
+            source_info=source_info,
+        ).strip()
+        + "\n"
+    )
 
 
 def calculate_statistics(
@@ -278,8 +279,8 @@ def generate_statistics_section(statistics: Dict[str, int]) -> str:
     """
     return f"""## Statistics
 
-- Total Files: {statistics['total_files']}
-- Total Lines: {statistics['total_lines']}
+- Total Files: {statistics["total_files"]}
+- Total Lines: {statistics["total_lines"]}
 """
 
 

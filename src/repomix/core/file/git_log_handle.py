@@ -36,9 +36,7 @@ class GitLogResult:
     commits: List[GitLogCommit] = field(default_factory=list)
 
 
-def parse_git_log(
-    raw_log_output: str, record_separator: str = GIT_LOG_RECORD_SEPARATOR
-) -> List[GitLogCommit]:
+def parse_git_log(raw_log_output: str, record_separator: str = GIT_LOG_RECORD_SEPARATOR) -> List[GitLogCommit]:
     """Parse raw git log output into structured commits
 
     Args:

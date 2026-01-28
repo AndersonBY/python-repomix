@@ -79,11 +79,16 @@ class OutputStyle(ABC):
         """Get summary notes"""
         remove_comments_tip = "\n- Code comments have been removed." if self.config.output.remove_comments else ""
         show_line_numbers_tip = "\n- Line numbers have been added to the beginning of each line." if self.config.output.show_line_numbers else ""
-        parsable_style_tip = f"\n- Content has been formatted for parsing in {self.config.output.style_enum.value} style." if self.config.output.parsable_style else ""
-        return SUMMARY_NOTES.format(
-            remove_comments_tip=remove_comments_tip,
-            show_line_numbers_tip=show_line_numbers_tip,
-        ) + parsable_style_tip
+        parsable_style_tip = (
+            f"\n- Content has been formatted for parsing in {self.config.output.style_enum.value} style." if self.config.output.parsable_style else ""
+        )
+        return (
+            SUMMARY_NOTES.format(
+                remove_comments_tip=remove_comments_tip,
+                show_line_numbers_tip=show_line_numbers_tip,
+            )
+            + parsable_style_tip
+        )
 
     @property
     def summary_additional_info(self) -> str:
@@ -169,9 +174,7 @@ class OutputStyle(ABC):
         """Generates the file tree section."""
         pass
 
-    def generate_git_diff_section(
-        self, work_tree_diff: str, staged_diff: str
-    ) -> str:
+    def generate_git_diff_section(self, work_tree_diff: str, staged_diff: str) -> str:
         """Generate git diff section
 
         Args:

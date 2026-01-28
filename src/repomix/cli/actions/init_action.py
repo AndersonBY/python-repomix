@@ -42,9 +42,9 @@ def run_init_action(cwd: str | Path, use_global: bool = False) -> None:
 
     # Convert configuration to serializable dictionary
     # Get only public fields, excluding internal fields that start with underscore
-    output_dict = {k: v for k, v in config.output.__dict__.items() if not k.startswith('_')}
+    output_dict = {k: v for k, v in config.output.__dict__.items() if not k.startswith("_")}
     # Ensure style is exported as string value
-    if hasattr(config.output, 'style_enum'):
+    if hasattr(config.output, "style_enum"):
         output_dict["style"] = config.output.style_enum.value
 
     config_dict = {
