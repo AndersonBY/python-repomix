@@ -123,7 +123,17 @@ repomix --init --global
     "include_empty_directories": false,
     "calculate_tokens": false,
     "show_file_stats": false,
-    "show_directory_structure": true
+    "show_directory_structure": true,
+    "include_full_directory_structure": false,
+    "split_output": null,
+    "token_count_tree": false,
+    "git": {
+      "sort_by_changes": true,
+      "sort_by_changes_max_commits": 100,
+      "include_diffs": false,
+      "include_logs": false,
+      "include_logs_count": 50
+    }
   },
   "security": {
     "enable_security_check": true,
@@ -165,7 +175,7 @@ repomix --init --global
 -   `repomix [directory]`: 目标目录（默认为当前目录）。
 -   `-v, --version`: 显示版本。
 -   `-o, --output <file>`: 指定输出文件名。
--   `--style <style>`: 指定输出样式 (plain, xml, markdown)。
+-   `--style <style>`: 指定输出样式 (plain, xml, markdown, json)。
 -   `--remote <url>`: 处理远程 Git 仓库。
 -   `--branch <name>`: 指定远程仓库的分支。
 -   `--init`: 在当前目录初始化配置文件 (`repomix.config.json`)。
@@ -186,6 +196,8 @@ repomix --init --global
 -   `--truncate-base64`: 启用 base64 数据字符串的截断。
 -   `--include-empty-directories`: 在输出中包含空目录。
 -   `--include-diffs`: 在输出中包含 git diff。
+-   `--include-logs`: 在输出中包含 git 日志历史。
+-   `--sort-by-changes`: 按 git 变更频率排序文件（最常变更的在前）。
 
 
 ### 4.3 安全检查
@@ -258,6 +270,16 @@ repomix --config-override '{"compression": {"enabled": true, "keep_signatures": 
 
 目前，高级压缩功能完全支持：
 - **Python**: 基于 AST 的完整压缩，支持所有模式
+- **JavaScript/TypeScript**: 基于 Tree-sitter 的压缩
+- **Go**: 基于 Tree-sitter 的压缩
+- **Java**: 基于 Tree-sitter 的压缩
+- **C/C++**: 基于 Tree-sitter 的压缩
+- **C#**: 基于 Tree-sitter 的压缩
+- **Rust**: 基于 Tree-sitter 的压缩
+- **Ruby**: 基于 Tree-sitter 的压缩
+- **PHP**: 基于 Tree-sitter 的压缩
+- **Swift**: 基于 Tree-sitter 的压缩
+- **CSS**: 基于 Tree-sitter 的压缩
 - **其他语言**: 基础压缩并显示警告（计划未来增强）
 
 #### 4.4.5 示例输出
@@ -597,6 +619,12 @@ result = processor.process()
 - `security_check.py`: 安全检查功能示例
 - `file_statistics.py`: 文件统计示例
 - `remote_repo_usage.py`: 远程仓库处理示例
+- `json_output.py`: JSON 输出格式示例
+- `git_integration.py`: Git diff、log 和排序示例
+- `output_split.py`: 大型代码库输出分割
+- `token_count_tree.py`: Token 分布可视化
+- `full_directory_structure.py`: 完整目录树显示
+- `tree_sitter_compression.py`: Tree-sitter 压缩示例
 
 ### 6.3 环境变量
 
@@ -692,12 +720,13 @@ Starting Repomix MCP Server...
 🔧 Creating MCP server...
 📦 Registering MCP tools...
   ✅ pack_codebase
-  ✅ pack_remote_repository  
+  ✅ pack_remote_repository
   ✅ read_repomix_output
   ✅ grep_repomix_output
   ✅ file_system_read_file
   ✅ file_system_read_directory
-🎯 Repomix MCP Server configured with 6 tools
+  ✅ generate_skill
+🎯 Repomix MCP Server configured with 7 tools
 🚀 Starting Repomix MCP Server on stdio transport...
 📡 Waiting for MCP client connections...
 💡 Use Ctrl+C to stop the server
@@ -781,8 +810,11 @@ MCP 配置中的 `cwd`（当前工作目录）参数决定 repomix 命令的运�
 5. **file_system_read_directory** - 列出目录内容
    - 参数: path
 
-6. **pack_remote_repository** - 打包远程仓库（即将推出）
+6. **pack_remote_repository** - 打包远程仓库
    - 参数: remote, compress, include_patterns, ignore_patterns
+
+7. **generate_skill** - 从代码库生成 Claude Agent Skills
+   - 参数: directory, skill_name, include_patterns, ignore_patterns
 
 #### 工具调用日志
 

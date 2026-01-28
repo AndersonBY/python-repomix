@@ -277,14 +277,14 @@ build/output.py
         result = await read_file_paths_from_stdin(tmp_path)
 
         # Should only include main.py, src/app.py, and tests/test_app.py
-        assert len(result.file_paths) == 3
-        paths_str = str(result.file_paths)
-        assert "main.py" in paths_str
-        assert "src/app.py" in paths_str
-        assert "tests/test_app.py" in paths_str
+        paths = [Path(path) for path in result.file_paths]
+        assert len(paths) == 3
+        assert tmp_path / "main.py" in paths
+        assert tmp_path / "src" / "app.py" in paths
+        assert tmp_path / "tests" / "test_app.py" in paths
         # Ignored paths should not be present
-        assert ".venv" not in paths_str
-        assert "node_modules" not in paths_str
-        assert "__pycache__" not in paths_str
-        assert "build" not in paths_str
-        assert ".git" not in paths_str
+        assert not any(".venv" in path.parts for path in paths)
+        assert not any("node_modules" in path.parts for path in paths)
+        assert not any("__pycache__" in path.parts for path in paths)
+        assert not any("build" in path.parts for path in paths)
+        assert not any(".git" in path.parts for path in paths)

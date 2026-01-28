@@ -98,7 +98,9 @@ class TestRepoProcessor:
             (Path(temp_dir) / "test.py").write_text("print('hello')")
             (Path(temp_dir) / "readme.md").write_text("# Test")
 
-            processor = RepoProcessor(directory=temp_dir)
+            config = RepomixConfig()
+            config.output.file_path = str(Path(temp_dir) / "repomix-output.md")
+            processor = RepoProcessor(directory=temp_dir, config=config)
             result = processor.process()
 
             # Verify workflow calls
@@ -182,7 +184,9 @@ class TestRepoProcessor:
                 )
                 mock_check.return_value = [suspicious_result]
 
-                processor = RepoProcessor(directory=temp_dir)
+                config = RepomixConfig()
+                config.output.file_path = str(Path(temp_dir) / "repomix-output.md")
+                processor = RepoProcessor(directory=temp_dir, config=config)
                 result = processor.process()
 
                 assert len(result.suspicious_files_results) == 1

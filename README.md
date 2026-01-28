@@ -121,7 +121,17 @@ Create a `repomix.config.json` file in your project root for custom configuratio
     "include_empty_directories": false,
     "calculate_tokens": false,
     "show_file_stats": false,
-    "show_directory_structure": true
+    "show_directory_structure": true,
+    "include_full_directory_structure": false,
+    "split_output": null,
+    "token_count_tree": false,
+    "git": {
+      "sort_by_changes": true,
+      "sort_by_changes_max_commits": 100,
+      "include_diffs": false,
+      "include_logs": false,
+      "include_logs_count": 50
+    }
   },
   "security": {
     "enable_security_check": true,
@@ -163,7 +173,7 @@ When a remote URL is specified in the configuration, Repomix will process the re
 -   `repomix [directory]`: Target directory (defaults to current directory).
 -   `-v, --version`: Show version.
 -   `-o, --output <file>`: Specify output file name.
--   `--style <style>`: Specify output style (plain, xml, markdown).
+-   `--style <style>`: Specify output style (plain, xml, markdown, json).
 -   `--remote <url>`: Process a remote Git repository.
 -   `--branch <name>`: Specify branch for remote repository.
 -   `--init`: Initialize configuration file (`repomix.config.json`) in the current directory.
@@ -184,6 +194,8 @@ When a remote URL is specified in the configuration, Repomix will process the re
 -   `--truncate-base64`: Enable truncation of base64 data strings.
 -   `--include-empty-directories`: Include empty directories in the output.
 -   `--include-diffs`: Include git diffs in the output.
+-   `--include-logs`: Include git log history in the output.
+-   `--sort-by-changes`: Sort files by git change frequency (most changed first).
 
 ### 4.3 Security Check
 
@@ -255,6 +267,16 @@ repomix --config-override '{"compression": {"enabled": true, "keep_signatures": 
 
 Currently, advanced compression features are fully supported for:
 - **Python**: Complete AST-based compression with all modes
+- **JavaScript/TypeScript**: Tree-sitter based compression
+- **Go**: Tree-sitter based compression
+- **Java**: Tree-sitter based compression
+- **C/C++**: Tree-sitter based compression
+- **C#**: Tree-sitter based compression
+- **Rust**: Tree-sitter based compression
+- **Ruby**: Tree-sitter based compression
+- **PHP**: Tree-sitter based compression
+- **Swift**: Tree-sitter based compression
+- **CSS**: Tree-sitter based compression
 - **Other Languages**: Basic compression with warnings (future enhancement planned)
 
 #### 4.4.5 Example Output
@@ -486,6 +508,46 @@ The XML format structures the content in a hierarchical manner:
 </repository>
 ```
 
+### 5.4 JSON Format
+
+To generate output in JSON format, use the `--style json` option:
+
+```bash
+python -m repomix --style json
+```
+
+The JSON format provides machine-readable structured output:
+
+```json
+{
+  "summary": {
+    "total_files": 19,
+    "total_chars": 37377,
+    "total_tokens": 11195,
+    "generation_date": "2025-01-28T12:00:00"
+  },
+  "file_tree": {
+    "src": {
+      "index.py": "",
+      "utils.py": ""
+    }
+  },
+  "files": [
+    {
+      "path": "src/index.py",
+      "content": "# File contents here",
+      "chars": 1234,
+      "tokens": 567
+    }
+  ]
+}
+```
+
+JSON format is ideal for:
+- Integration with other tools and scripts
+- Programmatic processing of codebase analysis
+- Building custom pipelines and workflows
+
 ## 🛠️ 6. Advanced Usage
 
 ### 6.1 Library Usage
@@ -590,6 +652,12 @@ For more example code, check out the `examples` directory:
 -   `security_check.py`: Security check feature examples
 -   `file_statistics.py`: File statistics examples
 -   `remote_repo_usage.py`: Remote repository processing examples
+-   `json_output.py`: JSON output format examples
+-   `git_integration.py`: Git diff, log, and sorting examples
+-   `output_split.py`: Output splitting for large codebases
+-   `token_count_tree.py`: Token distribution visualization
+-   `full_directory_structure.py`: Full directory tree display
+-   `tree_sitter_compression.py`: Tree-sitter compression examples
 
 ### 6.3 Environment Variables
 
@@ -685,12 +753,13 @@ Starting Repomix MCP Server...
 🔧 Creating MCP server...
 📦 Registering MCP tools...
   ✅ pack_codebase
-  ✅ pack_remote_repository  
+  ✅ pack_remote_repository
   ✅ read_repomix_output
   ✅ grep_repomix_output
   ✅ file_system_read_file
   ✅ file_system_read_directory
-🎯 Repomix MCP Server configured with 6 tools
+  ✅ generate_skill
+🎯 Repomix MCP Server configured with 7 tools
 🚀 Starting Repomix MCP Server on stdio transport...
 📡 Waiting for MCP client connections...
 💡 Use Ctrl+C to stop the server
@@ -774,8 +843,11 @@ The `cwd` (current working directory) parameter in MCP configuration determines 
 5. **file_system_read_directory** - List directory contents
    - Parameters: path
 
-6. **pack_remote_repository** - Package remote repositories (coming soon)
+6. **pack_remote_repository** - Package remote repositories
    - Parameters: remote, compress, include_patterns, ignore_patterns
+
+7. **generate_skill** - Generate Claude Agent Skills from codebase
+   - Parameters: directory, skill_name, include_patterns, ignore_patterns
 
 #### Tool Call Logs
 
