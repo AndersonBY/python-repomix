@@ -11,12 +11,15 @@ The original [Repomix](https://github.com/yamadashy/repomix) is written in JavaS
 ## ⭐ 2. Features
 
 -   **AI-Optimized**: Formats your codebase in a way that's easy for AI to understand and process.
--   **Token Counting**: Provides token counts for each file and the entire repository using tiktoken.
+-   **Token Counting**: Provides token counts for each file and the entire repository using tiktoken, with configurable encoding (`--token-count-encoding`).
 -   **Simple to Use**: Pack your entire repository with just one command.
+-   **Multiple Directories**: Process multiple directories in a single command (`repomix src lib tests`).
 -   **Customizable**: Easily configure what to include or exclude.
--   **Git-Aware**: Automatically respects your .gitignore files.
+-   **Git-Aware**: Automatically respects your `.gitignore`, `.repomixignore`, and `.ignore` files.
 -   **Security-Focused**: Built-in security checks to detect and prevent the inclusion of sensitive information (powered by `detect-secrets`).
 -   **Code Compression**: Advanced code compression with multiple modes to reduce output size while preserving essential information.
+-   **Semantic CLI Suggestions**: Unknown CLI options suggest the closest valid alternative (e.g., `--exclude` → "Did you mean: `--ignore`?").
+-   **Quiet Mode**: Suppress all console output except errors with `--quiet`.
 -   ⚡ **Performance**: Utilizes multiprocessing or threading for faster analysis on multi-core systems.
 -   ⚙️ **Encoding Aware**: Automatically detects and handles various file encodings (using `chardet`) beyond UTF-8, increasing robustness.
 
@@ -44,7 +47,7 @@ uvx repomix --remote https://github.com/username/repo
 uvx repomix --include "src/**/*.py" --ignore "tests/**"
 
 # Use a specific version
-uvx repomix@0.4.1
+uvx repomix@0.5.0
 ```
 
 You can also use [pipx](https://pipx.pypa.io/): `pipx run repomix`
@@ -105,6 +108,12 @@ To pack a specific directory:
 repomix path/to/directory
 ```
 
+To pack multiple directories at once:
+
+```bash
+repomix src lib tests
+```
+
 To pack a remote repository:
 
 ```bash
@@ -114,7 +123,7 @@ repomix --remote https://github.com/username/repo
 To pack a specific branch of a remote repository:
 
 ```bash
-repomix --remote https://github.com/username/repo --branch feature-branch
+repomix --remote https://github.com/username/repo --remote-branch feature-branch
 ```
 
 To initialize a new configuration file:
@@ -163,7 +172,8 @@ Create a `repomix.config.json` file in your project root for custom configuratio
   "ignore": {
     "custom_patterns": [],
     "use_gitignore": true,
-    "use_default_ignore": true
+    "use_default_ignore": true,
+    "use_dot_ignore": true
   },
   "compression": {
     "enabled": false,
@@ -189,16 +199,16 @@ The `remote` section allows you to configure remote repository processing:
 - `url`: The URL of the remote Git repository to process
 - `branch`: The specific branch, tag, or commit hash to process (optional, defaults to repository's default branch)
 
-When a remote URL is specified in the configuration, Repomix will process the remote repository instead of the local directory. This can be overridden by CLI parameters.
+When a remote URL is specified in the configuration, Repomix will process the remote repository instead of the local directory. This can be overridden by CLI parameters (`--remote-branch`).
 
 **Command Line Options**
 
--   `repomix [directory]`: Target directory (defaults to current directory).
+-   `repomix [directories...]`: Target directories (defaults to current directory). Supports multiple directories.
 -   `-v, --version`: Show version.
 -   `-o, --output <file>`: Specify output file name.
 -   `--style <style>`: Specify output style (plain, xml, markdown, json).
 -   `--remote <url>`: Process a remote Git repository.
--   `--branch <name>`: Specify branch for remote repository.
+-   `--remote-branch <name>`: Specify branch, tag, or commit for remote repository.
 -   `--init`: Initialize configuration file (`repomix.config.json`) in the current directory.
 -   `--global`: Use with `--init` to create/manage the global configuration file (located in a platform-specific user config directory, e.g., `~/.config/repomix` on Linux). The global config is automatically loaded if present.
 -   `--no-security-check`: Disable security check.
@@ -210,6 +220,7 @@ When a remote URL is specified in the configuration, Repomix will process the re
 -   `--output-show-line-numbers`: Add line numbers to output code blocks.
 -   `--stdin`: Read file paths from standard input (one per line) instead of discovering files automatically.
 -   `--verbose`: Enable verbose logging for debugging.
+-   `--quiet`: Suppress all console output except errors. Cannot be used with `--verbose`.
 -   `--parsable-style`: By escaping and formatting, ensure the output is parsable as a document of its type.
 -   `--stdout`: Output to stdout instead of writing to a file.
 -   `--remove-comments`: Remove comments from source code.
@@ -218,7 +229,25 @@ When a remote URL is specified in the configuration, Repomix will process the re
 -   `--include-empty-directories`: Include empty directories in the output.
 -   `--include-diffs`: Include git diffs in the output.
 -   `--include-logs`: Include git log history in the output.
+-   `--include-logs-count <count>`: Number of recent commits to include with `--include-logs` (default: 50).
 -   `--sort-by-changes`: Sort files by git change frequency (most changed first).
+-   `--no-file-summary`: Omit the file summary section from output.
+-   `--no-directory-structure`: Omit the directory tree visualization from output.
+-   `--no-files`: Generate metadata only without file contents.
+-   `--no-gitignore`: Don't use `.gitignore` rules for filtering files.
+-   `--no-dot-ignore`: Don't use `.ignore` rules for filtering files.
+-   `--no-default-patterns`: Don't apply built-in ignore patterns.
+-   `--no-git-sort-by-changes`: Don't sort files by git change frequency.
+-   `--include-full-directory-structure`: Show entire repository tree even when using `--include` patterns.
+-   `--token-count-encoding <encoding>`: Tokenizer encoding for counting (e.g., `o200k_base` for GPT-4o, `cl100k_base` for GPT-3.5/4).
+-   `--token-count-tree [threshold]`: Show file tree with token counts; optional threshold to show only files with ≥N tokens.
+-   `--split-output <size>`: Split output into multiple numbered files (e.g., `500kb`, `2mb`).
+-   `--header-text <text>`: Custom text to include at the beginning of the output.
+-   `--instruction-file-path <path>`: Path to file containing custom instructions to include in output.
+-   `--compress`: Enable tree-sitter based code compression.
+-   `--skill-generate [name]`: Generate Claude Agent Skills format output to `.claude/skills/<name>/` directory.
+-   `--skill-output <path>`: Specify skill output directory path directly.
+-   `-f, --force`: Skip all confirmation prompts (currently: skill directory overwrite).
 
 ### 4.3 Security Check
 
@@ -351,8 +380,9 @@ Ignore patterns are applied in the following priority order (from highest to low
 
 1. Custom patterns in configuration file (`ignore.custom_patterns`)
 2. `.repomixignore` file
-3. `.gitignore` file (if `ignore.use_gitignore` is true)
-4. Default patterns (if `ignore.use_default_ignore` is true)
+3. `.ignore` file (if `ignore.use_dot_ignore` is true)
+4. `.gitignore` file (if `ignore.use_gitignore` is true)
+5. Default patterns (if `ignore.use_default_ignore` is true)
 
 #### Ignore Methods
 
@@ -382,6 +412,9 @@ The complete list of default ignore patterns can be found in [default_ignore.py]
 
 ##### .repomixignore
 You can create a `.repomixignore` file in your project root to define Repomix-specific ignore patterns. This file follows the same format as `.gitignore`.
+
+##### .ignore
+Repomix also supports `.ignore` files, which follow the same format as `.gitignore`. This is useful for tools that share a common ignore file. This behavior can be controlled with the `ignore.use_dot_ignore` option or the `--no-dot-ignore` CLI flag.
 
 ##### Custom Patterns
 Additional ignore patterns can be specified using the `ignore.custom_patterns` option in the configuration file:
