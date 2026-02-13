@@ -142,6 +142,9 @@ repomix --init --global
 
 ```json
 {
+  "input": {
+    "max_file_size": 52428800
+  },
   "output": {
     "file_path": "repomix-output.md",
     "style": "markdown",
@@ -187,12 +190,16 @@ repomix --init --global
     "url": "",
     "branch": ""
   },
-  "include": []
+  "include": [],
+  "token_count": {
+    "encoding": "o200k_base"
+  }
 }
 ```
 
 > [!NOTE]
-> *关于 `remove_comments` 的注意*：此功能能够感知语言，可以正确处理 Python、JavaScript、C++、HTML 等多种语言的注释语法，而不是使用简单的通用模式。
+> *关于 `remove_comments` 的注意*：此功能能够感知语言，可以正确处理多种语言的注释语法，而不是使用简单的通用模式。支持的语言：
+> Python, JavaScript, TypeScript, JSX, TSX, Vue, Svelte, Java, C, C++, C#, Go, Rust, Ruby, PHP, Swift, Kotlin, HTML, CSS, XML, YAML
 
 #### 远程仓库配置
 
@@ -202,6 +209,25 @@ repomix --init --global
 - `branch`: 要处理的特定分支、标签或提交哈希（可选，默认为仓库的默认分支）
 
 当在配置中指定远程 URL 时，Repomix 将处理远程仓库而不是本地目录。这可以通过 CLI 参数覆盖。
+
+你可以使用多种 URL 格式配合 `--remote`：
+
+```bash
+# GitHub 简写
+repomix --remote user/repo
+
+# 完整 GitHub URL
+repomix --remote https://github.com/user/repo
+
+# 指定分支
+repomix --remote https://github.com/user/repo --remote-branch feature-branch
+
+# 指定标签
+repomix --remote https://github.com/user/repo --remote-branch v1.0.0
+
+# 指定提交
+repomix --remote https://github.com/user/repo --remote-branch abc123
+```
 
 **命令行选项**
 
@@ -262,11 +288,111 @@ Repomix 包含内置的安全检查，使用 [detect-secrets](https://github.com
 repomix --no-security-check
 ```
 
-### 4.4 代码压缩
+### 4.4 自定义指令
+
+你可以在输出文件中添加自定义指令，引导 AI 工具如何解读和使用打包的代码库。
+
+创建一个 markdown 文件（如 `repomix-instruction.md`），写入你的指令：
+
+```markdown
+## 项目背景
+这是一个使用 FastAPI 的 Python Web 应用。
+建议代码修改时请遵循 PEP 8 规范。
+```
+
+然后通过 CLI 或配置指定路径：
+
+```bash
+# 通过 CLI
+repomix --instruction-file-path repomix-instruction.md
+
+# 通过配置 (repomix.config.json)
+```
+
+```json
+{
+  "output": {
+    "instruction_file_path": "repomix-instruction.md"
+  }
+}
+```
+
+指令内容将包含在输出文件的 "Instruction" 部分中。
+
+### 4.5 Token 计数
+
+Repomix 提供 token 计数功能，帮助你了解代码库在 AI 模型 token 维度上的大小。
+
+#### 选择编码
+
+使用 `--token-count-encoding` 选择分词器编码：
+
+```bash
+# 使用 GPT-4o 编码（默认）
+repomix --token-count-encoding o200k_base
+
+# 使用 GPT-3.5/4 编码
+repomix --token-count-encoding cl100k_base
+```
+
+#### 可视化 Token 分布
+
+使用 `--token-count-tree` 显示带有 token 计数的文件树：
+
+```bash
+# 显示所有文件的 token 计数
+repomix --token-count-tree
+
+# 仅显示 token 数 ≥100 的文件
+repomix --token-count-tree 100
+```
+
+### 4.6 大型代码库输出分割
+
+对于超出 AI 模型上下文限制的大型代码库，你可以将输出分割为多个文件：
+
+```bash
+# 分割为约 500KB 的文件
+repomix --split-output 500kb
+
+# 分割为约 2MB 的文件
+repomix --split-output 2mb
+```
+
+输出文件将按顺序编号（如 `repomix-output.1.md`、`repomix-output.2.md` 等）。文件在目录边界处分割，以保持相关文件在一起。
+
+### 4.7 Agent Skills 生成
+
+Repomix 可以生成 [Claude Agent Skills](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/skills) 格式的输出，为 AI 编码助手提供结构化的参考材料。
+
+```bash
+# 使用自动检测的名称生成 skills
+repomix --skill-generate
+
+# 使用自定义名称生成 skills
+repomix --skill-generate my-project
+
+# 直接指定输出目录路径
+repomix --skill-output ./my-skills-dir
+```
+
+这将创建以下目录结构：
+
+```
+.claude/skills/<name>/
+├── SKILL.md                          # 入口文件，包含使用指南
+└── references/
+    ├── summary.md                    # 用途、格式说明和统计信息
+    ├── project-structure.md          # 带行数的目录树
+    ├── files.md                      # 所有文件内容
+    └── tech-stack.md                 # 语言、框架和依赖
+```
+
+### 4.8 代码压缩
 
 Repomix 提供高级代码压缩功能，可以在保留关键信息的同时减少输出大小。此功能在处理大型代码库或需要专注于代码特定方面时特别有用。
 
-#### 4.4.1 压缩模式
+#### 4.8.1 压缩模式
 
 **接口模式** (`keep_interfaces: true`)
 - 保留函数和类签名及其完整的类型注解
@@ -285,7 +411,7 @@ Repomix 提供高级代码压缩功能，可以在保留关键信息的同时减
 - 仅保留全局变量、导入和模块级代码
 - 最大压缩，专注于配置和常量
 
-#### 4.4.2 配置选项
+#### 4.8.2 配置选项
 
 ```json
 {
@@ -298,7 +424,7 @@ Repomix 提供高级代码压缩功能，可以在保留关键信息的同时减
 }
 ```
 
-#### 4.4.3 使用示例
+#### 4.8.3 使用示例
 
 **生成 API 文档：**
 ```bash
@@ -318,7 +444,7 @@ repomix --config-override '{"compression": {"enabled": true, "keep_interfaces": 
 repomix --config-override '{"compression": {"enabled": true, "keep_signatures": false}}'
 ```
 
-#### 4.4.4 语言支持
+#### 4.8.4 语言支持
 
 目前，高级压缩功能完全支持：
 - **Python**: 基于 AST 的完整压缩，支持所有模式
@@ -334,7 +460,7 @@ repomix --config-override '{"compression": {"enabled": true, "keep_signatures": 
 - **CSS**: 基于 Tree-sitter 的压缩
 - **其他语言**: 基础压缩并显示警告（计划未来增强）
 
-#### 4.4.5 示例输出
+#### 4.8.5 示例输出
 
 **原始 Python 代码：**
 ```python
@@ -373,7 +499,7 @@ def calculate_sum(a: int, b: int) -> int:
     pass
 ```
 
-### 4.5 忽略模式
+### 4.9 忽略模式
 
 Repomix 使用多个来源的忽略模式，并按以下优先级顺序应用：
 
@@ -610,6 +736,19 @@ JSON 格式非常适合：
 - 与其他工具和脚本集成
 - 对代码库分析进行程序化处理
 - 构建自定义管道和工作流
+
+你可以使用 `jq` 从 JSON 输出中提取特定信息：
+
+```bash
+# 提取文件路径
+cat repomix-output.json | jq '.files[].path'
+
+# 获取总 token 数
+cat repomix-output.json | jq '.summary.total_tokens'
+
+# 查找 token 数超过 1000 的文件
+cat repomix-output.json | jq '.files[] | select(.tokens > 1000) | {path, tokens}'
+```
 
 ## 🛠️ 6. 高级用法
 

@@ -140,6 +140,9 @@ Create a `repomix.config.json` file in your project root for custom configuratio
 
 ```json
 {
+  "input": {
+    "max_file_size": 52428800
+  },
   "output": {
     "file_path": "repomix-output.md",
     "style": "markdown",
@@ -185,12 +188,16 @@ Create a `repomix.config.json` file in your project root for custom configuratio
     "url": "",
     "branch": ""
   },
-  "include": []
+  "include": [],
+  "token_count": {
+    "encoding": "o200k_base"
+  }
 }
 ```
 
 > [!NOTE]
-> *Note on `remove_comments`*: This feature is language-aware, correctly handling comment syntax for various languages like Python, JavaScript, C++, HTML, etc., rather than using a simple generic pattern.*
+> *Note on `remove_comments`*: This feature is language-aware, correctly handling comment syntax for various languages rather than using a simple generic pattern. Supported languages:
+> Python, JavaScript, TypeScript, JSX, TSX, Vue, Svelte, Java, C, C++, C#, Go, Rust, Ruby, PHP, Swift, Kotlin, HTML, CSS, XML, YAML
 
 #### Remote Repository Configuration
 
@@ -200,6 +207,25 @@ The `remote` section allows you to configure remote repository processing:
 - `branch`: The specific branch, tag, or commit hash to process (optional, defaults to repository's default branch)
 
 When a remote URL is specified in the configuration, Repomix will process the remote repository instead of the local directory. This can be overridden by CLI parameters (`--remote-branch`).
+
+You can use various URL formats with `--remote`:
+
+```bash
+# GitHub shorthand
+repomix --remote user/repo
+
+# Full GitHub URL
+repomix --remote https://github.com/user/repo
+
+# Specific branch
+repomix --remote https://github.com/user/repo --remote-branch feature-branch
+
+# Specific tag
+repomix --remote https://github.com/user/repo --remote-branch v1.0.0
+
+# Specific commit
+repomix --remote https://github.com/user/repo --remote-branch abc123
+```
 
 **Command Line Options**
 
@@ -259,11 +285,111 @@ Disable checks via configuration or CLI:
 repomix --no-security-check
 ```
 
-### 4.4 Code Compression
+### 4.4 Custom Instructions
+
+You can add custom instructions to the output file that will guide AI tools on how to interpret and use the packed codebase.
+
+Create a markdown file (e.g., `repomix-instruction.md`) with your instructions:
+
+```markdown
+## Project Context
+This is a Python web application using FastAPI.
+Please follow PEP 8 conventions when suggesting code changes.
+```
+
+Then specify the path via CLI or configuration:
+
+```bash
+# Via CLI
+repomix --instruction-file-path repomix-instruction.md
+
+# Via configuration (repomix.config.json)
+```
+
+```json
+{
+  "output": {
+    "instruction_file_path": "repomix-instruction.md"
+  }
+}
+```
+
+The instruction content will be included in the "Instruction" section of the output file.
+
+### 4.5 Token Count
+
+Repomix provides token counting to help you understand the size of your codebase in terms of AI model tokens.
+
+#### Choosing an Encoding
+
+Use `--token-count-encoding` to select the tokenizer encoding:
+
+```bash
+# Use GPT-4o encoding (default)
+repomix --token-count-encoding o200k_base
+
+# Use GPT-3.5/4 encoding
+repomix --token-count-encoding cl100k_base
+```
+
+#### Visualizing Token Distribution
+
+Use `--token-count-tree` to display a file tree with token counts for each file:
+
+```bash
+# Show all files with token counts
+repomix --token-count-tree
+
+# Show only files with 100 or more tokens
+repomix --token-count-tree 100
+```
+
+### 4.6 Splitting Output for Large Codebases
+
+For large codebases that exceed AI model context limits, you can split the output into multiple files:
+
+```bash
+# Split into files of approximately 500KB each
+repomix --split-output 500kb
+
+# Split into files of approximately 2MB each
+repomix --split-output 2mb
+```
+
+Output files will be numbered sequentially (e.g., `repomix-output.1.md`, `repomix-output.2.md`, etc.). Files are split at directory boundaries to keep related files together.
+
+### 4.7 Agent Skills Generation
+
+Repomix can generate [Claude Agent Skills](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/skills) format output, which provides structured reference materials for AI coding agents.
+
+```bash
+# Generate skills with auto-detected name
+repomix --skill-generate
+
+# Generate skills with a custom name
+repomix --skill-generate my-project
+
+# Specify output directory directly
+repomix --skill-output ./my-skills-dir
+```
+
+This creates the following directory structure:
+
+```
+.claude/skills/<name>/
+├── SKILL.md                          # Entry point with usage guide
+└── references/
+    ├── summary.md                    # Purpose, format, and statistics
+    ├── project-structure.md          # Directory tree with line counts
+    ├── files.md                      # All file contents
+    └── tech-stack.md                 # Languages, frameworks, dependencies
+```
+
+### 4.8 Code Compression
 
 Repomix provides advanced code compression capabilities to reduce output size while preserving essential information. This feature is particularly useful when working with large codebases or when you need to focus on specific aspects of your code.
 
-#### 4.4.1 Compression Modes
+#### 4.8.1 Compression Modes
 
 **Interface Mode** (`keep_interfaces: true`)
 - Preserves function and class signatures with their complete type annotations
@@ -282,7 +408,7 @@ Repomix provides advanced code compression capabilities to reduce output size wh
 - Keeps only global variables, imports, and module-level code
 - Maximum compression for focusing on configuration and constants
 
-#### 4.4.2 Configuration Options
+#### 4.8.2 Configuration Options
 
 ```json
 {
@@ -295,7 +421,7 @@ Repomix provides advanced code compression capabilities to reduce output size wh
 }
 ```
 
-#### 4.4.3 Usage Examples
+#### 4.8.3 Usage Examples
 
 **Generate API Documentation:**
 ```bash
@@ -315,7 +441,7 @@ repomix --config-override '{"compression": {"enabled": true, "keep_interfaces": 
 repomix --config-override '{"compression": {"enabled": true, "keep_signatures": false}}'
 ```
 
-#### 4.4.4 Language Support
+#### 4.8.4 Language Support
 
 Currently, advanced compression features are fully supported for:
 - **Python**: Complete AST-based compression with all modes
@@ -331,7 +457,7 @@ Currently, advanced compression features are fully supported for:
 - **CSS**: Tree-sitter based compression
 - **Other Languages**: Basic compression with warnings (future enhancement planned)
 
-#### 4.4.5 Example Output
+#### 4.8.5 Example Output
 
 **Original Python Code:**
 ```python
@@ -370,7 +496,7 @@ def calculate_sum(a: int, b: int) -> int:
     pass
 ```
 
-### 4.5 Ignore Patterns
+### 4.9 Ignore Patterns
 
 Repomix provides multiple methods to set ignore patterns for excluding specific files or directories during the packing process:
 
@@ -603,6 +729,19 @@ JSON format is ideal for:
 - Integration with other tools and scripts
 - Programmatic processing of codebase analysis
 - Building custom pipelines and workflows
+
+You can use `jq` to extract specific information from the JSON output:
+
+```bash
+# Extract file paths
+cat repomix-output.json | jq '.files[].path'
+
+# Get total token count
+cat repomix-output.json | jq '.summary.total_tokens'
+
+# Find files with more than 1000 tokens
+cat repomix-output.json | jq '.files[] | select(.tokens > 1000) | {path, tokens}'
+```
 
 ## 🛠️ 6. Advanced Usage
 
