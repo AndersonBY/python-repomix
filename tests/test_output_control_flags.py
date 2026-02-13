@@ -2,11 +2,9 @@
 Test suite for --no-file-summary, --no-directory-structure, --no-files CLI flags (Issue #10)
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 
 from src.repomix.cli.cli_run import create_parser
-from src.repomix.config.config_schema import RepomixConfig, RepomixConfigOutput
+from src.repomix.config.config_schema import RepomixConfig
 from src.repomix.core.output.output_generate import generate_output
 from src.repomix.core.file.file_types import ProcessedFile
 

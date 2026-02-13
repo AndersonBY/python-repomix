@@ -5,10 +5,9 @@ Test suite for multiple directories support (Issue #20)
 import os
 import tempfile
 import pytest
-from pathlib import Path
 from unittest.mock import patch, Mock
 
-from src.repomix.cli.cli_run import create_parser, execute_action
+from src.repomix.cli.cli_run import create_parser
 from src.repomix.cli.actions.default_action import run_default_action
 from src.repomix.core.repo_processor import RepoProcessor
 from src.repomix.config.config_schema import RepomixConfig

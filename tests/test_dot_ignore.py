@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 from src.repomix.cli.cli_run import create_parser
-from src.repomix.config.config_schema import RepomixConfig, RepomixConfigIgnore
+from src.repomix.config.config_schema import RepomixConfig
 from src.repomix.core.file.file_search import get_ignore_patterns
 
 

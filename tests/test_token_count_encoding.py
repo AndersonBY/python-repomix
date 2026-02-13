@@ -2,7 +2,6 @@
 Test suite for --token-count-encoding CLI flag (Issue #14)
 """
 
-import pytest
 
 from src.repomix.cli.cli_run import create_parser
 from src.repomix.config.config_schema import RepomixConfig, RepomixConfigTokenCount

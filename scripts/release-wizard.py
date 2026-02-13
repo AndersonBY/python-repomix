@@ -7,7 +7,7 @@
 
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 
 # 颜色和格式化
@@ -100,7 +100,7 @@ def ask_string(question: str, default: str = "") -> str:
     return response if response else default
 
 
-def run_command(cmd: List[str], cwd: Optional[str] = None) -> Tuple[bool, str]:
+def run_command(cmd: List[str], cwd: str | None = None) -> Tuple[bool, str]:
     """运行命令"""
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=cwd)
@@ -174,7 +174,7 @@ def check_prerequisites() -> bool:
     return True
 
 
-def collect_commits() -> Optional[str]:
+def collect_commits() -> str | None:
     """收集提交信息"""
     print_step(2, 8, "收集提交信息")
 
@@ -358,7 +358,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     return ask_yes_no("CHANGELOG.md 编辑完成了吗?", True)
 
 
-def determine_version() -> Optional[str]:
+def determine_version() -> str | None:
     """确定版本号"""
     print_step(5, 8, "确定版本号")
 

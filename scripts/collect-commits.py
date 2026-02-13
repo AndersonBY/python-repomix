@@ -11,7 +11,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 
 def run_command(cmd: List[str]) -> Tuple[bool, str]:
@@ -23,7 +23,7 @@ def run_command(cmd: List[str]) -> Tuple[bool, str]:
         return False, e.stderr.strip()
 
 
-def get_latest_tag() -> Optional[str]:
+def get_latest_tag() -> str | None:
     """Get the latest git tag"""
     success, output = run_command(["git", "describe", "--tags", "--abbrev=0"])
     if success and output:
@@ -31,7 +31,7 @@ def get_latest_tag() -> Optional[str]:
     return None
 
 
-def get_commits_since_tag(tag: Optional[str] = None, max_count: Optional[int] = None) -> List[dict]:
+def get_commits_since_tag(tag: str | None = None, max_count: int | None = None) -> List[dict]:
     """Get all commits since the specified tag (or all commits if no tag)"""
     if tag:
         cmd = ["git", "log", f"{tag}..HEAD", "--pretty=format:%H|%an|%ae|%ad|%s", "--date=iso"]
@@ -108,7 +108,7 @@ def categorize_commit(message: str) -> str:
         return "Other"
 
 
-def generate_commit_summary(commits: List[dict], latest_tag: Optional[str], max_count: Optional[int] = None) -> str:
+def generate_commit_summary(commits: List[dict], latest_tag: str | None, max_count: int | None = None) -> str:
     """Generate a markdown summary of commits for Claude to process"""
 
     if not commits:
