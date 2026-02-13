@@ -37,7 +37,7 @@ jobs:
       run: pdm run ruff check .
     
     - name: Run type checking
-      run: pdm run pyright
+      run: pdm run ty check src
   
   docker:
     runs-on: ubuntu-latest
