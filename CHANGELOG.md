@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 🔍 **Semantic CLI Suggestions**: Unknown CLI options now suggest the closest valid alternative (e.g., `--exclude` → "Did you mean: `--ignore`?")
+- 📂 **Multiple Directories Support**: Process multiple directories in a single command (`repomix src lib tests`), with root-labeled file trees for multi-root output
+- 🛠️ **Skill Generation CLI Flags**: New `--skill-generate`, `--skill-output`, and `--force` flags for Claude Agent Skills generation from CLI
+- 🔇 **Quiet Mode**: New `--quiet` flag to suppress all console output except errors, with `--quiet`/`--verbose` conflict detection
+- 🌿 **Remote Branch Flag**: New `--remote-branch` flag (replaces deprecated `--branch`) for specifying branch, tag, or commit for remote repositories
+- 🔢 **Token Count Encoding**: New `--token-count-encoding` flag to specify custom tokenizer encoding (e.g., `o200k_base`, `cl100k_base`)
+- 📄 **Ignore File Support**: Added `.repomixignore` and `.ignore` file support alongside `.gitignore`
+- 🚫 **Output Control Flags**: New `--no-file-summary`, `--no-directory-structure`, `--no-files`, `--no-gitignore`, `--no-dot-ignore`, `--no-default-patterns` flags for fine-grained output control
+- 🧪 **Comprehensive Test Suite**: Added 125 new tests covering all new features (418 → 543 total)
+
+### Changed
+- 🔧 **Type Checker Migration**: Replaced pyright with ty (from Astral/Ruff team) for faster, more accurate type checking
+- 🧹 **Code Quality**: Applied ruff auto-fixes across codebase (`Optional[X]` → `X | None`), fixed `raise` without `from`, deprecated API usage
+- 📦 **Type Safety**: Improved type annotations with `Sequence` for covariant parameters and `cast` for dict unpacking patterns
+
 ## [0.4.1] - 2026-01-29
 
 ### Fixed
