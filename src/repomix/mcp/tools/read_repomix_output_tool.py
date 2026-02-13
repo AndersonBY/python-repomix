@@ -1,7 +1,7 @@
 """Read repomix output MCP tool."""
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
@@ -14,11 +14,11 @@ class ReadRepomixOutputInput(BaseModel):
     """Input schema for read_repomix_output tool."""
 
     output_id: str = Field(description="ID of the Repomix output file to read")
-    start_line: Optional[int] = Field(
+    start_line: int | None = Field(
         default=None,
         description="Starting line number (1-based, inclusive). If not specified, reads from beginning.",
     )
-    end_line: Optional[int] = Field(
+    end_line: int | None = Field(
         default=None,
         description="Ending line number (1-based, inclusive). If not specified, reads to end.",
     )
@@ -32,7 +32,7 @@ def register_read_repomix_output_tool(server: FastMCP) -> None:
         description=("Read the contents of a Repomix-generated output file. Supports partial reading with line range specification for large files."),
     )
     async def read_repomix_output(  # pyright: ignore[reportUnusedFunction]
-        output_id: str, start_line: Optional[int] = None, end_line: Optional[int] = None
+        output_id: str, start_line: int | None = None, end_line: int | None = None
     ) -> Dict[str, Any]:
         """Read the contents of a repomix output file."""
 

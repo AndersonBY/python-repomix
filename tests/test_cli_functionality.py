@@ -32,7 +32,7 @@ class TestCLIParser:
         parser = create_parser()
         args = parser.parse_args([])
 
-        assert args.directory == "."
+        assert args.directories == ["."]
         assert args.version is False
         assert args.verbose is False
         assert args.init is False
@@ -44,7 +44,7 @@ class TestCLIParser:
         parser = create_parser()
         args = parser.parse_args(["/path/to/project"])
 
-        assert args.directory == "/path/to/project"
+        assert args.directories == ["/path/to/project"]
 
     def test_parser_version_flag(self):
         """Test parser with version flag"""
@@ -247,7 +247,7 @@ class TestCLIParser:
             ]
         )
 
-        assert args.directory == "my-project"
+        assert args.directories == ["my-project"]
         assert args.output == "output.xml"
         assert args.style == "xml"
         assert args.verbose is True
@@ -275,7 +275,7 @@ class TestCLIParser:
             ]
         )
 
-        assert args.directory == "test-project"
+        assert args.directories == ["test-project"]
         assert args.parsable_style is True
         assert args.stdout is True
         assert args.remove_comments is True
@@ -584,9 +584,9 @@ class TestRunCLIFunction:
 
             await run_cli([], "/test/cwd", cli_options)
 
-            # Should default to current directory "."
+            # Should default to current directory ["."]
             args, _kwargs = mock_run_default.call_args
-            assert args[0] == "."
+            assert args[0] == ["."]
 
 
 class TestStdinFunctionality:
@@ -675,7 +675,7 @@ class TestCLIIntegration:
                 mock_run_default.return_value = mock_result
 
                 with patch("src.repomix.cli.cli_run.logger.set_verbose"):
-                    execute_action(args.directory, Path.cwd(), args)
+                    execute_action(args.directories, Path.cwd(), args)
 
                 mock_run_default.assert_called_once()
 
@@ -683,7 +683,7 @@ class TestCLIIntegration:
                 call_args = mock_run_default.call_args[0]
                 call_options = mock_run_default.call_args[0][2]
 
-                assert call_args[0] == temp_dir
+                assert call_args[0] == [temp_dir]
                 assert call_options["output"] == "integration-test.md"
                 assert call_options["style"] == "markdown"
 

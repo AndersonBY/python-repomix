@@ -3,7 +3,6 @@ Permission Check Module - Used for Checking File and Directory Access Permission
 """
 
 from pathlib import Path
-from typing import Optional
 from dataclasses import dataclass
 
 
@@ -30,7 +29,7 @@ class PermissionCheckResult:
     """
 
     has_permission: bool
-    error: Optional[Exception] = None
+    error: Exception | None = None
 
 
 def check_file_permission(file_path: str | Path) -> PermissionCheckResult:

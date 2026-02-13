@@ -3,7 +3,7 @@ Output Sort Module - Sorts files by git change count
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from ...shared.logger import logger
 from ...config.config_schema import RepomixConfig
@@ -19,7 +19,7 @@ _file_change_counts_cache: Dict[str, Dict[str, int]] = {}
 _git_availability_cache: Dict[str, bool] = {}
 
 
-def _build_cache_key(cwd: str, max_commits: Optional[int]) -> str:
+def _build_cache_key(cwd: str, max_commits: int | None) -> str:
     """Build cache key for file change counts"""
     return f"{cwd}:{max_commits if max_commits else 'default'}"
 
@@ -78,7 +78,7 @@ def _check_git_availability(cwd: str) -> bool:
     return True
 
 
-def _get_file_change_counts(cwd: str, max_commits: Optional[int]) -> Optional[Dict[str, int]]:
+def _get_file_change_counts(cwd: str, max_commits: int | None) -> Dict[str, int] | None:
     """Get file change counts from cache or git log.
     Returns None if git is not available or the command fails.
 

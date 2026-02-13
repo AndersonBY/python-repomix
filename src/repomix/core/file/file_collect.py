@@ -3,7 +3,7 @@ File Collection Module - Responsible for Collecting File Contents from File Syst
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import chardet
 
@@ -12,7 +12,7 @@ from ...shared.process_concurrency import get_process_concurrency
 from .file_types import RawFile
 
 
-def _process_file(args: tuple[Path, str]) -> Optional[RawFile]:
+def _process_file(args: tuple[Path, str]) -> RawFile | None:
     """Helper function to process a single file
 
     Args:
@@ -40,14 +40,14 @@ def collect_files(file_paths: List[str], root_dir: str | Path) -> List[RawFile]:
     # Create argument list, each element is a tuple of (full Path object, relative path)
     file_args = [(root / path, path) for path in file_paths]
 
-    raw_files: List[Optional[RawFile]] = []
+    raw_files: List[RawFile | None] = []
     with get_process_concurrency() as executor:
         raw_files = list(executor.map(_process_file, file_args))
 
     return [file for file in raw_files if file is not None]
 
 
-def read_raw_file(full_path: Path, file_path: str) -> Optional[RawFile]:
+def read_raw_file(full_path: Path, file_path: str) -> RawFile | None:
     """Read single file content
 
     Args:

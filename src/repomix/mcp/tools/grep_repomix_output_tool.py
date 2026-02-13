@@ -2,7 +2,7 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
@@ -16,15 +16,15 @@ class GrepRepomixOutputInput(BaseModel):
 
     output_id: str = Field(description="ID of the Repomix output file to search")
     pattern: str = Field(description="Search pattern (JavaScript RegExp regular expression syntax)")
-    context_lines: Optional[int] = Field(
+    context_lines: int | None = Field(
         default=0,
         description="Number of context lines to show before and after each match (like grep -C). Overridden by before_lines/after_lines if specified.",
     )
-    before_lines: Optional[int] = Field(
+    before_lines: int | None = Field(
         default=None,
         description="Number of context lines to show before each match (like grep -B). Takes precedence over context_lines.",
     )
-    after_lines: Optional[int] = Field(
+    after_lines: int | None = Field(
         default=None,
         description="Number of context lines to show after each match (like grep -A). Takes precedence over context_lines.",
     )

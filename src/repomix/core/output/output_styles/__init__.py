@@ -2,7 +2,7 @@
 Output Style Factory Module - Responsible for Creating and Managing Different Output Styles
 """
 
-from typing import Dict, Optional, Type
+from typing import Dict, Type
 
 from .xml_style import XmlStyle
 from .plain_style import PlainStyle
@@ -20,7 +20,7 @@ _style_map: Dict[RepomixOutputStyle, Type[OutputStyle]] = {
 }
 
 
-def get_output_style(config: RepomixConfig) -> Optional[OutputStyle]:
+def get_output_style(config: RepomixConfig) -> OutputStyle | None:
     """Get an output style instance of the specified type
 
     Args:

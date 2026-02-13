@@ -4,7 +4,7 @@ Git Command Processing Module - Provides Git-related Functionality
 
 import subprocess
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 
 from ...shared.logger import logger
 
@@ -46,7 +46,7 @@ def is_git_repository(directory: str | Path) -> bool:
         return False
 
 
-def exec_git_diff(directory: str | Path, options: Optional[List[str]] = None) -> str:
+def exec_git_diff(directory: str | Path, options: List[str] | None = None) -> str:
     """Execute git diff command
 
     Args:
@@ -143,7 +143,7 @@ def exec_git_log_filenames(directory: str | Path, max_commits: int = 100) -> Lis
         return []
 
 
-def exec_git_shallow_clone(repo_url: str, target_dir: str | Path, branch: Optional[str] = None) -> None:
+def exec_git_shallow_clone(repo_url: str, target_dir: str | Path, branch: str | None = None) -> None:
     """Perform Git shallow clone
 
     Args:

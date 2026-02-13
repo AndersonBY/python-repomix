@@ -2,31 +2,87 @@
 CLI Run Module - Handling Command Line Arguments and Executing Corresponding Actions
 """
 
+import re
+import sys
 import asyncio
 import argparse
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, NoReturn
 
 from ..__init__ import __version__
-from ..shared.error_handle import handle_error
-from ..shared.logger import logger
+from ..shared.error_handle import handle_error, RepomixError
+from ..shared.logger import logger, LogLevel
 from .actions.default_action import run_default_action
 from .actions.init_action import run_init_action
 from .actions.remote_action import run_remote_action
 from .actions.version_action import run_version_action
 from .types import CliOptions, CliResult
 
+# Semantic suggestion map: maps conceptually related terms to valid options
+SEMANTIC_SUGGESTION_MAP: Dict[str, List[str]] = {
+    "exclude": ["--ignore"],
+    "reject": ["--ignore"],
+    "omit": ["--ignore"],
+    "skip": ["--ignore"],
+    "blacklist": ["--ignore"],
+    "save": ["--output"],
+    "export": ["--output"],
+    "out": ["--output"],
+    "file": ["--output"],
+    "format": ["--style"],
+    "type": ["--style"],
+    "syntax": ["--style"],
+    "debug": ["--verbose"],
+    "detailed": ["--verbose"],
+    "silent": ["--quiet"],
+    "mute": ["--quiet"],
+    "add": ["--include"],
+    "with": ["--include"],
+    "whitelist": ["--include"],
+    "clone": ["--remote"],
+    "git": ["--remote"],
+    "minimize": ["--compress"],
+    "reduce": ["--compress"],
+    "strip-comments": ["--remove-comments"],
+    "no-comments": ["--remove-comments"],
+    "print": ["--stdout"],
+    "console": ["--stdout"],
+    "terminal": ["--stdout"],
+    "pipe": ["--stdin"],
+}
+
+
+class RepomixArgumentParser(argparse.ArgumentParser):
+    """Custom ArgumentParser with semantic suggestions for unknown options."""
+
+    def error(self, message: str) -> NoReturn:
+        """Override error to provide semantic suggestions for unknown options."""
+        # Check if this is an "unrecognized arguments" error
+        match = re.search(r"unrecognized arguments: (-{1,2}\S+)", message)
+        if match:
+            unknown_option = match.group(1)
+            clean_option = unknown_option.lstrip("-")
+
+            semantic_matches = SEMANTIC_SUGGESTION_MAP.get(clean_option)
+            if semantic_matches:
+                self.print_usage(sys.stderr)
+                suggestion = " or ".join(semantic_matches)
+                self.exit(2, f"error: Unknown option: {unknown_option}\nDid you mean: {suggestion}?\n")
+
+        # Fall back to default argparse error handling
+        super().error(message)
+
 
 def create_parser() -> argparse.ArgumentParser:
     """Create command line argument parser"""
-    parser = argparse.ArgumentParser(description="Repomix - Code Repository Packaging Tool")
+    parser = RepomixArgumentParser(description="Repomix - Code Repository Packaging Tool")
 
     # Positional arguments
     parser.add_argument(
-        "directory",
-        nargs="?",
-        default=".",
-        help="Target directory, defaults to current directory",
+        "directories",
+        nargs="*",
+        default=["."],
+        help="Target directories to process (defaults to current directory)",
     )
 
     # Optional arguments
@@ -46,6 +102,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("-c", "--config", metavar="<path>", help="Custom configuration file path")
     parser.add_argument("--copy", action="store_true", help="Copy generated output to system clipboard")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("--quiet", action="store_true", help="Suppress all console output except errors")
     parser.add_argument(
         "--top-files-len",
         type=int,
@@ -72,9 +129,15 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--remote", metavar="<url>", help="Process remote Git repository")
     parser.add_argument(
+        "--remote-branch",
+        metavar="<name>",
+        help="Specify branch, tag, or commit for remote repository",
+    )
+    # Keep --branch as deprecated alias for backward compatibility
+    parser.add_argument(
         "--branch",
         metavar="<name>",
-        help="Specify branch name for remote repository (can be set in config file)",
+        help=argparse.SUPPRESS,  # Hidden, deprecated in favor of --remote-branch
     )
     parser.add_argument("--no-security-check", action="store_true", help="Disable security check")
     parser.add_argument(
@@ -95,6 +158,44 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--truncate-base64", action="store_true", help="Enable truncation of base64 data strings")
     parser.add_argument("--include-empty-directories", action="store_true", help="Include empty directories in the output")
     parser.add_argument("--include-diffs", action="store_true", help="Include git diffs in the output")
+    parser.add_argument("--no-file-summary", action="store_true", help="Omit the file summary section from output")
+    parser.add_argument("--no-directory-structure", action="store_true", help="Omit the directory tree visualization from output")
+    parser.add_argument("--no-files", action="store_true", help="Generate metadata only without file contents")
+    parser.add_argument(
+        "--token-count-encoding",
+        metavar="<encoding>",
+        help="Tokenizer model for counting: o200k_base (GPT-4o), cl100k_base (GPT-3.5/4), etc.",
+    )
+    parser.add_argument(
+        "--token-count-tree",
+        nargs="?",
+        const=True,
+        default=None,
+        metavar="<threshold>",
+        help="Show file tree with token counts; optional threshold to show only files with ≥N tokens",
+    )
+    parser.add_argument("--header-text", metavar="<text>", help="Custom text to include at the beginning of the output")
+    parser.add_argument("--instruction-file-path", metavar="<path>", help="Path to file containing custom instructions to include in output")
+    parser.add_argument("--split-output", metavar="<size>", help="Split output into multiple numbered files (e.g., 500kb, 2mb)")
+    parser.add_argument("--include-full-directory-structure", action="store_true", help="Show entire repository tree even when using --include patterns")
+    parser.add_argument("--no-git-sort-by-changes", action="store_true", help="Don't sort files by git change frequency")
+    parser.add_argument("--include-logs", action="store_true", help="Add git commit history with messages and changed files")
+    parser.add_argument("--include-logs-count", type=int, metavar="<count>", help="Number of recent commits to include with --include-logs (default: 50)")
+    parser.add_argument("--no-gitignore", action="store_true", help="Don't use .gitignore rules for filtering files")
+    parser.add_argument("--no-dot-ignore", action="store_true", help="Don't use .ignore rules for filtering files")
+    parser.add_argument("--no-default-patterns", action="store_true", help="Don't apply built-in ignore patterns")
+
+    # Skill Generation
+    parser.add_argument(
+        "--skill-generate",
+        nargs="?",
+        const=True,
+        default=None,
+        metavar="<name>",
+        help="Generate Claude Agent Skills format output to .claude/skills/<name>/ directory",
+    )
+    parser.add_argument("--skill-output", metavar="<path>", help="Specify skill output directory path directly")
+    parser.add_argument("-f", "--force", action="store_true", help="Skip all confirmation prompts (currently: skill directory overwrite)")
 
     return parser
 
@@ -105,12 +206,12 @@ def run() -> None:
     args = parser.parse_args()
 
     try:
-        execute_action(args.directory, Path.cwd(), args)
+        execute_action(args.directories, Path.cwd(), args)
     except Exception as e:
         handle_error(e)
 
 
-async def run_cli(directories: List[str], cwd: str, cli_options: CliOptions) -> Optional[CliResult]:
+async def run_cli(directories: List[str], cwd: str, cli_options: CliOptions) -> CliResult | None:
     """Run CLI programmatically for MCP tools.
 
     Args:
@@ -143,11 +244,11 @@ async def run_cli(directories: List[str], cwd: str, cli_options: CliOptions) -> 
         logger.set_verbose(not cli_options.quiet)
 
         try:
-            # Use the first directory (MCP typically processes one at a time)
-            directory = directories[0] if directories else "."
+            # Normalize empty directories to default
+            dirs = directories if directories else ["."]
 
             # Run default action in a separate thread to avoid blocking the event loop
-            result = await asyncio.to_thread(run_default_action, directory, cwd, options)
+            result = await asyncio.to_thread(run_default_action, dirs, cwd, options)
 
             # Return the result
             return CliResult(pack_result=result.pack_result)
@@ -161,15 +262,25 @@ async def run_cli(directories: List[str], cwd: str, cli_options: CliOptions) -> 
         return None
 
 
-def execute_action(directory: str, cwd: Path, options: argparse.Namespace) -> None:
+def execute_action(directories: List[str], cwd: Path, options: argparse.Namespace) -> None:
     """Execute corresponding action
 
     Args:
-        directory: Target directory
+        directories: Target directories
         cwd: Current working directory
         options: Command line options
     """
     logger.set_verbose(options.verbose)
+
+    # Handle quiet and verbose conflict
+    if getattr(options, 'quiet', False) and getattr(options, 'verbose', False):
+        raise RepomixError("--quiet and --verbose cannot be used together")
+
+    # Set log level based on verbose and quiet flags
+    if getattr(options, 'quiet', False):
+        logger.set_log_level(LogLevel.SILENT)
+    elif options.verbose:
+        logger.set_log_level(LogLevel.DEBUG)
 
     if options.version:
         run_version_action()
@@ -192,4 +303,4 @@ def execute_action(directory: str, cwd: Path, options: argparse.Namespace) -> No
         run_remote_action(options.remote, vars(options))
         return
 
-    run_default_action(directory, cwd, vars(options))
+    run_default_action(directories, cwd, vars(options))

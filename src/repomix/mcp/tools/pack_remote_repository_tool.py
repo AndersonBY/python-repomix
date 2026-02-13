@@ -1,6 +1,6 @@
 """Pack remote repository MCP tool - placeholder implementation."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
@@ -17,8 +17,8 @@ class PackRemoteRepositoryInput(BaseModel):
         default=False,
         description="Enable Tree-sitter compression to extract essential code signatures and structure",
     )
-    include_patterns: Optional[str] = Field(default=None, description="Specify files to include using fast-glob patterns")
-    ignore_patterns: Optional[str] = Field(
+    include_patterns: str | None = Field(default=None, description="Specify files to include using fast-glob patterns")
+    ignore_patterns: str | None = Field(
         default=None,
         description="Specify additional files to exclude using fast-glob patterns",
     )

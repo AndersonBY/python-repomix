@@ -4,7 +4,7 @@ import json
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ...core.repo_processor import RepoProcessorResult
@@ -15,7 +15,7 @@ from ...shared.logger import logger
 class McpToolError:
     """Error response for MCP tools."""
 
-    def __init__(self, error_message: str, error_code: Optional[str] = None):
+    def __init__(self, error_message: str, error_code: str | None = None):
         self.error_message = error_message
         self.error_code = error_code
 
@@ -135,6 +135,6 @@ def _store_output_mapping(output_id: str, file_path: str) -> None:
     logger.trace(f"Stored output mapping: {output_id} -> {file_path}")
 
 
-def get_output_file_path(output_id: str) -> Optional[str]:
+def get_output_file_path(output_id: str) -> str | None:
     """Get file path for a given output ID."""
     return _output_mappings.get(output_id)

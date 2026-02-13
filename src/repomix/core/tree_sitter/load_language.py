@@ -16,7 +16,7 @@ class LanguageLoader:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def get_language(self, language_name: str) -> Optional[Language]:
+    def get_language(self, language_name: str) -> Language | None:
         """Get a tree-sitter language by name.
 
         Args:
@@ -59,7 +59,7 @@ class LanguageLoader:
             # Other errors loading language
             return None
 
-    def create_parser(self, language_name: str) -> Optional[Parser]:
+    def create_parser(self, language_name: str) -> Parser | None:
         """Create a parser for the given language.
 
         Args:

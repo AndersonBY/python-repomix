@@ -4,7 +4,6 @@ Git Utilities Module - Git related helper functions
 
 import re
 from pathlib import Path
-from typing import Optional
 
 from ..shared.logger import logger
 from ..shared.error_handle import RepomixError
@@ -33,7 +32,7 @@ def format_git_url(url: str) -> str:
     return url
 
 
-def clone_repository(url: str, directory: str | Path, branch: Optional[str] = None) -> None:
+def clone_repository(url: str, directory: str | Path, branch: str | None = None) -> None:
     """Clone repository
 
     Args:

@@ -5,7 +5,7 @@ Configuration Loading Module - Responsible for Loading and Merging Configuration
 import os
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from ..shared.error_handle import RepomixError
 from ..shared.logger import logger
@@ -59,8 +59,8 @@ def migrate_config_format(config_dict: Dict[str, Any]) -> Dict[str, Any]:
 def load_config(
     directory: str | Path,
     cwd: str | Path,
-    config_path: Optional[str] = None,
-    cli_options: Optional[Dict[str, Any]] = None,
+    config_path: str | None = None,
+    cli_options: Dict[str, Any] | None = None,
 ) -> RepomixConfig:
     """Load configuration
 
@@ -91,7 +91,7 @@ def load_config(
     return merged_config
 
 
-def load_global_config() -> Optional[RepomixConfig]:
+def load_global_config() -> RepomixConfig | None:
     """Load global configuration
 
     Returns:
@@ -123,7 +123,7 @@ def load_global_config() -> Optional[RepomixConfig]:
         return None
 
 
-def load_local_config(directory: str | Path, cwd: str | Path, config_path: Optional[str] = None) -> Optional[RepomixConfig]:
+def load_local_config(directory: str | Path, cwd: str | Path, config_path: str | None = None) -> RepomixConfig | None:
     """Load local configuration
 
     Args:
@@ -167,8 +167,8 @@ def load_local_config(directory: str | Path, cwd: str | Path, config_path: Optio
 
 
 def merge_configs(
-    global_config: Optional[RepomixConfig],
-    local_config: Optional[RepomixConfig],
+    global_config: RepomixConfig | None,
+    local_config: RepomixConfig | None,
     cli_options: Dict[str, Any],
 ) -> RepomixConfig:
     """Merge configurations

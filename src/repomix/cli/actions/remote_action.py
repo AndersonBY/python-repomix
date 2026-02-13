@@ -37,7 +37,7 @@ def run_remote_action(repo_url: str, options: Dict[str, Any]) -> None:
     try:
         spinner.start()
 
-        clone_repository(repo_url, temp_dir_path, options.get("branch"))
+        clone_repository(repo_url, temp_dir_path, options.get("remote_branch") or options.get("branch"))
 
         spinner.succeed("Repository cloned successfully!")
         logger.log("")

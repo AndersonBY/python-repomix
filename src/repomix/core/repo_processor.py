@@ -1,7 +1,7 @@
 from pathlib import Path
 from fnmatch import fnmatch
 from dataclasses import dataclass
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Sequence
 import re
 import logging
 from functools import lru_cache
@@ -10,6 +10,7 @@ from functools import lru_cache
 from ..config.config_load import load_config
 from ..config.config_schema import RepomixConfig
 from ..core.file.file_collect import collect_files
+from ..core.file.file_types import RawFile
 from ..core.file.file_process import process_files
 from ..core.file.file_search import search_files, get_ignore_patterns
 from ..core.output.output_generate import generate_output
@@ -228,18 +229,30 @@ class RepoProcessor:
         config: RepomixConfig | None = None,
         config_path: str | None = None,
         cli_options: Dict | None = None,
+        directories: Sequence[str | Path] | None = None,
     ):
-        if directory is None and repo_url is None:
-            raise RepomixError("Either directory or repo_url must be provided")
+        if directory is None and repo_url is None and directories is None:
+            raise RepomixError("Either directory, directories, or repo_url must be provided")
 
         self.repo_url = repo_url
         self.temp_dir = None
         self.branch = branch
-        self.directory = directory
         self.config = config
         self.config_path = config_path
         self.cli_options = cli_options
         self._predefined_file_paths: List[str] | None = None  # For stdin mode
+
+        # Normalize directories
+        if directories is not None:
+            self.directories = [str(d) for d in directories]
+            self.directory = self.directories[0] if self.directories else None
+        elif directory is not None:
+            self.directory = directory
+            self.directories = [str(directory)]
+        else:
+            self.directory = None
+            self.directories = []
+
         if self.config is None:
             if self.directory is None:
                 _directory = Path.cwd()
@@ -261,51 +274,56 @@ class RepoProcessor:
         if self.config and self.config.output.calculate_tokens:
             import tiktoken
 
-            gpt_4o_encoding = tiktoken.encoding_for_model("gpt-4o")
+            encoding_name = getattr(self.config, 'token_count', None)
+            encoding_name = encoding_name.encoding if encoding_name else "o200k_base"
+            try:
+                token_encoding = tiktoken.get_encoding(encoding_name)
+            except Exception:
+                logger.warning(f"Unknown encoding '{encoding_name}', falling back to o200k_base")
+                token_encoding = tiktoken.get_encoding("o200k_base")
         else:
-            gpt_4o_encoding = None
+            token_encoding = None
 
         try:
             if self.repo_url:
                 self.temp_dir = create_temp_directory()
                 clone_repository(format_git_url(self.repo_url), self.temp_dir, self.branch)
                 self.directory = self.temp_dir
+                self.directories = [self.temp_dir]
 
             if self.config is None:
                 raise RepomixError("Configuration not loaded.")
 
-            if self.directory is None:
+            if not self.directories:
                 raise RepomixError("Directory not set.")
+
+            is_multi_root = len(self.directories) > 1
 
             # Use predefined file paths if available (stdin mode)
             if self._predefined_file_paths is not None:
                 # Convert absolute paths to relative paths based on directory
-                dir_path = Path(self.directory).resolve()
+                dir_path = Path(self.directories[0]).resolve()
                 relative_paths = []
                 for abs_path in self._predefined_file_paths:
                     try:
                         rel_path = Path(abs_path).relative_to(dir_path)
                         relative_paths.append(str(rel_path))
                     except ValueError:
-                        # If path is not relative to directory, use as is
                         relative_paths.append(abs_path)
 
-                raw_files = collect_files(relative_paths, self.directory)
+                raw_files = collect_files(relative_paths, self.directories[0])
+                file_tree = self._build_tree_for_directory(self.directories[0])
+            elif is_multi_root:
+                # Multi-directory processing
+                raw_files, file_tree = self._process_multiple_directories()
             else:
-                # Normal file search
-                search_result = search_files(self.directory, self.config)
-                raw_files = collect_files(search_result.file_paths, self.directory)
+                # Single directory processing
+                search_result = search_files(self.directories[0], self.config)
+                raw_files = collect_files(search_result.file_paths, self.directories[0])
+                file_tree = self._build_tree_for_directory(self.directories[0])
 
             if not raw_files:
                 raise RepomixError("No files found. Please check the directory path and filter conditions.")
-
-            # Build the file tree based on configuration
-            if self.config.output.include_full_directory_structure:
-                # Build full directory tree without filtering
-                file_tree = build_full_file_tree(self.directory)
-            else:
-                # Build filtered file tree, respecting ignore patterns
-                file_tree = build_file_tree_with_ignore(self.directory, self.config)
 
             processed_files = process_files(raw_files, self.config)
 
@@ -315,23 +333,19 @@ class RepoProcessor:
             total_tokens = 0
 
             # Optimize character and token counting
-            if self.config.output.calculate_tokens and gpt_4o_encoding:
-                # Token calculation enabled - process files with error handling
+            if self.config.output.calculate_tokens and token_encoding:
                 for processed_file in processed_files:
                     char_count = len(processed_file.content)
                     file_char_counts[processed_file.path] = char_count
                     total_chars += char_count
-
-                    # Token calculation with error handling for better performance
                     try:
-                        token_count = len(gpt_4o_encoding.encode(processed_file.content))
+                        token_count = len(token_encoding.encode(processed_file.content))
                         file_token_counts[processed_file.path] = token_count
                         total_tokens += token_count
                     except Exception as e:
                         logger.debug(f"Token calculation failed for {processed_file.path}: {e}")
                         file_token_counts[processed_file.path] = 0
             else:
-                # Only count characters if tokens not needed - much faster
                 for processed_file in processed_files:
                     char_count = len(processed_file.content)
                     file_char_counts[processed_file.path] = char_count
@@ -342,7 +356,8 @@ class RepoProcessor:
             if self.config.security.enable_security_check:
                 file_contents = {file.path: file.content for file in raw_files}
                 file_paths = [file.path for file in raw_files]
-                suspicious_files_results = check_files(self.directory, file_paths, file_contents)
+                # Use first directory for security check base path
+                suspicious_files_results = check_files(self.directories[0], file_paths, file_contents)
                 suspicious_file_paths = {result.file_path for result in suspicious_files_results}
                 processed_files = [file for file in processed_files if file.path not in suspicious_file_paths]
 
@@ -372,6 +387,43 @@ class RepoProcessor:
         finally:
             if self.temp_dir:
                 cleanup_temp_directory(self.temp_dir)
+
+    def _build_tree_for_directory(self, directory: str | Path) -> Dict:
+        """Build file tree for a single directory based on config."""
+        assert self.config is not None
+        if self.config.output.include_full_directory_structure:
+            return build_full_file_tree(directory)
+        else:
+            return build_file_tree_with_ignore(directory, self.config)
+
+    def _process_multiple_directories(self):
+        """Process multiple directories and merge results.
+
+        Returns:
+            Tuple of (merged raw_files, merged file_tree)
+        """
+        assert self.config is not None
+        all_raw_files = []
+        merged_tree: Dict[str, Any] = {}
+
+        for directory in self.directories:
+            dir_path = Path(directory).resolve()
+            root_label = dir_path.name or str(dir_path)
+
+            # Search and collect files for this directory
+            search_result = search_files(directory, self.config)
+            dir_raw_files = collect_files(search_result.file_paths, directory)
+
+            # Prefix file paths with root label for multi-root
+            for raw_file in dir_raw_files:
+                prefixed_path = f"{root_label}/{raw_file.path}"
+                all_raw_files.append(RawFile(path=prefixed_path, content=raw_file.content))
+
+            # Build tree for this directory and nest under root label
+            dir_tree = self._build_tree_for_directory(directory)
+            merged_tree[root_label] = dir_tree
+
+        return all_raw_files, merged_tree
 
     def write_output(self, output_content: str) -> None:
         """Write output content to file or stdout

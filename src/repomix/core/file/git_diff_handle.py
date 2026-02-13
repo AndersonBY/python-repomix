@@ -3,7 +3,6 @@ Git Diff Handle Module - Handles Git Diff Operations
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 from ...shared.logger import logger
 from ...config.config_schema import RepomixConfig
@@ -69,7 +68,7 @@ def _get_diff(directory: str, options: list) -> str:
 def get_git_diffs(
     root_dirs: list,
     config: RepomixConfig,
-) -> Optional[GitDiffResult]:
+) -> GitDiffResult | None:
     """Get git diffs if enabled in configuration
 
     Args:

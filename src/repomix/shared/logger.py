@@ -17,6 +17,7 @@ class LogLevel(Enum):
     SUCCESS = 3
     WARN = 4
     ERROR = 5
+    SILENT = 6
 
 
 class Logger:

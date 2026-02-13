@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
@@ -32,14 +32,14 @@ class PackCodebaseInput(BaseModel):
             "Use only when you specifically need the entire codebase content for large repositories."
         ),
     )
-    include_patterns: Optional[str] = Field(
+    include_patterns: str | None = Field(
         default=None,
         description=(
             "Specify files to include using fast-glob patterns. Multiple patterns can be "
             'comma-separated (e.g., "**/*.{js,ts}", "src/**,docs/**"). Only matching files will be processed.'
         ),
     )
-    ignore_patterns: Optional[str] = Field(
+    ignore_patterns: str | None = Field(
         default=None,
         description=(
             "Specify additional files to exclude using fast-glob patterns. Multiple patterns can be "
@@ -80,8 +80,8 @@ def register_pack_codebase_tool(server: FastMCP) -> None:
     async def pack_codebase(  # pyright: ignore[reportUnusedFunction]
         directory: str,
         compress: bool = False,
-        include_patterns: Optional[str] = None,
-        ignore_patterns: Optional[str] = None,
+        include_patterns: str | None = None,
+        ignore_patterns: str | None = None,
         top_files_length: int = 10,
     ) -> Dict[str, Any]:
         """Pack a local codebase into a consolidated XML file."""

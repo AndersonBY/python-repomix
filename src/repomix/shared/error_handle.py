@@ -4,7 +4,7 @@ Error Handling Module - Defines custom exceptions and error handling functions
 
 import sys
 import traceback
-from typing import Optional, Type
+from typing import Type
 
 from .logger import logger
 
@@ -15,7 +15,7 @@ class RepomixError(Exception):
     pass
 
 
-def handle_error(error: Exception, exit_code: int = 1, error_type: Optional[Type[Exception]] = None) -> None:
+def handle_error(error: Exception, exit_code: int = 1, error_type: Type[Exception] | None = None) -> None:
     """Handle exceptions and exit the program
 
     Args:

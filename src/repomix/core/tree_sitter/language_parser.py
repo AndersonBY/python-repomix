@@ -26,7 +26,7 @@ class LanguageParser:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def get_parser(self, language: str) -> Optional[Parser]:
+    def get_parser(self, language: str) -> Parser | None:
         """Get or create a parser for the given language.
 
         Args:
@@ -44,7 +44,7 @@ class LanguageParser:
 
         return parser
 
-    def get_query(self, language: str) -> Optional[Query]:
+    def get_query(self, language: str) -> Query | None:
         """Get or create a query for the given language.
 
         Args:

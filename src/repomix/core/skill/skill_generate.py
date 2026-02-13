@@ -3,7 +3,7 @@ Skill Generation Module - Generates Claude Agent Skills from codebase
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List
 from pathlib import Path
 import re
 
@@ -17,7 +17,7 @@ class SkillReferences:
     summary: str
     structure: str
     files: str
-    tech_stack: Optional[str] = None
+    tech_stack: str | None = None
 
 
 @dataclass
@@ -31,7 +31,7 @@ class SkillRenderContext:
     total_lines: int
     total_tokens: int
     has_tech_stack: bool
-    source_url: Optional[str] = None
+    source_url: str | None = None
 
 
 @dataclass
@@ -46,7 +46,7 @@ class SkillReferencesResult:
     total_lines: int
     statistics_section: str
     has_tech_stack: bool
-    source_url: Optional[str] = None
+    source_url: str | None = None
 
 
 def validate_skill_name(name: str) -> str:
@@ -284,7 +284,7 @@ def generate_statistics_section(statistics: Dict[str, int]) -> str:
 """
 
 
-def detect_tech_stack(processed_files: List[ProcessedFile]) -> Optional[Dict[str, List[str]]]:
+def detect_tech_stack(processed_files: List[ProcessedFile]) -> Dict[str, List[str]] | None:
     """Detect technology stack from processed files
 
     Args:
@@ -333,7 +333,7 @@ def detect_tech_stack(processed_files: List[ProcessedFile]) -> Optional[Dict[str
     }
 
 
-def _ext_to_language(ext: str) -> Optional[str]:
+def _ext_to_language(ext: str) -> str | None:
     """Convert file extension to language name"""
     mapping = {
         ".py": "Python",

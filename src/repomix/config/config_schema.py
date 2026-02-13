@@ -3,7 +3,7 @@ Configuration Module - Defines Repomix Configuration Schema and Default Values
 """
 
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, cast
 from dataclasses import dataclass, field
 
 
@@ -51,12 +51,15 @@ class RepomixConfigOutput:
     calculate_tokens: bool = False
     show_file_stats: bool = False
     show_directory_structure: bool = True
+    file_summary: bool = True  # Whether to show file summary section (--no-file-summary to disable)
+    directory_structure: bool = True  # Whether to show directory structure (--no-directory-structure to disable)
+    files: bool = True  # Whether to include file contents (--no-files to disable)
     parsable_style: bool = False
     truncate_base64: bool = False
     stdout: bool = False
     # New configuration items from TypeScript version
     include_full_directory_structure: bool = False
-    split_output: Optional[int] = None  # Max bytes per output file for splitting
+    split_output: int | None = None  # Max bytes per output file for splitting
     token_count_tree: bool | int | str = False  # Token count tree display
     compress: bool = False  # Enable code compression
     # Git configuration (nested)
@@ -81,7 +84,8 @@ class RepomixConfigOutput:
 
         # Handle git config if it's a dictionary
         if isinstance(self.git, dict):
-            self.git = RepomixConfigGit(**self.git)
+            d: Dict[str, Any] = cast(Dict[str, Any], self.git)
+            self.git = RepomixConfigGit(**d)
 
         # Migrate legacy include_diffs to git.include_diffs
         if self.include_diffs and not self.git.include_diffs:
@@ -136,6 +140,7 @@ class RepomixConfigIgnore:
 
     custom_patterns: List[str] = field(default_factory=list)
     use_gitignore: bool = True
+    use_dot_ignore: bool = True
     use_default_ignore: bool = True
 
 
@@ -147,6 +152,13 @@ class RepomixConfigCompression:
     keep_signatures: bool = True
     keep_docstrings: bool = True
     keep_interfaces: bool = True
+
+
+@dataclass
+class RepomixConfigTokenCount:
+    """Token count configuration"""
+
+    encoding: str = "o200k_base"
 
 
 @dataclass
@@ -167,6 +179,7 @@ class RepomixConfig:
     ignore: RepomixConfigIgnore = field(default_factory=RepomixConfigIgnore)
     compression: RepomixConfigCompression = field(default_factory=RepomixConfigCompression)
     remote: RepomixConfigRemote = field(default_factory=RepomixConfigRemote)
+    token_count: RepomixConfigTokenCount = field(default_factory=RepomixConfigTokenCount)
     include: List[str] = field(default_factory=list)
     # Skill generation configuration (string for skill name, or bool to enable/disable)
     skill_generate: str | bool = False
@@ -177,27 +190,38 @@ class RepomixConfig:
         """Post-initialization processing to handle nested dictionaries"""
         # Handle input if it's a dictionary
         if isinstance(self.input, dict):
-            self.input = RepomixConfigInput(**self.input)
+            d: Dict[str, Any] = cast(Dict[str, Any], self.input)
+            self.input = RepomixConfigInput(**d)
 
         # Handle output if it's a dictionary
         if isinstance(self.output, dict):
             # Create output object with all parameters (including style)
-            self.output = RepomixConfigOutput(**self.output)
+            d = cast(Dict[str, Any], self.output)
+            self.output = RepomixConfigOutput(**d)
 
         # Handle security if it's a dictionary
         if isinstance(self.security, dict):
-            self.security = RepomixConfigSecurity(**self.security)
+            d = cast(Dict[str, Any], self.security)
+            self.security = RepomixConfigSecurity(**d)
 
         # Handle ignore if it's a dictionary
         if isinstance(self.ignore, dict):
-            self.ignore = RepomixConfigIgnore(**self.ignore)
+            d = cast(Dict[str, Any], self.ignore)
+            self.ignore = RepomixConfigIgnore(**d)
 
         if isinstance(self.compression, dict):
-            self.compression = RepomixConfigCompression(**self.compression)
+            d = cast(Dict[str, Any], self.compression)
+            self.compression = RepomixConfigCompression(**d)
 
         # Handle remote if it's a dictionary
         if isinstance(self.remote, dict):
-            self.remote = RepomixConfigRemote(**self.remote)
+            d = cast(Dict[str, Any], self.remote)
+            self.remote = RepomixConfigRemote(**d)
+
+        # Handle token_count if it's a dictionary
+        if isinstance(self.token_count, dict):
+            d = cast(Dict[str, Any], self.token_count)
+            self.token_count = RepomixConfigTokenCount(**d)
 
 
 # Default configuration

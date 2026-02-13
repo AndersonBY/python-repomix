@@ -4,7 +4,7 @@ Output Split Module - Splits output into multiple parts based on size
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Callable, Any
+from typing import List, Callable, Any
 
 from ...shared.logger import logger
 from ...config.config_schema import RepomixConfig
@@ -136,9 +136,9 @@ def generate_split_output_parts(
     generate_output_fn: Callable[..., str],
     file_char_counts: dict[str, int],
     file_token_counts: dict[str, int],
-    git_diff_result: Optional[Any] = None,
-    git_log_result: Optional[Any] = None,
-    progress_callback: Optional[Callable[[str], None]] = None,
+    git_diff_result: Any | None = None,
+    git_log_result: Any | None = None,
+    progress_callback: Callable[[str], None] | None = None,
 ) -> List[OutputSplitPart]:
     """Generate split output parts
 

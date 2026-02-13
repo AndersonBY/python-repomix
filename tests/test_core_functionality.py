@@ -45,7 +45,7 @@ class TestRepoProcessor:
 
     def test_repo_processor_initialization_error(self):
         """Test RepoProcessor initialization error when neither directory nor repo_url provided"""
-        with pytest.raises(RepomixError, match="Either directory or repo_url must be provided"):
+        with pytest.raises(RepomixError, match="Either directory, directories, or repo_url must be provided"):
             RepoProcessor()
 
     def test_repo_processor_with_custom_config(self):

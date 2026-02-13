@@ -3,7 +3,7 @@ Git Log Handle Module - Handles Git Log Operations
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 from ...shared.logger import logger
 from ...config.config_schema import RepomixConfig
@@ -102,7 +102,7 @@ def get_git_log(directory: str, max_commits: int) -> str:
 def get_git_logs(
     root_dirs: list,
     config: RepomixConfig,
-) -> Optional[GitLogResult]:
+) -> GitLogResult | None:
     """Get git logs if enabled in configuration
 
     Args:

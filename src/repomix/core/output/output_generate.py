@@ -2,7 +2,7 @@
 Output Generation Module - Responsible for Generating Final Output Content
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 from pathlib import Path
 
 from ...shared.logger import logger
@@ -48,8 +48,8 @@ def generate_output(
     file_char_counts: Dict[str, int],
     file_token_counts: Dict[str, int],
     file_tree: Dict,
-    git_diff_result: Optional[Any] = None,
-    git_log_result: Optional[Any] = None,
+    git_diff_result: Any | None = None,
+    git_log_result: Any | None = None,
 ) -> str:
     """Generate output content
 
@@ -100,14 +100,19 @@ def generate_output(
         assert style is not None
 
     # Generate output content
-    output = style.generate_header()
+    # Only include file summary (header) if file_summary is enabled
+    if config.output.file_summary:
+        output = style.generate_header()
+    else:
+        output = ""
 
     # Add file tree if configured to do so
-    if config.output.show_directory_structure:
+    if config.output.show_directory_structure and config.output.directory_structure:
         output += style.generate_file_tree_section(display_tree)
 
-    # Add files section
-    output += style.generate_files_section(processed_files, file_char_counts, file_token_counts)
+    # Add files section (unless --no-files is set)
+    if config.output.files:
+        output += style.generate_files_section(processed_files, file_char_counts, file_token_counts)
 
     # Add git diff section if enabled
     if config.output.git.include_diffs and git_diff_result:

@@ -4,7 +4,7 @@ Default Action Module - Handling the Main Packaging Logic
 
 import asyncio
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Sequence
 from dataclasses import dataclass
 
 from ...config.config_schema import RepomixConfig
@@ -23,6 +23,32 @@ from ...shared.logger import logger
 from ...shared.error_handle import RepomixError
 
 
+def _parse_split_output(value: str | None) -> int | None:
+    """Parse human-readable size string to bytes (e.g., '500kb', '2mb', '2.5mb').
+
+    Args:
+        value: Size string or None
+
+    Returns:
+        Size in bytes or None
+    """
+    if not value:
+        return None
+    value = value.strip().lower()
+    multipliers = {"kb": 1024, "mb": 1024 * 1024, "gb": 1024 * 1024 * 1024}
+    for suffix, mult in multipliers.items():
+        if value.endswith(suffix):
+            try:
+                return int(float(value[: -len(suffix)]) * mult)
+            except ValueError:
+                raise RepomixError(f"Invalid size for --split-output: '{value}'") from None
+    # Try plain number (bytes)
+    try:
+        return int(value)
+    except ValueError:
+        raise RepomixError(f"Invalid size for --split-output: '{value}'. Use format like 500kb, 2mb, or 2.5mb") from None
+
+
 @dataclass
 class DefaultActionRunnerResult:
     """Default action runner result class
@@ -36,11 +62,11 @@ class DefaultActionRunnerResult:
     pack_result: Any  # Will be RepoProcessorResult but avoiding circular import
 
 
-def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str, Any]) -> DefaultActionRunnerResult:
+def run_default_action(directories: Sequence[str | Path] | str | Path, cwd: str | Path, options: Dict[str, Any]) -> DefaultActionRunnerResult:
     """Execute default action
 
     Args:
-        directory: Target directory
+        directories: Target directories (list or single directory for backward compatibility)
         cwd: Current working directory
         options: Command line options
 
@@ -50,16 +76,73 @@ def run_default_action(directory: str | Path, cwd: str | Path, options: Dict[str
     Raises:
         RepomixError: When an error occurs during execution
     """
+    # Normalize to list
+    if isinstance(directories, str | Path):
+        directories = [directories]
+
+    # Validate skill-related option dependencies
+    _validate_skill_options(options)
+
+    # Validate conflicting options
+    _validate_option_conflicts(options)
+
     # Handle stdin mode
     if options.get("stdin"):
         # Validate directory arguments for stdin mode
-        if directory != "." and directory != cwd:
+        first_dir = directories[0] if directories else "."
+        if len(directories) > 1 or (str(first_dir) != "." and str(first_dir) != str(cwd)):
             raise RepomixError("When using --stdin, do not specify directory arguments. File paths will be read from stdin.")
 
         return _handle_stdin_processing(cwd, options)
 
     # Normal directory processing
-    return _handle_directory_processing(directory, cwd, options)
+    return _handle_directory_processing(directories, cwd, options)
+
+
+def _validate_skill_options(options: Dict[str, Any]) -> None:
+    """Validate skill-related option dependencies.
+
+    Args:
+        options: Command line options
+
+    Raises:
+        RepomixError: When skill options are used incorrectly
+    """
+    skill_generate = options.get("skill_generate")
+
+    if options.get("skill_output") and skill_generate is None:
+        raise RepomixError("--skill-output can only be used with --skill-generate")
+
+    if options.get("force") and skill_generate is None:
+        raise RepomixError("--force can only be used with --skill-generate")
+
+    if options.get("skill_output") is not None and not str(options.get("skill_output", "")).strip():
+        raise RepomixError("--skill-output path cannot be empty")
+
+
+def _validate_option_conflicts(options: Dict[str, Any]) -> None:
+    """Validate conflicting option combinations.
+
+    Args:
+        options: Command line options
+
+    Raises:
+        RepomixError: When conflicting options are used together
+    """
+    conflicts = [
+        ("split_output", "stdout", "Split output requires writing to filesystem."),
+        ("split_output", "skill_generate", "Skill output is a directory."),
+        ("split_output", "copy", "Split output generates multiple files."),
+        ("skill_generate", "stdout", "Skill output requires writing to filesystem."),
+        ("skill_generate", "copy", "Skill output is a directory and cannot be copied to clipboard."),
+    ]
+
+    for opt_a, opt_b, reason in conflicts:
+        if options.get(opt_a) and options.get(opt_b):
+            # Convert underscores to hyphens for display
+            flag_a = f"--{opt_a.replace('_', '-')}"
+            flag_b = f"--{opt_b.replace('_', '-')}"
+            raise RepomixError(f"{flag_a} cannot be used with {flag_b}. {reason}")
 
 
 def _handle_stdin_processing(cwd: str | Path, options: Dict[str, Any]) -> DefaultActionRunnerResult:
@@ -105,20 +188,21 @@ def _handle_stdin_processing(cwd: str | Path, options: Dict[str, Any]) -> Defaul
     )
 
 
-def _handle_directory_processing(directory: str | Path, cwd: str | Path, options: Dict[str, Any]) -> DefaultActionRunnerResult:
+def _handle_directory_processing(directories: Sequence[str | Path], cwd: str | Path, options: Dict[str, Any]) -> DefaultActionRunnerResult:
     """Handle normal directory processing workflow.
 
     Args:
-        directory: Target directory
+        directories: Target directories
         cwd: Current working directory
         options: Command line options
 
     Returns:
         Action execution result
     """
-    # Load configuration
+    # Load configuration using the first directory
+    first_dir = directories[0] if directories else "."
     cli_options_override = _build_cli_options_override(options)
-    config = load_config(directory, cwd, options.get("config"), cli_options_override)
+    config = load_config(first_dir, cwd, options.get("config"), cli_options_override)
 
     # Determine if we should use remote repository from config
     if config.remote.url:
@@ -129,12 +213,12 @@ def _handle_directory_processing(directory: str | Path, cwd: str | Path, options
             config=config,
         )
     else:
-        # Use local directory
-        processor = RepoProcessor(directory, config=config)
+        # Use local directories
+        processor = RepoProcessor(directories=directories, config=config)
     result = processor.process()
 
     # Print results
-    _print_results(directory, result, config)
+    _print_results(first_dir, result, config)
 
     return DefaultActionRunnerResult(
         config=config,
@@ -165,16 +249,48 @@ def _build_cli_options_override(options: Dict[str, Any]) -> Dict[str, Any]:
             "include_empty_directories": options.get("include_empty_directories"),
             "stdout": options.get("stdout"),
             "include_diffs": options.get("include_diffs"),
+            "file_summary": False if options.get("no_file_summary") else None,
+            "directory_structure": False if options.get("no_directory_structure") else None,
+            "files": False if options.get("no_files") else None,
+            "header_text": options.get("header_text"),
+            "instruction_file_path": options.get("instruction_file_path"),
+            "include_full_directory_structure": options.get("include_full_directory_structure") or None,
+            "token_count_tree": options.get("token_count_tree"),
+            "split_output": _parse_split_output(options.get("split_output")),
         },
-        "ignore": {"custom_patterns": options.get("ignore", "").split(",") if options.get("ignore") else None},
+        "ignore": {
+            "custom_patterns": options.get("ignore", "").split(",") if options.get("ignore") else None,
+            "use_gitignore": False if options.get("no_gitignore") else None,
+            "use_dot_ignore": False if options.get("no_dot_ignore") else None,
+            "use_default_ignore": False if options.get("no_default_patterns") else None,
+        },
         "include": options.get("include", "").split(",") if options.get("include") else None,
         "security": {},
         "compression": {"enabled": options.get("compress", False)},
+        "token_count": {"encoding": options.get("token_count_encoding")} if options.get("token_count_encoding") else {},
         "remote": {
             "url": options.get("remote"),
-            "branch": options.get("branch"),
+            "branch": options.get("remote_branch") or options.get("branch"),
         },
     }
+
+    # Handle git-related options
+    git_overrides = {}
+    if options.get("no_git_sort_by_changes"):
+        git_overrides["sort_by_changes"] = False
+    if options.get("include_diffs"):
+        git_overrides["include_diffs"] = True
+    if options.get("include_logs"):
+        git_overrides["include_logs"] = True
+    if options.get("include_logs_count") is not None:
+        git_overrides["include_logs_count"] = options["include_logs_count"]
+    if git_overrides:
+        cli_options_override["output"]["git"] = git_overrides
+
+    # Handle skill generation
+    skill_generate = options.get("skill_generate")
+    if skill_generate is not None:
+        cli_options_override["skill_generate"] = skill_generate
 
     if "no_security_check" in options and options.get("no_security_check"):
         cli_options_override["security"]["enable_security_check"] = False

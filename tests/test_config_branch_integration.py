@@ -126,7 +126,7 @@ class TestConfigBranchIntegration:
             result = run_default_action(".", Path.cwd(), options)
 
         # Verify RepoProcessor was called with local directory
-        mock_repo_processor.assert_called_once_with(".", config=real_config)
+        mock_repo_processor.assert_called_once_with(directories=["."], config=real_config)
 
         assert result.pack_result.total_files == 5
 

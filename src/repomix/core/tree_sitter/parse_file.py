@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 import tree_sitter
 
 from .ext2lang import get_language_from_extension
@@ -16,7 +16,7 @@ from .parse_strategies import go_parse_strategy  # noqa: F401 # pyright: ignore[
 logger = logging.getLogger(__name__)
 
 
-def parse_file(content: str, file_path: str) -> Optional[str]:
+def parse_file(content: str, file_path: str) -> str | None:
     """Parse a file using tree-sitter and return compressed content.
 
     Args:

@@ -1,6 +1,6 @@
 """Language to query mapping for tree-sitter queries."""
 
-from typing import Dict, Optional
+from typing import Dict
 
 # Mapping of languages to their query module names
 lang2query: Dict[str, str] = {
@@ -20,7 +20,7 @@ lang2query: Dict[str, str] = {
 }
 
 
-def get_query_module_name(language: str) -> Optional[str]:
+def get_query_module_name(language: str) -> str | None:
     """Get the query module name for a given language.
 
     Args:

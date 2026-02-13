@@ -73,33 +73,35 @@ class JsonStyle(OutputStyle):
         json_document: Dict[str, Any] = {}
 
         # Add file summary section
-        json_document["fileSummary"] = {
-            "generationHeader": self.header,
-            "purpose": self.summary_purpose,
-            "fileFormat": self._get_file_format_description(),
-            "usageGuidelines": self.summary_usage_guidelines,
-            "notes": self.summary_notes,
-        }
+        if self.config.output.file_summary:
+            json_document["fileSummary"] = {
+                "generationHeader": self.header,
+                "purpose": self.summary_purpose,
+                "fileFormat": self._get_file_format_description(),
+                "usageGuidelines": self.summary_usage_guidelines,
+                "notes": self.summary_notes,
+            }
 
         # Add user provided header if exists
         if self.config.output.header_text:
             json_document["userProvidedHeader"] = self.config.output.header_text
 
         # Add directory structure if enabled
-        if self.config.output.show_directory_structure:
+        if self.config.output.show_directory_structure and self.config.output.directory_structure:
             json_document["directoryStructure"] = format_file_tree(file_tree)
 
         # Add files section
-        json_document["files"] = {}
-        for file in files:
-            file_entry: Dict[str, Any] = {"content": file.content}
+        if self.config.output.files:
+            json_document["files"] = {}
+            for file in files:
+                file_entry: Dict[str, Any] = {"content": file.content}
 
-            # Add file stats if configured
-            if self.config.output.show_file_stats:
-                file_entry["charCount"] = file_char_counts.get(file.path, 0)
-                file_entry["tokenCount"] = file_token_counts.get(file.path, 0)
+                # Add file stats if configured
+                if self.config.output.show_file_stats:
+                    file_entry["charCount"] = file_char_counts.get(file.path, 0)
+                    file_entry["tokenCount"] = file_token_counts.get(file.path, 0)
 
-            json_document["files"][file.path] = file_entry
+                json_document["files"][file.path] = file_entry
 
         # Add git diffs if available
         if git_diff_result and self.config.output.git.include_diffs:

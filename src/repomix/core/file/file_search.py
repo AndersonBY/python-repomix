@@ -4,7 +4,7 @@ File Search Module - Responsible for Searching and Filtering Files in the File S
 
 import fnmatch
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 from dataclasses import dataclass
 
 from ...config.config_schema import RepomixConfig
@@ -43,7 +43,7 @@ class PermissionCheckResult:
     """
 
     has_permission: bool
-    error: Optional[Exception] = None
+    error: Exception | None = None
 
 
 def check_directory_permissions(directory: str | Path) -> PermissionCheckResult:
@@ -68,7 +68,7 @@ def check_directory_permissions(directory: str | Path) -> PermissionCheckResult:
         return PermissionCheckResult(has_permission=False, error=e)
 
 
-def find_empty_directories(root_dir: str | Path, directories: List[str], ignore_patterns: List[str], config: Optional[RepomixConfig] = None) -> List[str]:
+def find_empty_directories(root_dir: str | Path, directories: List[str], ignore_patterns: List[str], config: RepomixConfig | None = None) -> List[str]:
     """Find empty directories, respecting ignore patterns."""
     empty_dirs: List[str] = []
     root_path = Path(root_dir)
@@ -102,7 +102,7 @@ def find_empty_directories(root_dir: str | Path, directories: List[str], ignore_
     return empty_dirs
 
 
-def _should_ignore_path(path: str, ignore_patterns: List[str], current_dir: Optional[Path] = None, root_path: Optional[Path] = None) -> bool:
+def _should_ignore_path(path: str, ignore_patterns: List[str], current_dir: Path | None = None, root_path: Path | None = None) -> bool:
     """Check if the path should be ignored
 
     Args:
@@ -176,7 +176,7 @@ def _scan_directory(
     all_files: List[str],
     all_dirs: List[str],
     ignore_patterns: List[str],
-    config: Optional[RepomixConfig] = None,
+    config: RepomixConfig | None = None,
 ) -> None:
     """Recursively scan directory, pruning ignored directories early."""
 
@@ -449,6 +449,16 @@ def get_ignore_patterns(root_dir: str | Path, config: RepomixConfig) -> List[str
             patterns.extend(new_patterns)
         except Exception as error:
             logger.warn(f"Failed to read .repomixignore: {error}")
+
+    # Add patterns from .ignore files
+    if config.ignore.use_dot_ignore:
+        ignore_path = Path(root_dir) / ".ignore"
+        if ignore_path.exists():
+            try:
+                new_patterns = [line.strip() for line in ignore_path.read_text().splitlines() if line.strip() and not line.startswith("#")]
+                patterns.extend(new_patterns)
+            except Exception as error:
+                logger.warn(f"Failed to read .ignore file: {error}")
 
     # Add patterns from .gitignore
     if config.ignore.use_gitignore:

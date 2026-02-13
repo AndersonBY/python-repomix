@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
@@ -22,15 +22,15 @@ class GenerateSkillInput(BaseModel):
     """Input schema for generate_skill tool."""
 
     directory: str = Field(description="Absolute path to the directory to generate skill from")
-    skill_name: Optional[str] = Field(
+    skill_name: str | None = Field(
         default=None,
         description="Name for the generated skill. If not provided, uses directory name.",
     )
-    include_patterns: Optional[str] = Field(
+    include_patterns: str | None = Field(
         default=None,
         description=('Specify files to include using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "**/*.{js,ts}", "src/**,docs/**").'),
     )
-    ignore_patterns: Optional[str] = Field(
+    ignore_patterns: str | None = Field(
         default=None,
         description=('Specify additional files to exclude using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "test/**,*.spec.js").'),
     )
@@ -60,9 +60,9 @@ def register_generate_skill_tool(server: FastMCP) -> None:
     )
     async def generate_skill(  # pyright: ignore[reportUnusedFunction]
         directory: str,
-        skill_name: Optional[str] = None,
-        include_patterns: Optional[str] = None,
-        ignore_patterns: Optional[str] = None,
+        skill_name: str | None = None,
+        include_patterns: str | None = None,
+        ignore_patterns: str | None = None,
     ) -> Dict[str, Any]:
         """Generate a Claude Agent Skill from a codebase."""
 
