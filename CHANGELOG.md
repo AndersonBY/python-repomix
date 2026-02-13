@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-02-13
+
 ### Added
 - 🔍 **Semantic CLI Suggestions**: Unknown CLI options now suggest the closest valid alternative (e.g., `--exclude` → "Did you mean: `--ignore`?")
 - 📂 **Multiple Directories Support**: Process multiple directories in a single command (`repomix src lib tests`), with root-labeled file trees for multi-root output
@@ -22,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🔧 **Type Checker Migration**: Replaced pyright with ty (from Astral/Ruff team) for faster, more accurate type checking
 - 🧹 **Code Quality**: Applied ruff auto-fixes across codebase (`Optional[X]` → `X | None`), fixed `raise` without `from`, deprecated API usage
 - 📦 **Type Safety**: Improved type annotations with `Sequence` for covariant parameters and `cast` for dict unpacking patterns
-
 ## [0.4.1] - 2026-01-29
 
 ### Fixed
