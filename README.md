@@ -932,8 +932,8 @@ When AI assistants call tools, you'll see detailed logs in the server terminal:
 - ✅ Multiple output formats
 - ✅ File search and reading
 - ✅ Temporary file management
+- ✅ Code compression (Tree-sitter based)
 - 🔄 Remote repository support (in development)
-- 🔄 Code compression features (in development)
 
 ### 7.3 Best Practices
 
